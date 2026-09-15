@@ -1,0 +1,244 @@
+{
+  "master": "scripts/brand-source/shield-master.svg",
+  "pngs": [
+    {
+      "file": "mashal-icon-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-icon-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-icon-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "file": "mashal-monochrome-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-monochrome-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-monochrome-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "file": "mashal-black-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-black-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-black-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "file": "mashal-white-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-white-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-white-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "file": "mashal-reversed-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-reversed-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-reversed-1024.png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "file": "mashal-wordmark-1520x512.png",
+      "width": 1520,
+      "height": 512
+    },
+    {
+      "file": "mashal-wordmark-3040x1024.png",
+      "width": 3040,
+      "height": 1024
+    },
+    {
+      "file": "mashal-wordmark-monochrome-1520x512.png",
+      "width": 1520,
+      "height": 512
+    },
+    {
+      "file": "mashal-wordmark-monochrome-3040x1024.png",
+      "width": 3040,
+      "height": 1024
+    },
+    {
+      "file": "mashal-wordmark-reversed-1520x512.png",
+      "width": 1520,
+      "height": 512
+    },
+    {
+      "file": "mashal-wordmark-reversed-3040x1024.png",
+      "width": 3040,
+      "height": 1024
+    },
+    {
+      "file": "mashal-dark-1520x512.png",
+      "width": 1520,
+      "height": 512
+    },
+    {
+      "file": "mashal-dark-3040x1024.png",
+      "width": 3040,
+      "height": 1024
+    },
+    {
+      "file": "mashal-stacked-1280.png",
+      "width": 1280,
+      "height": 1280
+    },
+    {
+      "file": "mashal-stacked-dark-1280.png",
+      "width": 1280,
+      "height": 1280
+    },
+    {
+      "file": "mashal-stacked-monochrome-1280.png",
+      "width": 1280,
+      "height": 1280
+    },
+    {
+      "file": "mashal-logotype-1360x460.png",
+      "width": 1360,
+      "height": 460
+    },
+    {
+      "file": "mashal-favicon-16.png",
+      "width": 16,
+      "height": 16
+    },
+    {
+      "file": "mashal-favicon-24.png",
+      "width": 24,
+      "height": 24
+    },
+    {
+      "file": "mashal-favicon-32.png",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "file": "mashal-favicon-48.png",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "file": "mashal-favicon-64.png",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "file": "mashal-favicon-128.png",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "file": "mashal-favicon-180.png",
+      "width": 180,
+      "height": 180
+    },
+    {
+      "file": "mashal-favicon-192.png",
+      "width": 192,
+      "height": 192
+    },
+    {
+      "file": "mashal-favicon-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-favicon-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-app-icon-48.png",
+      "width": 48,
+      "height": 48
+    },
+    {
+      "file": "mashal-app-icon-72.png",
+      "width": 72,
+      "height": 72
+    },
+    {
+      "file": "mashal-app-icon-96.png",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "file": "mashal-app-icon-144.png",
+      "width": 144,
+      "height": 144
+    },
+    {
+      "file": "mashal-app-icon-180.png",
+      "width": 180,
+      "height": 180
+    },
+    {
+      "file": "mashal-app-icon-192.png",
+      "width": 192,
+      "height": 192
+    },
+    {
+      "file": "mashal-app-icon-256.png",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "file": "mashal-app-icon-512.png",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "file": "mashal-app-icon-1024.png",
+      "width": 1024,
+      "height": 1024
+    }
+  ],
+  "icoSizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ]
+}
