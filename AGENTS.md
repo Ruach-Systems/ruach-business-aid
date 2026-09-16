@@ -31,12 +31,12 @@ Do not use Gold as a warning or status color. Do not give multiple accent colors
 The approved business logo is the shielded M with a diamond above it, in Navy and Royal Red. This selected shield is an intentional exception to generic abstract-logo guidance. The source image is `scripts/brand-source/approved-reference.png`.
 
 - Use `scripts/brand-source/shield-master.svg` as the single geometry master. Preserve mirrored shoulders, two lower panels, vertical center gap, and diamond; do not replace them with stacked chevrons.
-- Run `pnpm brand:assets` to regenerate SVG, PNG, and ICO files. Never draw individual icon versions independently or append another SVG root to a file.
+- Reuse the approved SVG, PNG, and ICO exports in `public/brand`. Keep their geometry consistent with the master; do not draw individual icon versions independently or append another SVG root to a file.
 - Use transparent gaps, not white or background-colored overlays. Monochrome includes the shield and diamond in the same ink.
 - Export lettering as vector outlines. The generator uses bundled Montserrat fonts and license so exports have no font dependency.
 - Logo colors are Navy and Royal Red, with Slate supporting type; reversed logos use Cloud White. Purple and Gold remain available in the wider UI palette, not in this logo.
 - Rounded favicon tiles and opaque square app tiles use identical mark geometry and consistent safe padding. Review `public/brand/brand-preview.png` and actual-size icons after export.
-- In the app, use `BrandLogo.vue` and the `virtual:mashal-brand` asset URLs. `build/branding.ts` assigns content-hashed filenames to logo and launcher assets. Preserve those URLs in HTML/manifest references and the Firebase revalidation rules; run `node scripts/verify-brand-release.mjs` after building.
+- In the app, use `BrandLogo.razor` and the content-hashed files in `src/Mashal.BusinessAid.Client/wwwroot/brand-assets`. Preserve those URLs in HTML/manifest references and Firebase revalidation rules. Run `scripts/verify-release.ps1` after publishing to verify content hashes and offline inclusion.
 
 ## Visual direction
 
@@ -45,3 +45,11 @@ Favor clean, modern, premium SaaS interfaces with generous whitespace, clear inf
 Approved positioning line for concepts and mockups:
 
 > Customized software for business and life.
+
+## Maintainable .NET solution
+
+- Use the root Mashal.BusinessAid.slnx: Client, API, Shared, Migrations, and Tests.
+- Keep business rules in Shared, Dapper SQL and authorization in API, and browser UI/state in Client.
+- Never introduce EF Core, FluentMigrator, MediatR, extra architecture layers, or frontend Node build dependencies.
+- Preserve the IndexedDB namespace and serialized outbox format, and the DbUp logical script names.
+- Verify both ordinary tests and the published PWA browser tests for offline/synchronization changes.

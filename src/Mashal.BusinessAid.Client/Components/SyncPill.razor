@@ -1,0 +1,6 @@
+@inject BusinessState Store
+<button class="sync-pill sync-@Store.SyncStatus" @onclick="Store.Synchronize" disabled="@Store.Busy" title="@Store.Error">
+<Icon Name="sync" />
+<span>@Label</span>
+</button>
+@code { private string Label => !Store.Online ? "Saved offline" : Store.User?.IsDemo == true ? "Local mode" : Store.Busy ? "Syncing…" : Store.SyncStatus == "error" ? "Needs attention" : Store.PendingCount > 0 ? $"{Store.PendingCount} pending" : "Synchronized"; }

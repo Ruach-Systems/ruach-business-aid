@@ -1,0 +1,42 @@
+@page "/products"
+@inherits PageBase
+<div class="page">
+<PageHeading Title="Products" Eyebrow="Catalog & costing" Description="Set prices, recipes, and how every product affects stock.">
+<a class="button primary small" href="/products/new">
+<Icon Name="plus" />Add product</a>
+</PageHeading>
+@if(Store.Products.Any()){
+<div class="product-grid">@foreach(var product in Store.Products){var cost=ProductCost(product,Store.Inventory);<a class="card product-card" href="@($"/products/{product.Id}")">
+<div class="product-top">
+<span class="list-icon">
+<Icon Name="tag" />
+</span>
+<span class="pill @(product.InventoryMode=="prepared"?"warning":"muted")">@(product.InventoryMode=="prepared"?"Prepared in advance":"Not tracked")</span>
+</div>
+<h2>@product.Name</h2>
+<div class="price-row">
+<div>
+<span>Price</span>
+<strong>@Money(product.SellingPriceCentavos)</strong>
+</div>
+<div>
+<span>Cost</span>
+<strong>@Money(cost)</strong>
+</div>
+</div>
+<footer>
+<span>@(product.SellingPriceCentavos>0?((product.SellingPriceCentavos-cost)*100m/product.SellingPriceCentavos).ToString("0.0"):"0.0")% margin</span>
+<span>›</span>
+</footer>
+</a>}
+</div>}
+else{
+<div class="card empty">
+<span class="list-icon">
+<Icon Name="tag" />
+</span>
+<h3>No products yet</h3>
+<p>Add what you sell, then optionally build its recipe from inventory items.</p>
+<a class="button primary small" href="/products/new">Add first product</a>
+</div>}
+</div>

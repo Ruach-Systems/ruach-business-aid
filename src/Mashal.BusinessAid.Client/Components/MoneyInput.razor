@@ -1,0 +1,29 @@
+@using System.Globalization
+<input @attributes="Attributes" type="number" step="0.01" inputmode="decimal" value="@text" @oninput="Input" @onblur="Blur" />
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+    private string text = "0.00";
+    private bool editing;
+    protected override void OnParametersSet()
+    {
+        if (!editing) text = Value.ToString("F2", CultureInfo.InvariantCulture);
+    }
+    private async Task Input(ChangeEventArgs args)
+    {
+        editing = true;
+        text = args.Value?.ToString() ?? "";
+        if (decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var amount))
+            await ValueChanged.InvokeAsync(amount);
+    }
+    private async Task Blur()
+    {
+        editing = false;
+        // Keep empty required inputs empty so native form validation can explain the omission.
+        if (!decimal.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var amount)) return;
+        amount = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
+        text = amount.ToString("F2", CultureInfo.InvariantCulture);
+        await ValueChanged.InvokeAsync(amount);
+    }
+}

@@ -1,0 +1,13 @@
+
+.actual-list { display: grid; gap: 8px; }.actual-row { display: grid; grid-template-columns: minmax(0,1fr) 90px 48px; gap: 8px; align-items: center; padding: 11px; border-radius: 13px; background: var(--mashal-cloud); }.actual-row div { display: grid; gap: 3px; }.actual-row strong { font-size: 12px; }.actual-row small, .actual-row > span { color: var(--mashal-muted); font-size: 10px; }.actual-row input { min-width: 0; height: 44px; border-radius: 10px; border: 1px solid var(--mashal-line); background: white; padding: 8px; text-align: right; }.field label i { font-style: normal; font-weight: 500; letter-spacing: 0; text-transform: none; }.final-cost { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }.final-cost > div { display: grid; gap: 6px; }.final-cost strong { font-size: 17px; }.final-cost div:first-child strong { color: var(--mashal-on-dark); }.final-cost footer { grid-column: 1/-1; display: flex; align-items: center; gap: 7px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.12); color: #CBD5E1; font-size: 11px; }.irreversible { display: flex; gap: 11px; }.irreversible > .icon { flex: none; font-size: 22px; color: var(--mashal-warning-ink); }.irreversible div { display: grid; gap: 5px; }.irreversible span { color: var(--mashal-muted); font-size: 11px; line-height: 1.45; }.confirmation-panel { display: grid; gap: 10px; border: 2px solid var(--mashal-purple); }.confirmation-panel h2 { font-family: var(--app-font-family); color: var(--mashal-navy); margin: 0; }.confirmation-panel p { color: var(--mashal-muted); margin: 0; font-size: 12px; line-height: 1.5; }.confirmation-panel > div { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.actual-row { grid-template-columns: minmax(0,1fr) 112px auto; gap: 8px; }
+.actual-row > div { min-width: 0; gap: 5px; }
+.actual-row strong { overflow-wrap: anywhere; }
+.actual-row small, .actual-row > span { font-size: 12px; line-height: 1.4; }
+.actual-row input { width: 100%; font-variant-numeric: tabular-nums; }
+@media(max-width: 420px) {
+    .actual-row { grid-template-columns: minmax(0,1fr) auto; }
+    .actual-row > div { grid-column: 1 / -1; }
+    .final-cost { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .confirmation-panel > div { grid-template-columns: minmax(0,1fr); }
+}

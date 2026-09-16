@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><PackageReference Include="dbup-sqlserver" Version="6.0.16" /><EmbeddedResource Include="../../database/migrations/*.sql"><LogicalName>Mashal.Migrations.%(Filename)%(Extension)</LogicalName></EmbeddedResource></ItemGroup></Project>

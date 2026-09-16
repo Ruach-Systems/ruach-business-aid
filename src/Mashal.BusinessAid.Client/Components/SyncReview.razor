@@ -1,0 +1,58 @@
+@inherits PageBase
+@inject IJSRuntime JS
+@if (!string.IsNullOrEmpty(Store.Error))
+{
+<div class="notice">
+<ErrorBanner Message="@Store.Error" />
+<button class="button ghost small" @onclick="Store.Synchronize">Retry synchronization</button>
+<button class="button ghost small" @onclick="Store.SignIn">Sign in again</button>
+</div>
+}
+@if (Store.State?.Outbox.FirstOrDefault() is { Error: not null } operation)
+{
+<section class="notice card">
+<h2>Review saved changes</h2>
+<p>Another device may have changed this record. Compare your saved change with the current server record.</p>
+    <button class="button ghost small" @onclick="() => Run(Store.ReviewConflicts)">Refresh server records</button>
+    <div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>This device</th>
+<th>Server</th>
+</tr>
+</thead>
+<tbody>
+    @foreach (var row in Comparison(operation)) {
+<tr>
+<td>@row.Label</td>
+<td>@row.Local</td>
+<td>@row.Server</td>
+</tr> }
+</tbody>
+</table>
+</div>
+    <ErrorBanner Message="@Error" />
+    <div class="form-actions">
+<button class="button ghost" @onclick="() => Resolve(true)">Use server records</button>
+<button class="button primary" @onclick="() => Resolve(false)">Retry reviewed change</button>
+</div>
+</section>
+}
+@code {
+    private async Task Resolve(bool discard) { if (await JS.InvokeAsync<bool>("confirm", discard ? "Discard all pending changes on this device and use server records?" : "Retry this change using the latest server version?")) await Run(() => Store.ResolveConflict(discard)); }
+    private IEnumerable<(string Label, string Local, string Server)> Comparison(PendingOperation op)
+    {
+        var projection = op.Projections.FirstOrDefault(x => x.Entity.GetProperty("id").GetGuid() == op.EntityId) ?? op.Projections.FirstOrDefault();
+        var local = projection?.Entity ?? op.Payload;
+        var entity = projection is null ? null : LocalData.Entities(Store.State!.ServerData).FirstOrDefault(x => x.Id == projection.Entity.GetProperty("id").GetGuid());
+        var server = entity is null ? JsonSerializer.SerializeToElement(Store.State!.ServerData.Business, Wire.Json) : JsonSerializer.SerializeToElement(entity, entity.GetType(), Wire.Json);
+        foreach (var field in new[] { ("name","Name"), ("description","Description"), ("category","Category"), ("sellingPriceCentavos","Selling price (centavos)"), ("manualCostCentavos","Unit cost (centavos)"), ("amountCentavos","Expense (centavos)"), ("minimumQuantity","Minimum stock"), ("currentQuantity","Stock quantity"), ("inventoryMode","Inventory behavior"), ("status","Status"), ("plannedYield","Planned yield"), ("actualYield","Actual yield") })
+        {
+            var a = local.ValueKind == JsonValueKind.Object && local.TryGetProperty(field.Item1, out var av) ? av.ToString() : null;
+            var b = server.ValueKind == JsonValueKind.Object && server.TryGetProperty(field.Item1, out var bv) ? bv.ToString() : null;
+            if (a is not null || b is not null) yield return (field.Item2, a ?? "—", b ?? "Not synchronized");
+        }
+    }
+}

@@ -24,11 +24,11 @@ These assets reproduce the approved shielded M and diamond from `scripts/brand-s
 
 Use SVG for business stationery, signage, design tools, and scalable web placements. PNG is RGB raster artwork; use its native dimensions or smaller. SVG text is outlined, so a printer or another computer does not need the font installed. Black and white versions are genuinely single-ink, including the diamond.
 
-The square app tile is fully opaque and leaves room for platform masking. The rounded favicon is a separate container treatment of the same mark. Root browser, Apple touch, and PWA files are generated from these sources too. Do not manually stretch or redraw any variant.
+The square app tile is fully opaque and leaves room for platform masking. The rounded favicon is a separate container treatment of the same mark. The application uses content-hashed copies of the required browser, Apple touch, and PWA files. Do not manually stretch or redraw any variant.
 
 ## Rebuild and verify
 
-Run `pnpm brand:assets`, then `node scripts/verify-brand-assets.mjs` from the project. The source geometry is `scripts/brand-source/shield-master.svg`. Bundled Montserrat ExtraBold and Bold are used for outlined lettering; see the bundled `OFL.txt` and [font source](https://github.com/JulietaUla/Montserrat). Font files are only build inputs.
+The approved exports are retained as source assets for the Blazor application. The source geometry is `scripts/brand-source/shield-master.svg`. Bundled Montserrat ExtraBold and Bold were used for outlined lettering; see the bundled `OFL.txt` and [font source](https://github.com/JulietaUla/Montserrat). Font files are not required to display the exported logos. Use the matching content-hashed copies under `src/Mashal.BusinessAid.Client/wwwroot/brand-assets` and run `scripts/verify-release.ps1` after publishing. If an export changes, update its hashed copy and HTML/manifest/component references together.
 
 Review `brand-preview.png` for the color, horizontal, monochrome, stacked dark, and favicon treatments. `asset-inventory.json` lists exported PNG dimensions and ICO sizes.
 

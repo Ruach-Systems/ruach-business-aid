@@ -1,0 +1,1 @@
+{"profiles":{"Client":{"commandName":"Project","launchBrowser":false,"applicationUrl":"http://localhost:5173","inspectUri":"{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"}}}

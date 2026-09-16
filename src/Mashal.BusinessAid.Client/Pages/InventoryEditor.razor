@@ -1,0 +1,32 @@
+@page "/inventory/new"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/inventory" Text="Back to inventory" />
+<PageHeading Title="New item" Eyebrow="Inventory setup" Description="Use the smallest practical unit for accurate recipes." />
+<form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
+<div class="field">
+<label for="inventory-name">Item name</label>
+<input id="inventory-name" @bind="name" required placeholder="e.g. Condensed Milk" />
+</div>
+<div class="field">
+<label for="inventory-base-unit">Base unit</label>
+<select id="inventory-base-unit" @bind="unit" aria-describedby="base-unit-help">
+<option value="g">g · gram</option>
+<option value="ml">ml · milliliter</option>
+<option value="pc">pc · piece</option>
+<option value="pack">pack · pack</option>
+<option value="serving">serving · serving</option>
+</select>
+<span id="base-unit-help" class="field-help">Purchases can still be entered in kg or L and will convert automatically.</span>
+</div>
+<div class="field">
+<label for="inventory-minimum">Low-stock warning at</label>
+<input id="inventory-minimum" type="number" min="0" step="any" @bind:get="decimal.Round(minimum, 2)" @bind:set="value => minimum = value" @bind:event="oninput" />
+</div>
+<ErrorBanner Message="@Error" />
+<div class="form-actions">
+<a class="button ghost" href="/inventory">Cancel</a>
+<button class="button primary" disabled="@Saving">Save item</button>
+</div>
+</form>
+</div>

@@ -1,0 +1,4 @@
+.reports-heading h2 { min-width: 0; }
+.reports-heading { margin-bottom: 0; }
+.reports-subtitle { margin: 0 0 16px; color: var(--mashal-muted); font-size: 13px; line-height: 1.5; }
+.reports-heading a { flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; }

@@ -1,0 +1,128 @@
+@page "/products/new"
+@page "/products/{Id:guid}"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/products" Text="Back to products" />
+<PageHeading Title="@(Id is null ? "New product":"Edit product")" Eyebrow="Products & costing" Description="Price and cost stay separate so profit remains clear." />
+<form class="stack" @onsubmit="Save" @onsubmit:preventDefault>
+<section class="card form-card">
+<div class="field">
+<label for="product-name">Product name</label>
+<input id="product-name" @bind="draft.Name" required />
+</div>
+<div class="field">
+<label for="product-price">Selling price (₱)</label>
+<MoneyInput id="product-price" min="0.01" @bind-Value="price" required />
+</div>
+<div class="field">
+<span class="field-label" id="mode-label">Inventory behavior</span>
+<div class="mode-grid" role="radiogroup" aria-labelledby="mode-label">
+<button type="button" role="radio" aria-checked="@(draft.InventoryMode=="untracked"?"true":"false")" class="mode-card @(draft.InventoryMode=="untracked"?"active":"")" @onclick='()=>draft.InventoryMode="untracked"'>
+<Icon Name="tag" />
+<strong>Not tracked</strong>
+<small>Record sales without changing inventory.</small>
+</button>
+<button type="button" role="radio" aria-checked="@(draft.InventoryMode=="prepared"?"true":"false")" class="mode-card @(draft.InventoryMode=="prepared"?"active":"")" @onclick='()=>draft.InventoryMode="prepared"'>
+<Icon Name="cube" />
+<strong>Prepared in advance</strong>
+<small>Make batches first, then sell from finished stock.</small>
+</button>
+</div>
+</div>
+@if(draft.InventoryMode=="untracked"){
+<div class="field">
+<label for="manual-cost">Manual cost per item (₱)</label>
+<MoneyInput id="manual-cost" min="0" @bind-Value="manualCost" />
+</div>}
+</section>
+@if(draft.InventoryMode=="prepared"){
+<section class="card">
+<div class="section-heading">
+<div>
+<span class="card-label">Reference production batch</span>
+<h2>Batch ingredients</h2>
+</div>
+</div>
+<div class="field batch-yield-field">
+<label for="recipe-batch-yield">How many finished items does this batch normally make?</label>
+<input id="recipe-batch-yield" type="number" min="0.000001" step="any" @bind:get="decimal.Round(draft.RecipeBatchYield, 2)" @bind:set="value => draft.RecipeBatchYield = value" @bind:event="oninput" />
+<p class="field-help">Enter the total ingredients for this normal batch. MASHAL calculates the amount and cost per finished item.</p>
+</div>
+<div class="recipe-list">@foreach(var line in batchRecipe){
+<div class="recipe-row" @key="line">
+<select @bind="line.InventoryItemId" aria-label="Ingredient">
+<option value="@Guid.Empty">Select ingredient</option>
+@foreach(var item in Store.Inventory.Where(x=>x.Id!=draft.FinishedInventoryItemId && (x.Id==line.InventoryItemId || !batchRecipe.Any(other=>other.InventoryItemId==x.Id)))){
+<option value="@item.Id">@item.Name</option>}
+</select>
+<input aria-label="Batch ingredient quantity" type="number" min="0.000001" step="any" inputmode="decimal" @bind:get="Quantity(line.BatchQuantity)" @bind:set="(string? value) => SetBatchQuantity(line, value)" />
+<span>@Store.Inventory.FirstOrDefault(x=>x.Id==line.InventoryItemId)?.BaseUnit</span>
+<button type="button" aria-label="Remove ingredient" @onclick="()=>batchRecipe.Remove(line)">×</button>
+<small class="per-item-quantity">@Quantity(PerItemQuantity(line.BatchQuantity, draft.RecipeBatchYield)) @UnitName(Store.Inventory.FirstOrDefault(x=>x.Id==line.InventoryItemId)?.BaseUnit, PerItemQuantity(line.BatchQuantity, draft.RecipeBatchYield)) per item</small>
+</div>}
+</div>
+@if(batchRecipe.Count==0){
+<p class="field-help">No batch ingredients added.</p>}
+else if(!AvailableIngredients.Any()){
+<p class="field-help">All available ingredients have been added.</p>}
+@if(Store.Inventory.Any()){
+<div class="recipe-actions">
+<button type="button" class="button ghost" @onclick="()=>showQuickItem=true" disabled="@(Saving || showQuickItem)">Create inventory item</button>
+<button type="button" class="button ghost" @onclick="AddLine" disabled="@(!AvailableIngredients.Any())">Add ingredient</button>
+</div>}
+@if(showQuickItem || !Store.Inventory.Any()){
+<div class="quick-item" aria-labelledby="quick-item-title">
+<div>
+<strong id="quick-item-title">@(Store.Inventory.Any() ? "Create inventory item" : "Create your first ingredient")</strong>
+<p class="field-help">Save a new inventory item and add it to this recipe. Your product edits stay here. Add stock separately when you receive it.</p>
+</div>
+<div class="quick-item-fields">
+<div class="field">
+<label for="quick-item-name">Ingredient name</label>
+<input id="quick-item-name" @bind="quickItemName" @bind:event="oninput" placeholder="e.g. Flour" />
+</div>
+<div class="field">
+<label for="quick-item-unit">Base unit</label>
+<select id="quick-item-unit" @bind="quickItemUnit">
+<option value="g">Grams</option><option value="ml">Milliliters</option><option value="pc">Pieces</option><option value="pack">Packs</option><option value="serving">Servings</option>
+</select>
+</div>
+</div>
+<button type="button" class="button ghost small" @onclick="CreateFirstIngredient" disabled="@(Saving || string.IsNullOrWhiteSpace(quickItemName))">Create and add</button>
+@if(Store.Inventory.Any()){
+<button type="button" class="button ghost small" disabled="@Saving" @onclick="()=>showQuickItem=false">Cancel new item</button>}
+<ErrorBanner Message="@Error" />
+</div>}
+</section>}
+<section class="card dark cost-preview">
+<div>
+<span class="card-label">Selling price</span>
+<strong>@Money(Centavos(price))</strong>
+</div>
+<div>
+<span class="card-label">Product cost</span>
+<strong>@Money(Cost)</strong>
+</div>
+<div>
+<span class="card-label">Gross profit</span>
+<strong>@Money(Centavos(price)-Cost)</strong>
+</div>
+<footer>
+<span>Margin @(price>0 ? ((Centavos(price)-Cost)/(price*100)*100).ToString("0.0"):"0.0")%</span>
+<span>Markup @(Cost>0?((Centavos(price)-Cost)*100m/Cost).ToString("0.0"):"0.0")%</span>
+</footer>
+</section>
+<label class="toggle-row">
+<span>
+<strong>Product is active</strong>
+<small>Inactive products no longer appear in sales.</small>
+</span>
+<input type="checkbox" class="toggle" @bind="draft.IsActive" />
+</label>
+<ErrorBanner Message="@ProductError" />
+<div class="form-actions">
+<a class="button ghost" href="/products">Cancel</a>
+<button class="button primary" disabled="@Saving">Save product</button>
+</div>
+</form>
+</div>
