@@ -1,0 +1,120 @@
+name: Deploy environment
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [Development, Test, Production]
+        required: true
+      api_origin:
+        description: HTTPS API origin compiled into the PWA
+        type: string
+        default: https://api.businessaid.mashalsystems.com
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  build-test:
+    uses: ./.github/workflows/validate.yml
+    with:
+      api_origin: ${{ inputs.api_origin }}
+  migrate:
+    name: Back up and migrate SQL database
+    needs: build-test
+    runs-on: windows-latest
+    environment: ${{ inputs.environment }}
+    env:
+      ConnectionStrings__Mashal: ${{ secrets.SQL_MIGRATION_CONNECTION_STRING }}
+      MASHAL_BACKUP_PATH: ${{ secrets.SQL_BACKUP_PATH }}
+      MASHAL_ENVIRONMENT: ${{ inputs.environment }}
+      EXPECTED_API_ORIGIN: ${{ vars.API_ORIGIN }}
+      REQUESTED_API_ORIGIN: ${{ inputs.api_origin }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: migrations
+          path: artifacts/migrations
+      - name: Validate deployment configuration
+        shell: pwsh
+        run: |
+          if (!$env:EXPECTED_API_ORIGIN -or $env:EXPECTED_API_ORIGIN -ne $env:REQUESTED_API_ORIGIN) { throw 'API origin must match the selected GitHub Environment.' }
+          if (!$env:ConnectionStrings__Mashal) { throw 'Migration database secret is missing.' }
+      - name: Verify connectivity and production backup
+        shell: pwsh
+        run: |
+          dotnet artifacts/migrations/Mashal.BusinessAid.Migrations.dll --preflight
+          if ($LASTEXITCODE -ne 0) { throw 'Database preflight failed.' }
+      - name: Run pending DbUp migrations
+        shell: pwsh
+        run: |
+          dotnet artifacts/migrations/Mashal.BusinessAid.Migrations.dll
+          if ($LASTEXITCODE -ne 0) { throw 'Migration failed. Application deployment is blocked.' }
+  deploy-api:
+    name: Deploy ASP.NET Core to MyASP.NET
+    needs: migrate
+    runs-on: windows-latest
+    environment: ${{ inputs.environment }}
+    env:
+      MASHAL_ENVIRONMENT: ${{ inputs.environment }}
+      ConnectionStrings__Mashal: ${{ secrets.SQL_APP_CONNECTION_STRING }}
+      Google__ClientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+      Google__ClientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      DataProtection__CertificateBase64: ${{ secrets.DATA_PROTECTION_CERTIFICATE_BASE64 }}
+      DataProtection__CertificatePassword: ${{ secrets.DATA_PROTECTION_CERTIFICATE_PASSWORD }}
+      App__Origin: ${{ vars.PWA_ORIGIN }}
+      API_ORIGIN: ${{ vars.API_ORIGIN }}
+      WEBDEPLOY_ENDPOINT: ${{ secrets.WEBDEPLOY_ENDPOINT }}
+      WEBDEPLOY_SITE: ${{ secrets.WEBDEPLOY_SITE }}
+      WEBDEPLOY_USERNAME: ${{ secrets.WEBDEPLOY_USERNAME }}
+      WEBDEPLOY_PASSWORD: ${{ secrets.WEBDEPLOY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: api
+          path: artifacts/api
+      - name: Install Web Deploy
+        shell: pwsh
+        run: choco install webdeploy --yes --no-progress
+      - name: Configure and deploy API
+        shell: pwsh
+        run: ./scripts/deploy-api.ps1
+      - name: API readiness
+        shell: pwsh
+        run: |
+          $ready = Invoke-RestMethod "$env:API_ORIGIN/health/ready"
+          if ($ready.status -ne 'ready') { throw 'API readiness check failed.' }
+  deploy-pwa:
+    name: Deploy PWA to Firebase Hosting
+    needs: deploy-api
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      PWA_ORIGIN: ${{ vars.PWA_ORIGIN }}
+      API_ORIGIN: ${{ vars.API_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: pwa
+          path: artifacts/pwa/wwwroot
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Deploy validated PWA artifact
+        run: |
+          npx firebase-tools@14.12.1 deploy --only hosting --project "$FIREBASE_PROJECT_ID" --config firebase.json --non-interactive
+      - name: Verify release and security boundaries
+        shell: pwsh
+        run: ./scripts/smoke-release.ps1

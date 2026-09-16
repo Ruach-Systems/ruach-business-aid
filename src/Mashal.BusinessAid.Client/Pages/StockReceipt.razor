@@ -1,0 +1,47 @@
+@page "/stock/add"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/inventory" Text="Back to inventory" />
+<PageHeading Title="Add stock" Eyebrow="Purchases & costing" Description="Enter the quantity received and total purchase cost." />
+<form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
+<div class="field">
+<label for="receipt-item">Inventory item</label>
+<select id="receipt-item" @bind="itemId" @bind:after="ChooseItem" required>
+<option value="@Guid.Empty">Select inventory item</option>
+@foreach(var item in Store.Inventory){
+<option value="@item.Id">@item.Name</option>}
+</select>
+</div>
+<div class="field-row">
+<div class="field">
+<label for="receipt-quantity">Quantity received</label>
+<input id="receipt-quantity" type="number" min="0.000001" step="any" @bind:get="decimal.Round(quantity, 2)" @bind:set="value => quantity = value" required @bind:event="oninput" />
+</div>
+<div class="field">
+<label for="receipt-unit">Unit</label>
+<select id="receipt-unit" @bind="unit">@foreach(var value in Units){
+<option value="@value">@value</option>}
+</select>
+</div>
+</div>
+<div class="field">
+<label for="receipt-cost">Total purchase cost (₱)</label>
+<MoneyInput id="receipt-cost" min="0" @bind-Value="cost" required />
+</div>
+<div class="field">
+<label for="receipt-note">Note</label>
+<textarea id="receipt-note" @bind="note">
+</textarea>
+</div>
+@if(Item is {} selected && quantity > 0){
+<div class="card soft">
+<span class="card-label">New average cost per @UnitName(selected.BaseUnit, 1)</span>
+<strong>@Money(Rules.Average(selected.CurrentQuantity,selected.AverageCostCentavos, quantity * Conversion(unit,selected.BaseUnit),Centavos(cost)))</strong>
+</div>}
+<ErrorBanner Message="@Error" />
+<div class="form-actions">
+<a class="button ghost" href="/inventory">Cancel</a>
+<button class="button primary" disabled="@Saving">Save stock receipt</button>
+</div>
+</form>
+</div>

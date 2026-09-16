@@ -1,0 +1,47 @@
+
+.today-summary { display: grid; gap: 12px; }
+.profit-card { min-height: 180px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+.profit-decoration { width: 180px; height: 180px; border-radius: 50%; position: absolute; right: -70px; bottom: -100px; border: 24px solid rgba(255,255,255,.05); box-shadow: 0 0 0 26px rgba(255,255,255,.025); }
+.today-breakdown { display: grid; align-content: center; }
+.today-breakdown-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.item-count { color: var(--mashal-muted); font-size: 11px; }
+.today-total { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--mashal-line); color: var(--mashal-muted); font-size: 13px; }
+.today-total:last-child { border-bottom: 0; }
+.today-total strong { color: var(--mashal-navy); font-size: 17px; text-align: right; overflow-wrap: anywhere; }
+.section-kicker { display: block; margin-bottom: 4px; color: var(--mashal-purple); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.period-sales-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.period-sales-card { min-width: 0; }
+.period-sales-card .card-label { display: block; margin-bottom: 10px; }
+.period-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 7px 0; color: var(--mashal-muted); }
+.period-total strong { color: var(--mashal-navy); font-size: 16px; overflow-wrap: anywhere; text-align: right; }
+.period-total.profit { border-top: 1px solid var(--mashal-border); margin-top: 4px; padding-top: 11px; }
+.period-total.profit span, .period-total.profit strong { color: var(--mashal-success-ink); font-weight: 800; }
+.period-total.profit.negative span, .period-total.profit.negative strong { color: var(--mashal-danger); }
+.period-sales-card .metric-note { display: block; margin-top: 7px; }
+.section-heading a { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; min-height: 44px; }
+.sale-amount { flex: none; margin: 0 !important; text-align: right; }
+.list-icon.warning { background: var(--mashal-warning-soft); color: var(--mashal-warning-ink); }
+.list-card.compact { min-height: 54px; padding: 0; }
+.compact-empty { padding: 26px 18px; }
+.healthy { margin: 9px 0 6px !important; color: var(--mashal-navy) !important; }
+@media (min-width: 760px) { .today-summary { grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); } }
+@media (max-width: 420px) {
+  .period-sales-grid { grid-template-columns: 1fr; }
+  .list-card { align-items: flex-start; flex-wrap: wrap; }
+  .list-card .sale-amount { width: 100%; padding-left: 54px; text-align: left; }
+}
+.today-summary { align-items: start; }
+.activity-details { margin-top: 12px; min-width: 0; }
+.activity-details summary { min-height: 44px; padding: 12px; border: 1px solid var(--mashal-line); border-radius: 12px; color: var(--mashal-purple); font-size: 13px; font-weight: 700; cursor: pointer; }
+.activity-details summary:focus-visible { outline: 3px solid var(--mashal-focus); outline-offset: 3px; }
+.activity-details h3 { margin: 18px 0 10px; font-size: 14px; }
+.activity-entry { min-width: 0; padding: 12px; margin: 8px 0; border-radius: 12px; background: var(--mashal-cloud); font-size: 13px; overflow-wrap: anywhere; }
+.activity-entry strong, .activity-entry small { display: block; }
+.activity-entry small { margin-top: 4px; color: var(--mashal-muted); }
+.activity-details dl { display: grid; gap: 8px; font-size: 12px; }
+.activity-details dl > div { display: flex; justify-content: space-between; gap: 14px; }
+.activity-details dt { color: var(--mashal-muted); }
+.activity-details dd { margin: 0; text-align: right; font-weight: 700; overflow-wrap: anywhere; }
+.expense-entry { display: flex; justify-content: space-between; gap: 12px; }
+.expense-entry > div { min-width: 0; }
+.activity-reconciliation { border-top: 1px solid var(--mashal-line); padding-top: 16px; margin-top: 16px; }

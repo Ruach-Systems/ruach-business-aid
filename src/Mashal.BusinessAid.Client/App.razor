@@ -1,0 +1,42 @@
+@inject BusinessState Store
+@inject NavigationManager Navigation
+@implements IDisposable
+@if (!Store.Ready)
+{
+<div class="app-loading" role="status">
+<BrandLogo Reversed="true" />
+<span>Opening your business…</span>
+</div>
+}
+else if (Store.StartupError)
+{
+<div class="app-loading">
+<h1>Could not open your business</h1>
+<p>@Store.Error</p>
+<button class="button primary" @onclick="Store.Initialize">Try again</button>
+</div>
+}
+else
+{
+<Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+<FocusOnNavigate RouteData="@routeData" Selector="h1" />
+</Found>
+        <NotFound>
+<LayoutView Layout="@typeof(MainLayout)">
+<div class="page">
+<h1>Page not found</h1>
+<a class="button primary" href="/dashboard">Go to dashboard</a>
+</div>
+</LayoutView>
+</NotFound>
+    </Router>
+}
+@code {
+    protected override async Task OnInitializedAsync() { Store.Changed += Changed; Navigation.LocationChanged += Navigated; await Store.Initialize(); Redirect(); }
+    private void Changed() { _ = InvokeAsync(() => { Redirect(); StateHasChanged(); }); }
+    private void Navigated(object? sender, LocationChangedEventArgs args) => Redirect();
+    private void Redirect() { if (Store.StartupError) return; var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0]; var route = Calculations.Route(Store.Ready, Store.User is not null, Store.Data.Business is not null, path); if (route != path) Navigation.NavigateTo(route, replace: true); }
+    public void Dispose() { Store.Changed -= Changed; Navigation.LocationChanged -= Navigated; }
+}

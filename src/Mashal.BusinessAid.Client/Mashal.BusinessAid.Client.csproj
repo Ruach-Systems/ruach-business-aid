@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<PropertyGroup>
+<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+<WasmApplicationEnvironmentName Condition="'$(Configuration)' == 'Debug'">Development</WasmApplicationEnvironmentName>
+<WasmApplicationEnvironmentName Condition="'$(Configuration)' != 'Debug'">Production</WasmApplicationEnvironmentName>
+</PropertyGroup>
+<ItemGroup>
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
+<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.0" PrivateAssets="all" />
+<ProjectReference Include="../Mashal.BusinessAid.Shared/Mashal.BusinessAid.Shared.csproj" />
+<ServiceWorker Include="wwwroot/sw.js" PublishedContent="wwwroot/service-worker.published.js" />
+<AssemblyMetadata Include="ApiOrigin" Value="$(ApiOrigin)" Condition="'$(ApiOrigin)' != ''" />
+</ItemGroup>
+<Target Name="UsePublishedServiceWorker" AfterTargets="Publish">
+<Copy SourceFiles="$(ProjectDir)wwwroot/service-worker.published.js" DestinationFiles="$(PublishDir)wwwroot/sw.js" />
+</Target>
+</Project>

@@ -1,0 +1,9 @@
+<PageTitle>@Title | Mashal Business Aid</PageTitle>
+<header class="page-heading">
+<div>
+<span class="eyebrow">@Eyebrow</span>
+<h1>@Title</h1>
+<p>@Description</p>
+</div>
+@ChildContent</header>
+@code { [Parameter] public string Title { get; set; } = ""; [Parameter] public string Eyebrow { get; set; } = ""; [Parameter] public string Description { get; set; } = ""; [Parameter] public RenderFragment? ChildContent { get; set; } }

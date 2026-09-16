@@ -1,0 +1,48 @@
+@inherits LayoutComponentBase
+@inject BusinessState Store
+<div class="app-shell">
+    <aside class="side-nav">
+        <a class="side-brand" href="/dashboard">
+<BrandLogo Reversed="true" />
+<span class="product-label">Business Aid</span>
+<small>@Store.Data.Business?.Name</small>
+</a>
+        <nav aria-label="Main navigation">@foreach (var item in links) {
+<NavLink href="@item.Path">
+<Icon Name="@item.Icon" />@item.Label</NavLink> }
+</nav>
+        <SyncPill />
+    </aside>
+    <main class="main-panel">
+        <header class="mobile-header">
+<a href="/dashboard" class="mobile-brand">
+<BrandLogo Reversed="true" />
+<span>Business Aid</span>
+</a>
+<SyncPill />
+</header>
+        <SyncReview />
+        @Body
+    </main>
+    <nav class="bottom-nav" aria-label="Mobile navigation">
+        <NavLink href="/dashboard">
+<Icon Name="home" />
+<span>Home</span>
+</NavLink>
+<NavLink href="/sales">
+<Icon Name="cart" />
+<span>Sales</span>
+</NavLink>
+<NavLink href="/inventory">
+<Icon Name="cube" />
+<span>Inventory</span>
+</NavLink>
+<NavLink href="/more">
+<Icon Name="more" />
+<span>More</span>
+</NavLink>
+    </nav>
+</div>
+@code {
+    private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Overview", "home"), ("/sales", "Daily sales", "cart"), ("/expenses", "Expenses", "wallet"), ("/inventory", "Inventory", "cube"), ("/products", "Products & costing", "tag"), ("/production", "Production", "batch"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
+}

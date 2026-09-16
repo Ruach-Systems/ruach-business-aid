@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="360" height="360" role="img" aria-label="Mashal Systems"><g transform="translate(42 23) scale(1)"><g id="shield" fill="#F7F9FC">
+    <path d="M0 84 L76 44 L76 86 L128 126 L128 172 L39 115 L39 242 L16 216 Q6 206 0 196 Z"/>
+    <path d="M57 151 L128 198 L128 314 L65 267 Q57 261 57 253 Z"/>
+    <g transform="translate(276 0) scale(-1 1)">
+      <path d="M0 84 L76 44 L76 86 L128 126 L128 172 L39 115 L39 242 L16 216 Q6 206 0 196 Z"/>
+      <path d="M57 151 L128 198 L128 314 L65 267 Q57 261 57 253 Z"/>
+    </g>
+  </g>
+  <path id="diamond" fill="#A61B29" d="M138 0 L186 48 L138 96 L90 48 Z"/>
+</g></svg>
