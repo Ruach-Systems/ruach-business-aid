@@ -2,7 +2,11 @@ using System.Text.Json;
 using Mashal.BusinessAid.Shared;
 namespace Mashal.BusinessAid.Client.Services;
 
-public sealed record ClientUser(string Uid, string DisplayName, string Email, string? PhotoURL, bool IsDemo = false);
+public sealed record ClientUser(string Uid, string DisplayName, string Email, string? PhotoURL, bool IsDemo = false)
+{
+    public string? PhoneNumber { get; init; }
+    public bool IsAdmin { get; init; }
+}
 public sealed class PendingOperation
 {
     public Guid Id { get; set; }
@@ -19,6 +23,9 @@ public sealed class PendingOperation
 }
 public sealed class OfflineState
 {
+    public Guid? WorkspaceId { get; set; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string StorageKey => WorkspaceId is { } id ? $"{User.Uid}:{id}" : User.Uid;
     public ClientUser User { get; set; } = new("", "", "", null);
     public AppData Data { get; set; } = new();
     public AppData ServerData { get; set; } = new();

@@ -1,14 +1,22 @@
+-- Consolidated baseline for a new, empty database.
+-- Includes recipe batch yields and multi-business accounts. DbUp owns transactions and journaling.
 CREATE TABLE dbo.Users (
  Id uniqueidentifier NOT NULL PRIMARY KEY, GoogleSubject nvarchar(255) NOT NULL UNIQUE,
  DisplayName nvarchar(255) NOT NULL, Email nvarchar(320) NOT NULL, PhotoURL nvarchar(2048) NULL,
- CreatedAt datetimeoffset NOT NULL DEFAULT SYSUTCDATETIME()
+ CreatedAt datetimeoffset NOT NULL DEFAULT SYSUTCDATETIME(),
+ PhoneNumber varchar(13) NULL,
+ EmailVerified bit NOT NULL CONSTRAINT DF_Users_EmailVerified DEFAULT 0,
+ CONSTRAINT CK_Users_Phone CHECK (PhoneNumber IS NULL OR
+  (LEN(PhoneNumber)=13 AND PhoneNumber LIKE '+639%' AND SUBSTRING(PhoneNumber,5,9) NOT LIKE '%[^0-9]%' COLLATE Latin1_General_100_BIN2))
 );
+CREATE UNIQUE INDEX UX_Users_PhoneNumber ON dbo.Users(PhoneNumber) WHERE PhoneNumber IS NOT NULL;
 CREATE TABLE dbo.Businesses (
- Id uniqueidentifier NOT NULL PRIMARY KEY, OwnerUid uniqueidentifier NOT NULL UNIQUE REFERENCES dbo.Users(Id),
+ Id uniqueidentifier NOT NULL PRIMARY KEY, OwnerUid uniqueidentifier NOT NULL REFERENCES dbo.Users(Id),
  Name nvarchar(160) NOT NULL, DefaultLocation nvarchar(500) NOT NULL,
  Currency varchar(3) NOT NULL CHECK (Currency='PHP'), Timezone varchar(100) NOT NULL CHECK (Timezone='Asia/Manila'),
  CreatedAt datetimeoffset NOT NULL, UpdatedAt datetimeoffset NOT NULL
 );
+CREATE INDEX IX_Businesses_Owner ON dbo.Businesses(OwnerUid);
 CREATE TABLE dbo.BusinessMembers (
  BusinessId uniqueidentifier NOT NULL REFERENCES dbo.Businesses(Id), UserId uniqueidentifier NOT NULL REFERENCES dbo.Users(Id),
  Role varchar(20) NOT NULL CHECK(Role IN ('Owner','Manager','Staff')), PRIMARY KEY(BusinessId,UserId)
@@ -32,6 +40,7 @@ CREATE TABLE dbo.Products (
  Name nvarchar(160) NOT NULL,
  SellingPriceCentavos bigint NOT NULL,
  ManualCostCentavos bigint NOT NULL,
+ RecipeBatchYield decimal(19,6) NOT NULL CONSTRAINT DF_Products_RecipeBatchYield DEFAULT (1),
  InventoryMode nvarchar(500) NOT NULL,
  FinishedInventoryItemId uniqueidentifier NULL,
  IsActive bit NOT NULL,
@@ -40,6 +49,7 @@ CREATE TABLE dbo.Products (
 );
 ALTER TABLE dbo.Products ADD NormalizedName AS UPPER(LTRIM(RTRIM(Name))) COLLATE Latin1_General_100_CI_AS PERSISTED;
 CREATE UNIQUE INDEX UX_Products_Name ON dbo.Products(BusinessId,NormalizedName) WHERE DeletedAt IS NULL;
+ALTER TABLE dbo.Products ADD CONSTRAINT CK_Products_RecipeBatchYield CHECK (RecipeBatchYield > 0);
 CREATE TABLE dbo.Sales (
  Id uniqueidentifier NOT NULL, BusinessId uniqueidentifier NOT NULL REFERENCES dbo.Businesses(Id),
  SaleDate date NOT NULL,
@@ -149,3 +159,28 @@ CREATE INDEX IX_SyncChanges_BusinessCursor ON dbo.SyncChanges(BusinessId,[Cursor
 CREATE INDEX IX_Sales_Report ON dbo.Sales(BusinessId,SaleDate) INCLUDE(TotalRevenueCentavos,TotalCostCentavos,TotalItems) WHERE DeletedAt IS NULL;
 CREATE INDEX IX_Expenses_Report ON dbo.Expenses(BusinessId,ExpenseDate) INCLUDE(AmountCentavos,Category) WHERE DeletedAt IS NULL;
 CREATE INDEX IX_SaleLines_Product ON dbo.SaleLines(BusinessId,ProductId) INCLUDE(SaleId,Quantity,LineRevenueCentavos,LineCostCentavos);
+
+CREATE TABLE dbo.BusinessRequests (
+ Id uniqueidentifier NOT NULL PRIMARY KEY,
+ OwnerUid uniqueidentifier NOT NULL REFERENCES dbo.Users(Id),
+ Name nvarchar(160) NOT NULL, DefaultLocation nvarchar(500) NOT NULL,
+ Status varchar(20) NOT NULL CONSTRAINT CK_BusinessRequests_Status CHECK(Status IN ('Pending','Approved','Rejected')),
+ Reason nvarchar(1000) NULL, BusinessId uniqueidentifier NULL REFERENCES dbo.Businesses(Id),
+ CreatedAt datetimeoffset NOT NULL DEFAULT SYSUTCDATETIME(),
+ DecidedAt datetimeoffset NULL, DecidedBy uniqueidentifier NULL REFERENCES dbo.Users(Id),
+ CONSTRAINT CK_BusinessRequests_Decision CHECK (
+  (Status='Pending' AND DecidedAt IS NULL AND DecidedBy IS NULL AND BusinessId IS NULL) OR
+  (Status='Approved' AND DecidedAt IS NOT NULL AND DecidedBy IS NOT NULL AND BusinessId IS NOT NULL) OR
+  (Status='Rejected' AND DecidedAt IS NOT NULL AND DecidedBy IS NOT NULL AND BusinessId IS NULL AND Reason IS NOT NULL AND LEN(LTRIM(RTRIM(Reason)))>0))
+);
+CREATE UNIQUE INDEX UX_BusinessRequests_PendingOwner ON dbo.BusinessRequests(OwnerUid) WHERE Status='Pending';
+CREATE INDEX IX_BusinessRequests_Owner ON dbo.BusinessRequests(OwnerUid,CreatedAt);
+CREATE TABLE dbo.AdminAudit (
+ Id uniqueidentifier NOT NULL PRIMARY KEY,
+ ActorUid uniqueidentifier NOT NULL REFERENCES dbo.Users(Id),
+ Action varchar(40) NOT NULL, SubjectUid uniqueidentifier NOT NULL REFERENCES dbo.Users(Id),
+ RecipientUid uniqueidentifier NULL REFERENCES dbo.Users(Id),
+ RequestId uniqueidentifier NULL REFERENCES dbo.BusinessRequests(Id),
+ PhoneNumber varchar(13) NULL, PreviousRecipientPhone varchar(13) NULL,
+ Reason nvarchar(1000) NOT NULL, CreatedAt datetimeoffset NOT NULL DEFAULT SYSUTCDATETIME()
+);

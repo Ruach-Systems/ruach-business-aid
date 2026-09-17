@@ -20,7 +20,7 @@ else
 {
 <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
-<RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+<RouteView @key="Store.Data.Business?.Id" RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
 <FocusOnNavigate RouteData="@routeData" Selector="h1" />
 </Found>
         <NotFound>
@@ -37,6 +37,15 @@ else
     protected override async Task OnInitializedAsync() { Store.Changed += Changed; Navigation.LocationChanged += Navigated; await Store.Initialize(); Redirect(); }
     private void Changed() { _ = InvokeAsync(() => { Redirect(); StateHasChanged(); }); }
     private void Navigated(object? sender, LocationChangedEventArgs args) => Redirect();
-    private void Redirect() { if (Store.StartupError) return; var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0]; var route = Calculations.Route(Store.Ready, Store.User is not null, Store.Data.Business is not null, path); if (route != path) Navigation.NavigateTo(route, replace: true); }
+    private void Redirect()
+    {
+        if (Store.StartupError) return;
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0];
+        var newOwner = Store.Account is { Businesses.Count: 0, Requests.Count: 0 };
+        var route = Store.User?.IsDemo == true
+            ? Calculations.Route(Store.Ready, true, Store.Data.Business is not null, path)
+            : Calculations.AccountRoute(Store.Ready, Store.User is not null, Store.Data.Business is not null, Store.PhoneRequired, Store.User?.IsAdmin == true, newOwner, path);
+        if (route != path) Navigation.NavigateTo(route, replace: true);
+    }
     public void Dispose() { Store.Changed -= Changed; Navigation.LocationChanged -= Navigated; }
 }

@@ -69,6 +69,7 @@ jobs:
       DataProtection__CertificateBase64: ${{ secrets.DATA_PROTECTION_CERTIFICATE_BASE64 }}
       DataProtection__CertificatePassword: ${{ secrets.DATA_PROTECTION_CERTIFICATE_PASSWORD }}
       App__Origin: ${{ vars.PWA_ORIGIN }}
+      MASHAL_ADMIN_EMAILS: ${{ vars.MASHAL_ADMIN_EMAILS }}
       API_ORIGIN: ${{ vars.API_ORIGIN }}
       WEBDEPLOY_ENDPOINT: ${{ secrets.WEBDEPLOY_ENDPOINT }}
       WEBDEPLOY_SITE: ${{ secrets.WEBDEPLOY_SITE }}

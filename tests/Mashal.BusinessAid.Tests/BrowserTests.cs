@@ -16,7 +16,7 @@ public sealed class BrowserFactAttribute : FactAttribute
     public BrowserFactAttribute() { if (Environment.GetEnvironmentVariable("MASHAL_BROWSER_TESTS") != "true") Skip = "Set MASHAL_BROWSER_TESTS=true after publishing the PWA and installing Playwright browsers."; }
 }
 [Trait("Category", "Browser")]
-public class BrowserTests
+public partial class BrowserTests
 {
     [BrowserFact]
     public async Task PublishedPwaPreservesDataAcrossOfflineReloadsTabsAndUpdates()
@@ -25,7 +25,7 @@ public class BrowserTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true, Channel = Environment.GetEnvironmentVariable("MASHAL_BROWSER_CHANNEL") });
         await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 390, Height = 844 } });
-        var account = new AppUser(Guid.NewGuid(), "Browser tester", "browser@example.invalid", null);
+        var account = new AppUser(Guid.NewGuid(), "Browser tester", "browser@example.invalid", null) { PhoneNumber="+639171234567" };
         var business = new Business { Id = Guid.NewGuid(), OwnerUid = account.Uid, Name = "Browser test shop", DefaultLocation = "Main", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow };
         var product = new Product { Id = Guid.NewGuid(), BusinessId = business.Id, Name = "Buko Juice", InventoryMode = "untracked", IsActive = true, SellingPriceCentavos = 3500, ManualCostCentavos = 1630, Version = [0, 0, 0, 0, 0, 0, 0, 1], CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow };
         var data = new AppData { Business = business, Products = [product] };
@@ -33,13 +33,14 @@ public class BrowserTests
         var page = await context.NewPageAsync();
         var consoleErrors = new List<string>(); page.PageError += (_, error) => consoleErrors.Add(error);
         await page.GotoAsync(host.Url);
+        await page.GetByRole(AriaRole.Button, new() { Name="Open Browser test shop", Exact=true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.WaitForFunctionAsync("() => navigator.serviceWorker.controller !== null");
         // Seed exactly the former JavaScript shape: no revision property and a prepared outbox request.
         var expenseId = Guid.NewGuid();
         var operation = new { id = Guid.NewGuid(), entityId = expenseId, type = "saveExpense", expectedVersion = (string?)null, payload = new { id = expenseId, description = "Legacy fare", category = "Transportation", amountCentavos = 2500, expenseDate = "2026-09-15" }, projections = Array.Empty<object>(), dependsOnPending = false, prepared = true };
-        var oldState = JsonSerializer.Serialize(new { user = account, data, serverData = data, cursor = 0, outbox = new[] { operation } }, Wire.Json);
-        await page.EvaluateAsync("async args => { await mashalStorage.write('accounts',args.uid,args.state); }", new { uid = account.Uid.ToString(), state = oldState });
+        var oldState = JsonSerializer.Serialize(new { user = account, workspaceId=business.Id, data, serverData = data, cursor = 0, outbox = new[] { operation } }, Wire.Json);
+        await page.EvaluateAsync("async args => { await mashalStorage.write('accounts',args.uid,args.state); }", new { uid = $"{account.Uid}:{business.Id}", state = oldState });
         await page.ReloadAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         var preserved = await ReadState(page, account.Uid);
@@ -105,12 +106,20 @@ public class BrowserTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true, Channel = Environment.GetEnvironmentVariable("MASHAL_BROWSER_CHANNEL") });
         await using var context = await browser.NewContextAsync();
         var account = new AppUser(Guid.NewGuid(), "Owner", "onboarding@example.invalid", null);
-        await MockApi(context, account, new AppData());
+        var onboardingData=new AppData();
+        await MockApi(context, account, onboardingData);
         var page = await context.NewPageAsync(); await page.GotoAsync(host.Url);
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Create your business" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Request your first business" })).ToBeVisibleAsync();
         Assert.Equal(0, await page.GetByRole(AriaRole.Button, new() { Name = "Reset sign-in state" }).CountAsync());
         await page.GetByLabel("Business name", new() { Exact = true }).FillAsync("Form verification");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Create business", Exact = true }).ClickAsync();
+        await page.GetByLabel("Philippine mobile number",new(){Exact=true}).FillAsync("09171234567");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Submit request", Exact = true }).ClickAsync();
+        await Expect(page.GetByText("Pending",new(){Exact=true})).ToBeVisibleAsync();
+        Assert.Null(onboardingData.Business);
+        // Simulate a separately approved server workspace; onboarding itself created none.
+        onboardingData.Business=new Business {Id=Guid.NewGuid(),OwnerUid=account.Uid,Name="Form verification",DefaultLocation="Main"};
+        await page.GetByRole(AriaRole.Button,new(){Name="Refresh status",Exact=true}).ClickAsync();
+        await page.GetByRole(AriaRole.Button,new(){Name="Open Form verification",Exact=true}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/inventory/new");
         await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Flour");
@@ -193,16 +202,31 @@ public class BrowserTests
 
     private static async Task<JsonElement> ReadState(IPage page, Guid user)
     {
-        var json = await page.EvaluateAsync<string>("uid => mashalStorage.read('accounts',uid)", user.ToString());
+        var json = await page.EvaluateAsync<string>("async uid => { const id=JSON.parse(await mashalStorage.read('meta','selected:'+uid)); return mashalStorage.read('accounts',uid+':'+id); }", user.ToString());
         return JsonDocument.Parse(json).RootElement.Clone();
     }
-    private static Task MockApi(IBrowserContext context, AppUser account, AppData data) => context.RouteAsync("**/api/**", async route =>
+    private static Task MockApi(IBrowserContext context, AppUser account, AppData data, List<AppData>? additional = null)
     {
+        var requests=new List<BusinessRequest>();
+        return context.RouteAsync("**/api/**", async route => {
         var path = new Uri(route.Request.Url).AbsolutePath;
+        if(route.Request.Method=="POST" && path=="/api/account/phone") {
+            var input=JsonSerializer.Deserialize<PhoneInput>(route.Request.PostData!,Wire.Json)!;
+            account=account with {PhoneNumber=PhilippinePhone.Normalize(input.PhoneNumber)};
+        }
+        if(route.Request.Method=="POST" && path=="/api/account/requests") {
+            var input=JsonSerializer.Deserialize<BusinessRequestInput>(route.Request.PostData!,Wire.Json)!;
+            account=account with {PhoneNumber=PhilippinePhone.Normalize(input.PhoneNumber ?? account.PhoneNumber)};
+            requests.Add(new(){Id=input.Id,OwnerUid=account.Uid,Name=input.Name,DefaultLocation=input.DefaultLocation,CreatedAt=DateTimeOffset.UtcNow});
+        }
+        var all=new[]{data}.Concat(additional ?? []).ToList();
+        var businessId=Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(new Uri(route.Request.Url).Query).GetValueOrDefault("businessId").ToString();
+        var selected=all.Find(x=>x.Business?.Id.ToString()==businessId) ?? data;
         object response = path switch
         {
             "/api/auth/session" => account,
-            "/api/bootstrap" => new BootstrapResult(account, data, 0),
+            "/api/account" => new AccountOverview(account,all.Where(x=>x.Business is not null).Select(x=>x.Business!).ToList(),requests),
+            "/api/bootstrap" => new BootstrapResult(account, selected, 0),
             "/api/auth/antiforgery" => new { token = "fixture" },
             "/api/sync/pull" => new PullResult(0, [], false),
             "/api/sync/push" => new { code = "retry", title = "Test connection interrupted" },
@@ -211,7 +235,8 @@ public class BrowserTests
         };
         var headers = new Dictionary<string, string> { { "Access-Control-Allow-Origin", route.Request.Headers.GetValueOrDefault("origin", "*") }, { "Access-Control-Allow-Credentials", "true" }, { "Access-Control-Allow-Headers", "Content-Type,X-CSRF-TOKEN" }, { "Access-Control-Allow-Methods", "GET,POST,OPTIONS" } };
         await route.FulfillAsync(new() { Status = path == "/api/sync/push" && route.Request.Method != "OPTIONS" ? 503 : 200, ContentType = "application/json", Body = JsonSerializer.Serialize(response, Wire.Json), Headers = headers });
-    });
+        });
+    }
 
     private sealed class Preview : IAsyncDisposable
     {

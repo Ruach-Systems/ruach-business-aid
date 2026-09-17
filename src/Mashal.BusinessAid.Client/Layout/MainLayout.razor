@@ -11,6 +11,7 @@
 <NavLink href="@item.Path">
 <Icon Name="@item.Icon" />@item.Label</NavLink> }
 </nav>
+        @if (Store.User?.IsDemo != true) { <a class="button workspace-switch" href="/businesses">Switch business</a> }
         <SyncPill />
     </aside>
     <main class="main-panel">
@@ -21,6 +22,7 @@
 </a>
 <SyncPill />
 </header>
+        <div class="workspace-context"><strong>@Store.Data.Business?.Name</strong><span>Separate business workspace</span>@if (Store.User?.IsDemo != true) { <a href="/businesses">Switch business</a> }</div>
         <SyncReview />
         @Body
     </main>

@@ -1,0 +1,2 @@
+# Content-addressed SVGs must retain the bytes used to generate their URLs.
+src/Mashal.BusinessAid.Client/wwwroot/brand-assets/*.svg text eol=lf

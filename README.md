@@ -14,17 +14,20 @@ Open `Mashal.BusinessAid.slnx` in Visual Studio, Rider, or VS Code.
 
 ```text
 src/
-  Mashal.BusinessAid.Client/       Pages, Components, Layout, Services, wwwroot
-  Mashal.BusinessAid.Api/          HTTP endpoints and Data repositories/services
-  Mashal.BusinessAid.Shared/       Models, contracts, rules, commands and projections
+  Mashal.BusinessAid.Client/       Feature-grouped Pages, Components, Layout, Services, wwwroot
+  Mashal.BusinessAid.Api/          Configuration, Middleware, Endpoints, Data
+  Mashal.BusinessAid.Shared/       Models, Contracts, Rules, Offline
 tools/
   Mashal.BusinessAid.Migrations/   DbUp console runner
 tests/
   Mashal.BusinessAid.Tests/        Unit, component, SQL, HTTP and browser tests
 database/migrations/              Immutable ordered SQL scripts
+docs/                            Code navigation and maintenance guide
 ```
 
 The Client and API reference Shared. The Client never references SQL or the API assembly. Shared commands use either a local in-memory repository for provisional projections or a business-scoped Dapper repository inside the server transaction. Server authorization and transactions remain in the API. There is no mediator, generic application framework, or extra architecture layer.
+
+See [the code structure guide](docs/code-structure.md) for where to make changes and the contracts to preserve. DbUp remains the migration runner, including in validation and deployment; no manual SQL procedure is required.
 
 ## Run locally: no npm or pnpm required
 
@@ -54,6 +57,7 @@ $env:ASPNETCORE_ENVIRONMENT = 'Development'
 $env:App__Origin = 'http://localhost:5173'
 $env:Google__ClientId = '<your-google-client-id>'
 $env:Google__ClientSecret = '<your-google-client-secret>'
+$env:MashalAdmin__Emails__0 = '<your-verified-google-email>'
 dotnet watch --project src/Mashal.BusinessAid.Api run
 ```
 
@@ -144,7 +148,9 @@ The approved exports remain in `public/brand`; master geometry and fonts remain 
 5. DbUp executes each script transactionally and journals success in `dbo.SchemaVersions`. Failure exits nonzero and blocks deployment.
 6. Keep scripts SQL Server/DbUp-compatible: no SQLCMD directives, USE statements, credentials, or manual transaction wrappers.
 
-The runner preserves logical script names `Mashal.Migrations.<filename>` despite the project rename. Existing journal entries therefore remain valid, and `001_InitialSchema.sql` is unchanged.
+`001_InitialSchema.sql` is the consolidated baseline for a **new, empty database**, including recipe batch yields and multi-business accounts. The runner embeds it as `Mashal.Migrations.001_InitialSchema.sql`. Future changes start at `002` and remain forward-only.
+
+This fresh-start baseline replaces the former three-script chain; it is not an upgrade for a database created by that chain. DbUp skips scripts already recorded in `dbo.SchemaVersions`, so an existing `001` entry will not apply this consolidated definition. Use a new database for the fresh start; do not clear an existing journal or rerun the baseline over existing business data.
 
 Development, Test, and Production connection strings are separate environment secrets. Migrations are run explicitly; the web API never invokes DbUp.
 
@@ -184,6 +190,7 @@ Create all three environments with separate databases, OAuth clients where appro
 | FIREBASE_SERVICE_ACCOUNT | Secret | Firebase Hosting service account JSON |
 | API_ORIGIN | Variable | Environment API HTTPS origin |
 | PWA_ORIGIN | Variable | Environment PWA HTTPS origin |
+| MASHAL_ADMIN_EMAILS | Variable | Comma-separated, verified Google email addresses allowed to use Mashal Admin |
 | FIREBASE_PROJECT_ID | Variable | Environment-specific Firebase hosting project |
 
 Keep the selected dispatch API origin identical to the environment API_ORIGIN; preflight checks this. Recommended nonproduction naming is `dev.businessaid.mashalsystems.com` / `api.dev.businessaid.mashalsystems.com`, and equivalent `test` names. Use separate Firebase projects to avoid deployments replacing another environment.
@@ -209,7 +216,19 @@ Every semantic operation contains `id`, `entityId`, `type`, `expectedVersion`, a
 
 SQL business locks serialize writes and change-feed reads, preventing cursor gaps caused by uncommitted transactions. Master edits use rowversion comparisons; stocks are adjusted through movements. Sales preserve entered selling-price snapshots; the server determines cost and stock effects when accepted. Offline projections are provisional until synchronization. Negative stock remains possible, matching the existing operational workflow.
 
-IndexedDB compare-and-swap transactions preserve pending edits from concurrent tabs. The sync worker uses a per-account Web Lock when available. Conflicts remain visible until reviewed; accepting server data requires confirmation before discarding pending device changes. Sign-out preserves account data and outbox records but hides them until that account signs in again.
+IndexedDB compare-and-swap transactions preserve pending edits from concurrent tabs. Each owner/business pair has its own snapshot, cursor, outbox, and sync Web Lock. The `mashal-sql-v2` database namespace and operation serialization remain unchanged. Conflicts remain visible until reviewed; accepting server data requires confirmation before discarding pending device changes. Sign-out preserves account data and outbox records but hides them until that account signs in again.
+
+## Owners, businesses, and Mashal Admin
+
+The consolidated `001_InitialSchema.sql` creates support for multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. It does not seed users/businesses. Quantities retain `decimal(19,6)` precision.
+
+Owners provide a Philippine mobile number during onboarding, submit a business request, and wait for approval. The server accepts `09`, `639`, or `+639` mobile notation (with common formatting), normalizes it to E.164, and enforces one account per number with a unique database index. This checks format and uniqueness, **not possession or reachability**. No SMS/OTP provider or charge is introduced; the UI never calls these numbers verified.
+
+`/businesses` lists approved workspaces and request history. Only one pending request per owner is allowed. A rejected request requires a new submission; the original decision is retained. Approval creates an empty business and owner membership atomically. Clients cannot create businesses through sync. Each business must be opened online once before it is available offline on that device. The last selected business resumes on sign-in.
+
+Configure `MashalAdmin:Emails` as an array in API configuration, or use environment variables `MashalAdmin__Emails__0`, `MashalAdmin__Emails__1`, etc. Set the exact Google email before starting the local API. No address is granted access by default. Google must report the email as verified. Sign in with an allowlisted account and open `/admin`. The deployment workflow maps `MASHAL_ADMIN_EMAILS` to these settings and refuses deployment without an administrator. Admins can review requests and see all owner/business metadata; admin status alone never grants access to sales, inventory, transactions, or financial reports.
+
+Phone recovery requires the admin to complete an identity review outside the application, select the recipient, record a reason, and confirm the transfer. Transfers check the current holder and recipient's expected phone to reject stale decisions. The recipient's previous number is released; both numbers and the actors are retained in the audit. The former holder must add a different unique number before opening a business. Account settings and the business dashboard remain accessible. Requests, phone edits, approvals, and transfers are online-only. Cached offline records cannot be remotely revoked while a device is disconnected; the account is rechecked on reconnection before synchronization, and queued work is retained for recovery.
 
 Financial endpoints require authentication and business membership. Summary, trends, product performance, and expense categories use inclusive business dates. Reports exclude unsubmitted device activity and are not cached by the service worker. Periods use Asia/Manila; trend weeks start Monday. Current-day device activity remains available offline, clearly labeled as device-local.
 

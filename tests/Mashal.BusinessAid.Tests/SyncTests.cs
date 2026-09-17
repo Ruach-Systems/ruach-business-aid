@@ -14,6 +14,8 @@ public class SyncTests
     }
     [Theory]
     [InlineData(401, "unauthorized")]
+    [InlineData(403, "phone_required")]
+    [InlineData(403, "forbidden")]
     [InlineData(503, "retry")]
     public async Task TemporaryFailurePreservesFrozenRequest(int status, string code)
     {

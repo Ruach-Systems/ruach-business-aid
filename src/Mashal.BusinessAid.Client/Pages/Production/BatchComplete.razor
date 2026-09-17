@@ -1,0 +1,76 @@
+@namespace Mashal.BusinessAid.Client.Pages
+@page "/production/{Id:guid}/complete"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="@($"/production/{Id}")" Text="Back to batch draft" />
+<PageHeading Title="Complete batch" Eyebrow="Final production record" Description="@($"{batch?.ProductName} · edit actual use before posting.")" />
+@if(batch is not null && batch.Status=="draft"){
+<form class="stack" @onsubmit:preventDefault>
+<section class="card">
+<div class="section-heading">
+<h2>What was consumed?</h2>
+</div>
+<div class="actual-list">@foreach(var line in batch.Ingredients){
+<div class="actual-row">
+<div>
+<strong>@line.ItemName</strong>
+<small>Planned: @Quantity(line.PlannedQuantity) @UnitName(Store.Inventory.FirstOrDefault(x=>x.Id==line.InventoryItemId)?.BaseUnit, line.PlannedQuantity)</small>
+</div>
+<input type="number" min="0" step="any" inputmode="decimal" @bind:get="Quantity(actual[line.InventoryItemId])" @bind:set="(string? value) => SetActualQuantity(line.InventoryItemId, value)" aria-label="@($"Actual {line.ItemName} used")" />
+<span>@Store.Inventory.FirstOrDefault(x=>x.Id==line.InventoryItemId)?.BaseUnit</span>
+</div>}
+</div>
+</section>
+<section class="card form-card">
+<div class="field">
+<label for="actual-yield">Actual finished yield</label>
+<input id="actual-yield" type="number" min="1" step="1" @bind:get="decimal.Round(yield, 2)" @bind:set="value => yield = value" required @bind:event="oninput" />
+</div>
+<div class="field">
+<label for="completion-note">Completion note (optional)</label>
+<textarea id="completion-note" @bind="note">
+</textarea>
+</div>
+</section>
+<section class="card dark final-cost">
+<div>
+<span class="card-label">Final batch cost</span>
+<strong>@Money(Total)</strong>
+</div>
+<div>
+<span class="card-label">Cost per item</span>
+<strong>@Money(yield>0?Rules.Round(Total/yield):0)</strong>
+</div>
+<div>
+<span class="card-label">Yield variance</span>
+<strong>@Quantity(yield-batch.PlannedYield)</strong>
+</div>
+<footer>Ingredients out · finished stock +@Quantity(yield)</footer>
+</section>
+<div class="card warning irreversible">
+<div>
+<strong>Completion is final</strong>
+<span>MASHAL posts an immutable audit trail. Use a stock adjustment afterward if a physical correction is needed.</span>
+</div>
+</div>
+@if(confirming){
+<section class="card confirmation-panel" aria-live="assertive">
+<h2>Complete this batch?</h2>
+<p>This will deduct the actual ingredients and add @Quantity(yield) finished items to stock.</p>
+<div>
+<button type="button" class="button ghost" @onclick="()=>confirming=false">Keep editing</button>
+<button type="button" class="button primary" disabled="@Saving" @onclick="Complete">Confirm & post</button>
+</div>
+</section>}
+<ErrorBanner Message="@Error" />
+<div class="form-actions">
+<a class="button ghost" href="@($"/production/{Id}")">Back to draft</a>
+<button type="button" class="button primary" @onclick="()=>confirming=true" disabled="@Saving">Complete batch</button>
+</div>
+</form>}
+else{
+<div class="card empty">
+<h3>Draft batch not found</h3>
+<a href="/production">Back to production</a>
+</div>}
+</div>

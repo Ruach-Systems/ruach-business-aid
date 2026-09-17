@@ -1,0 +1,82 @@
+@namespace Mashal.BusinessAid.Client.Pages
+@page "/admin"
+@layout AccountLayout
+@inherits PageBase
+@inject ApiClient Api
+<PageTitle>Mashal Admin | Business Aid</PageTitle>
+<div class="page account-page">
+<PageHeading Title="Mashal Admin" Eyebrow="Platform management" Description="Review business requests and manage owner access. Operational and financial records are not available here." />
+<ErrorBanner Message="@Error" />
+@if (!Store.Online) { <p class="account-notice" role="status">Connect to review requests or manage accounts. Admin data is not saved offline.</p> }
+@if (Store.User?.IsAdmin != true) { <p role="alert">Mashal Admin access is required.</p> }
+else {
+<div class="account-actions-row"><button class="button ghost" disabled="@(Saving || !Store.Online)" @onclick="Load">Refresh</button></div>
+@if (data is null) { <p role="status">@(Saving ? "Loading account metadata…" : "Refresh to load account metadata.")</p> }
+else {
+<div class="admin-metrics"><article class="card"><span>Pending requests</span><strong>@data.Requests.Count(x=>x.Status=="Pending")</strong></article><article class="card"><span>Owners</span><strong>@data.Users.Count</strong></article><article class="card"><span>Approved businesses</span><strong>@data.Businesses.Count</strong></article></div>
+<nav class="admin-tabs" aria-label="Admin sections">@foreach (var section in new[]{"Requests","Users","Businesses","Audit trail"}) { <button class="button @(tab==section ? "primary" : "ghost")" aria-pressed="@(tab==section)" @onclick="()=>ChangeTab(section)">@section</button> }</nav>
+<p role="status">@message</p>
+@if (tab=="Requests") {
+<div class="field"><label for="request-status">Request status</label><select id="request-status" @bind="status"><option>Pending</option><option>Approved</option><option>Rejected</option><option>All</option></select></div>
+@if (review is not null) {
+<section class="card request-form"><h2>Review @review.Name</h2><dl class="account-details"><div><dt>Owner</dt><dd>@Owner(review.OwnerUid)?.DisplayName</dd></div><div><dt>Email</dt><dd>@Owner(review.OwnerUid)?.Email</dd></div><div><dt>Mobile (not SMS-verified)</dt><dd>@(Owner(review.OwnerUid)?.PhoneNumber ?? "New number required")</dd></div><div><dt>Location</dt><dd>@review.DefaultLocation</dd></div></dl>
+<p>Approval creates an empty workspace. No products, stock, sales, or expenses will be copied.</p>
+<div class="field"><label for="decision-reason">Reason for rejection</label><textarea id="decision-reason" @bind="reason" @bind:event="oninput" maxlength="1000" placeholder="Required if rejecting. The owner will see this reason."></textarea></div>
+@if (confirmDecision is { } approve) { <div class="account-notice" role="alert"><strong>@(approve ? "Approve this business?" : "Reject this request?")</strong><p>@(approve ? "An independent empty workspace will be created for the owner." : reason)</p><div class="account-actions-row"><button class="button ghost" @onclick="()=>confirmDecision=null">Keep reviewing</button><button class="button primary" disabled="@(Saving || !Store.Online)" @onclick="Decide">Confirm @(approve ? "approval" : "rejection")</button></div></div> }
+else { <div class="account-actions-row"><button class="button ghost" @onclick="()=>review=null">Close</button><button class="button danger" disabled="@(Saving || !Store.Online || string.IsNullOrWhiteSpace(reason))" @onclick="()=>confirmDecision=false">Reject with reason</button><button class="button primary" disabled="@(Saving || !Store.Online || Owner(review.OwnerUid)?.PhoneNumber is null)" @onclick="()=>confirmDecision=true">Approve business</button></div> }
+</section> }
+<div class="stack">@foreach (var request in data.Requests.Where(x=>status=="All" || x.Status==status)) { <article class="card"><div class="section-heading"><h3>@request.Name</h3><span class="status-badge @request.Status.ToLowerInvariant()">@request.Status</span></div><p>@Owner(request.OwnerUid)?.DisplayName · @request.DefaultLocation · @request.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</p>@if (request.Status=="Pending") { <button class="button ghost" @onclick="()=>Review(request)">Review request</button> } else { <p>@request.Reason</p><small>Decided @request.DecidedAt?.ToLocalTime().ToString("g") by @Owner(request.DecidedBy ?? Guid.Empty)?.Email</small> }</article> }</div>
+@if(!data.Requests.Any(x=>status=="All" || x.Status==status)) { <p class="card empty-state">No @status.ToLowerInvariant() requests.</p> }
+}
+@if(tab is "Users" or "Businesses") { <div class="field"><label for="admin-search">Search @tab.ToLowerInvariant()</label><input id="admin-search" type="search" @bind="search" @bind:event="oninput" placeholder="Name, email, or location" /></div> }
+@if(tab=="Users") {
+@if (transferFrom is not null) {
+<section class="card request-form"><h2>Transfer mobile number</h2><p><strong>@transferFrom.PhoneNumber</strong> from @transferFrom.DisplayName (@transferFrom.Email)</p><p class="account-notice">After the transfer, this owner must add a new unique number before entering any business. Complete an offline identity review first.</p>
+<form class="form-card" @onsubmit="PrepareTransfer" @onsubmit:preventDefault>
+<div class="field"><label for="recipient">Recipient account</label><select id="recipient" @bind="recipientId" disabled="@confirmTransfer" required><option value="">Select an owner</option>@foreach(var user in data.Users.Where(x=>x.Uid!=transferFrom.Uid)) { <option value="@user.Uid">@user.DisplayName — @user.Email</option> }</select></div>
+<div class="field"><label for="transfer-reason">Reason / identity review reference</label><textarea id="transfer-reason" @bind="transferReason" readonly="@confirmTransfer" required maxlength="1000"></textarea></div>
+<label class="account-check"><input type="checkbox" @bind="identityChecked" disabled="@confirmTransfer" required />I completed the offline identity review and confirmed the recipient.</label>
+@if(confirmTransfer && Recipient is { } recipient) { <div class="account-notice" role="alert"><strong>Confirm transfer to @recipient.Email?</strong><p>Recipient's existing number: @(recipient.PhoneNumber ?? "None"). It will be replaced. The previous owner’s business access will pause.</p><button type="button" class="button primary" disabled="@(Saving || !Store.Online)" @onclick="Transfer">Confirm transfer</button></div> }
+else { <button class="button primary" disabled="@(Saving || !Store.Online || !identityChecked || Recipient is null)">Review transfer</button> }
+<button type="button" class="button ghost" @onclick="()=>transferFrom=null">Cancel</button>
+</form></section> }
+<div class="business-grid">@foreach (var user in data.Users.Where(x=>Match(x.DisplayName,x.Email,x.PhoneNumber))) { <article class="card"><h3>@user.DisplayName</h3><p>@user.Email</p><dl class="account-details"><div><dt>Mobile (not SMS-verified)</dt><dd>@(user.PhoneNumber ?? "Number required")</dd></div><div><dt>Businesses</dt><dd>@user.BusinessCount</dd></div><div><dt>Joined</dt><dd>@user.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</dd></div></dl><button class="button ghost" disabled="@(Saving || !Store.Online || user.PhoneNumber is null)" @onclick="()=>BeginTransfer(user)">Transfer phone number</button></article> }</div>
+@if(!data.Users.Any(x=>Match(x.DisplayName,x.Email,x.PhoneNumber))) { <p>No matching users.</p> }
+}
+@if(tab=="Businesses") {
+<div class="business-grid">@foreach (var business in data.Businesses.Where(x=>Match(x.Name,x.DefaultLocation,Owner(x.OwnerUid)?.Email))) { <article class="card"><span class="status-badge approved">Approved</span><h3>@business.Name</h3><p>@business.DefaultLocation</p><dl class="account-details"><div><dt>Owner</dt><dd>@Owner(business.OwnerUid)?.Email</dd></div><div><dt>Created</dt><dd>@business.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</dd></div><div><dt>Currency / time zone</dt><dd>PHP · Asia/Manila</dd></div></dl></article> }</div>
+@if(!data.Businesses.Any(x=>Match(x.Name,x.DefaultLocation,Owner(x.OwnerUid)?.Email))) { <p>No matching businesses.</p> }
+}
+@if(tab=="Audit trail") { <p>Most recent 200 actions. The database retains the full audit history.</p><div class="stack">@foreach(var entry in data.Audit) { <article class="card"><h3>@entry.Action</h3><p>@Owner(entry.ActorUid)?.Email · @entry.CreatedAt.ToLocalTime().ToString("g")</p><p>Owner: @Owner(entry.SubjectUid)?.Email</p>@if(entry.RecipientUid is { } recipient) { <p>@entry.PhoneNumber → @Owner(recipient)?.Email (replaced @(entry.PreviousRecipientPhone ?? "no number"))</p> }<p>@entry.Reason</p></article> }@if(data.Audit.Count==0) { <p>No admin actions yet.</p> }</div> }
+}
+}
+</div>
+@code {
+    private AdminOverview? data;
+    private BusinessRequest? review;
+    private AdminUser? transferFrom;
+    private string tab="Requests", status="Pending", search="", reason="", message="", recipientId="", transferReason="";
+    private bool? confirmDecision;
+    private bool identityChecked, confirmTransfer;
+    private AdminUser? Recipient => Guid.TryParse(recipientId,out var id) ? Owner(id) : null;
+    private AdminUser? Owner(Guid id) => data?.Users.Find(x=>x.Uid==id);
+    private bool Match(params string?[] values) => values.Any(x=>x?.Contains(search,StringComparison.OrdinalIgnoreCase)==true);
+    protected override async Task OnInitializedAsync() { if(Store.Online && Store.User?.IsAdmin==true) await Load(); }
+    private Task Load() => Run(async()=> { data=await Api.Get<AdminOverview>("/api/admin"); review=null; transferFrom=null; });
+    private void ChangeTab(string value) { tab=value; search=""; review=null; transferFrom=null; }
+    private void Review(BusinessRequest value) { review=value; reason=""; confirmDecision=null; }
+    private Task Decide() => Run(async()=> {
+        if (!Store.Online || review is null || confirmDecision is null) return;
+        await Api.Post($"/api/admin/requests/{review.Id}/decision",new DecisionInput(confirmDecision.Value,confirmDecision.Value ? "" : reason.Trim()));
+        message=confirmDecision.Value ? "Business approved. Its empty workspace is ready." : "Request rejected. The owner can update and resubmit.";
+        data=await Api.Get<AdminOverview>("/api/admin"); review=null; confirmDecision=null;
+    });
+    private void BeginTransfer(AdminUser user) { transferFrom=user; recipientId=""; transferReason=""; identityChecked=false; confirmTransfer=false; }
+    private void PrepareTransfer() { if(Recipient is not null && identityChecked && !string.IsNullOrWhiteSpace(transferReason)) confirmTransfer=true; }
+    private Task Transfer() => Run(async()=> {
+        if(!Store.Online || transferFrom?.PhoneNumber is null || Recipient is not { } recipient || !confirmTransfer) return;
+        await Api.Post("/api/admin/phone-transfer",new PhoneTransferInput(transferFrom.Uid,recipient.Uid,transferFrom.PhoneNumber,transferReason,identityChecked,recipient.PhoneNumber));
+        data=await Api.Get<AdminOverview>("/api/admin"); transferFrom=null; tab="Audit trail"; message="Mobile number transferred. The previous owner must add a new number.";
+        await Store.RefreshAccount();
+    });
+}

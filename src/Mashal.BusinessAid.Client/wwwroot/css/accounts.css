@@ -1,0 +1,39 @@
+.account-shell { height:100%; overflow-y:auto; background:var(--mashal-cloud); color:var(--mashal-navy); }
+.account-header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px max(20px,calc((100% - 1150px)/2)); background:var(--mashal-navy); color:var(--mashal-on-dark); }
+.account-header img { max-width:190px; }
+.account-header span { overflow-wrap:anywhere; }
+.account-nav { display:flex; flex-wrap:wrap; gap:8px; padding:12px max(20px,calc((100% - 1150px)/2)); background:var(--mashal-paper); border-bottom:1px solid var(--mashal-line); }
+.account-nav a { padding:12px 16px; min-height:44px; border-radius:10px; font-size:14px; }
+.account-nav a.active { background:var(--mashal-purple-soft); color:var(--mashal-purple); font-weight:600; }
+.account-page { max-width:1190px; margin:0 auto; padding-bottom:48px; }
+.account-actions-row { display:flex; flex-wrap:wrap; gap:12px; margin:18px 0; }
+.business-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:20px; }
+.business-card { display:flex; align-items:flex-start; flex-direction:column; gap:16px; }
+.business-card h2,.business-card p { margin:0; overflow-wrap:anywhere; }
+.business-card .button { width:100%; margin-top:auto; }
+.business-card small { color:var(--mashal-muted); }
+.account-notice { margin:22px 0; padding:20px; border-radius:16px; background:var(--mashal-purple-soft); color:var(--mashal-purple); line-height:1.6; }
+.status-badge { display:inline-block; padding:5px 9px; border-radius:7px; font-size:12px; background:var(--mashal-purple-soft); color:var(--mashal-purple); }
+.status-badge.approved { background:var(--mashal-success-soft); color:var(--mashal-success-ink); }
+.status-badge.pending { background:var(--mashal-warning-soft); color:var(--mashal-warning-ink); }
+.status-badge.rejected { background:var(--mashal-danger-soft); color:var(--mashal-danger); }
+.request-form { margin:24px 0; max-width:720px; }
+.account-page .card h3 { margin:8px 0; }
+.account-page .field { max-width:720px; }
+.account-page .field input,.account-page .field select,.account-page .field textarea { min-height:48px; font-size:16px; }
+.account-page .field textarea { min-height:100px; }
+.account-page .button,.account-shell .button { min-height:44px; height:auto; white-space:normal; line-height:1.4; }
+.account-page .card { min-width:0; overflow-wrap:anywhere; }
+.account-details { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:18px; margin:20px 0; }
+.account-details dt { font-size:12px; color:var(--mashal-muted); margin-bottom:5px; }
+.account-details dd { margin:0; overflow-wrap:anywhere; }
+.admin-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:24px 0; }
+.admin-tabs .button[aria-pressed="true"] { background:var(--mashal-purple); border-color:var(--mashal-purple); color:white; }
+.admin-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:24px 0; }
+.admin-metrics article { display:grid; gap:10px; }.admin-metrics strong { font-size:30px; }
+.account-check { display:flex; align-items:flex-start; gap:12px; padding:12px 0; line-height:1.6; }
+.account-check input { width:20px; height:20px; flex:none; margin-top:3px; }
+.workspace-context { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 24px; border-bottom:1px solid var(--mashal-line); background:var(--mashal-paper); font-size:13px; }
+.workspace-context span { color:var(--mashal-muted); }.workspace-context a { margin-left:auto; color:var(--mashal-purple); padding:10px; }
+.side-nav .workspace-switch { margin:16px; background:var(--mashal-purple); color:white; }
+@media(max-width:600px) { .account-header { padding:18px; }.account-header img { max-width:150px; }.account-nav { padding:8px; }.account-nav a { padding:12px; }.admin-metrics { grid-template-columns:1fr; }.admin-metrics article { display:flex; justify-content:space-between; align-items:center; }.workspace-context span { display:none; }.account-page .section-heading { flex-wrap:wrap; } }

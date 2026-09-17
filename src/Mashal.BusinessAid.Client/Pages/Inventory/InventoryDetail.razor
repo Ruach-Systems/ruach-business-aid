@@ -1,0 +1,49 @@
+@namespace Mashal.BusinessAid.Client.Pages
+@page "/inventory/{Id:guid}"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/inventory" Text="Back to inventory" />
+@if (Item is { } item)
+{
+<PageHeading Title="@item.Name" Eyebrow="Stock & ingredients" Description="@($"Base unit: {UnitName(item.BaseUnit, 1)}")" />
+<div class="metric-grid">
+<article class="card dark">
+<span class="card-label">Current stock</span>
+<div class="metric-value">@Quantity(item.CurrentQuantity)</div>
+<span>@UnitName(item.BaseUnit, item.CurrentQuantity)</span>
+</article>
+<article class="card">
+<span class="card-label">Average unit cost</span>
+<div class="metric-value">@Money(item.AverageCostCentavos)</div>
+</article>
+</div>
+<div class="quick-actions section">
+<a class="button primary" href="@($"/stock/add?item={Id}")">Add stock</a>
+<a class="button ghost" href="@($"/stock/adjust?item={Id}")">Adjust stock</a>
+</div>
+<section class="section">
+<div class="section-heading">
+<h2>Stock history</h2>
+</div>
+<div class="stack">
+@foreach(var movement in Store.Data.Movements.Where(x=>x.InventoryItemId == Id && x.DeletedAt is null).OrderByDescending(x=>x.CreatedAt)) {
+<article class="card list-card">
+<div class="list-main">
+<strong>@movement.MovementType.Replace('_',' ')</strong>
+<small>@movement.CreatedAt.ToLocalTime().ToString("MMM d, yyyy HH:mm") · @movement.Note</small>
+</div>
+<div>
+<strong>@Quantity(movement.QuantityDelta) @UnitName(item.BaseUnit, movement.QuantityDelta)</strong>
+<small>Balance @Quantity(movement.BalanceAfter)</small>
+</div>
+</article> }
+@if(!Store.Data.Movements.Any(x=>x.InventoryItemId==Id)) {
+<div class="card empty">
+<p>No stock movements yet.</p>
+</div> }
+</div>
+</section>
+}
+else {
+<h1>Inventory item not found</h1> }
+</div>

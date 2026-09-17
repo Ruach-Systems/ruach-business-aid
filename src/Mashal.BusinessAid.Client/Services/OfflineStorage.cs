@@ -20,11 +20,13 @@ public class OfflineStorage(IJSRuntime js)
     {
         for (var attempt = 0; attempt < 30; attempt++)
         {
-            var state = await Read<OfflineState>("accounts", fallback.User.Uid) ?? LocalData.Clone(fallback);
+            var state = await Read<OfflineState>("accounts", fallback.StorageKey) ?? LocalData.Clone(fallback);
+            if (state.User.Uid != fallback.User.Uid || state.WorkspaceId != fallback.WorkspaceId)
+                throw new InvalidOperationException("The saved workspace does not match this business.");
             var revision = state.Revision;
             await change(state);
             state.Revision++;
-            if (await js.InvokeAsync<bool>("mashalStorage.compareAndSwap", state.User.Uid, revision, JsonSerializer.Serialize(state, Wire.Json))) return state;
+            if (await js.InvokeAsync<bool>("mashalStorage.compareAndSwap", state.StorageKey, revision, JsonSerializer.Serialize(state, Wire.Json))) return state;
         }
         throw new InvalidOperationException("Another tab is saving. Please try again.");
     }

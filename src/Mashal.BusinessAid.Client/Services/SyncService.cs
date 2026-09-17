@@ -43,7 +43,7 @@ public sealed class SyncService(ApiClient api, OfflineStorage storage)
             if (op is null) break;
             if (op.Error is not null) throw new ApiException(409, "conflict", op.Error);
             try { await api.Post("/api/sync/push", new PushRequest(state.Data.Business!.Id, [op.Command()])); }
-            catch (ApiException error) when (error.Status is >= 400 and < 500 && error.Status != 401 && error.Code != "csrf")
+            catch (ApiException error) when (error.Status is >= 400 and < 500 && error.Status is not (401 or 403) && error.Code != "csrf")
             {
                 state = await storage.Mutate(state, latest => { var failed = latest.Outbox.Find(x => x.Id == op.Id); if (failed is not null) failed.Error = error.Message; return Task.CompletedTask; });
                 changed(state);

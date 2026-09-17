@@ -1,7 +1,7 @@
 <Solution>
-<Project Path="src/Mashal.BusinessAid.Client/Mashal.BusinessAid.Client.csproj" />
-<Project Path="src/Mashal.BusinessAid.Api/Mashal.BusinessAid.Api.csproj" />
-<Project Path="src/Mashal.BusinessAid.Shared/Mashal.BusinessAid.Shared.csproj" />
-<Project Path="tools/Mashal.BusinessAid.Migrations/Mashal.BusinessAid.Migrations.csproj" />
-<Project Path="tests/Mashal.BusinessAid.Tests/Mashal.BusinessAid.Tests.csproj" />
+  <Project Path="src/Mashal.BusinessAid.Client/Mashal.BusinessAid.Client.csproj" />
+  <Project Path="src/Mashal.BusinessAid.Api/Mashal.BusinessAid.Api.csproj" />
+  <Project Path="src/Mashal.BusinessAid.Shared/Mashal.BusinessAid.Shared.csproj" />
+  <Project Path="tools/Mashal.BusinessAid.Migrations/Mashal.BusinessAid.Migrations.csproj" />
+  <Project Path="tests/Mashal.BusinessAid.Tests/Mashal.BusinessAid.Tests.csproj" />
 </Solution>
