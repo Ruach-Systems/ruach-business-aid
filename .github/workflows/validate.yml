@@ -59,18 +59,13 @@ jobs:
         env:
           MASHAL_BROWSER_TESTS: 'true'
         run: dotnet test tests/Mashal.BusinessAid.Tests --no-build -c Release --filter "Category=Browser"
-      - name: Publish API and migration runner
+      - name: Publish API
         run: |
           dotnet publish src/Mashal.BusinessAid.Api -c Release -r win-x64 --self-contained false -o artifacts/api
-          dotnet publish tools/Mashal.BusinessAid.Migrations -c Release -o artifacts/migrations
       - uses: actions/upload-artifact@v4
         with:
           name: api
           path: artifacts/api
-      - uses: actions/upload-artifact@v4
-        with:
-          name: migrations
-          path: artifacts/migrations
       - uses: actions/upload-artifact@v4
         with:
           name: pwa

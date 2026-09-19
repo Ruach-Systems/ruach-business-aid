@@ -139,48 +139,51 @@ A frontend replacement on the same origin preserves the installation. Moving fro
 
 The approved exports remain in `public/brand`; master geometry and fonts remain in `scripts/brand-source`. The Client uses the existing content-hashed logo and launcher exports in `wwwroot/brand-assets`. Keep one geometry source and reuse those exports. The release check verifies filenames against SHA-256 and confirms every image is in the offline manifest. If a brand export changes, update its hashed copy and corresponding references together. No asset generator or Node package is required for normal builds.
 
-## DbUp migration procedure
+## Database change scripts
 
 1. Add the next ordered script under `database/migrations`, such as `002_AddReportingIndex.sql`.
-2. Never edit a successfully applied script. Use a new forward correction.
-3. Test a fresh database and an upgrade, then rerun and verify zero pending scripts.
-4. Use additive expand-and-contract SQL so migrations remain compatible with the currently deployed API.
-5. DbUp executes each script transactionally and journals success in `dbo.SchemaVersions`. Failure exits nonzero and blocks deployment.
-6. Keep scripts SQL Server/DbUp-compatible: no SQLCMD directives, USE statements, credentials, or manual transaction wrappers.
+2. Never edit a script that has been applied to any hosted environment. Use a new forward correction.
+3. Test a fresh database and an upgrade in isolated CI before making the script available for hosted use.
+4. Use additive expand-and-contract SQL so each script remains compatible with the currently deployed API.
+5. Keep scripts compatible with SQL Server, MyASP.NET's SQL editor, and the CI DbUp runner: no SQLCMD directives, `USE` statements, credentials, or manual transaction wrappers.
+6. State in the release notes which exact script filenames must be applied, in order, before deploying the corresponding API.
 
 `001_InitialSchema.sql` is the consolidated baseline for a **new, empty database**, including recipe batch yields and multi-business accounts. The runner embeds it as `Mashal.Migrations.001_InitialSchema.sql`. Future changes start at `002` and remain forward-only.
 
 This fresh-start baseline replaces the former three-script chain; it is not an upgrade for a database created by that chain. DbUp skips scripts already recorded in `dbo.SchemaVersions`, so an existing `001` entry will not apply this consolidated definition. Use a new database for the fresh start; do not clear an existing journal or rerun the baseline over existing business data.
 
-Development, Test, and Production connection strings are separate environment secrets. Migrations are run explicitly; the web API never invokes DbUp.
+Hosted Test and Production databases are updated manually through MyASP.NET. GitHub deployment and API startup never run migrations, take backups, or connect with schema credentials. DbUp remains a local/CI test tool so every supplied script is proven against an isolated SQL Server before release.
 
-Production preflight creates a COPY_ONLY backup with checksums and executes RESTORE VERIFYONLY. `SQL_BACKUP_PATH` must be a SQL Server-side directory. Confirm backup/verify permissions with MyASP.NET. If the hosting plan blocks this procedure, arrange a supported automated backup process before enabling Production deployment; do not bypass the check.
+For a new empty hosted database, execute `001_InitialSchema.sql`. For later releases, execute only the newly supplied scripts in filename order. Record the environment, script filename, execution time, and outcome outside the application so you can determine what was applied. Do not rerun a successful non-idempotent script.
 
-A failed migration leaves the old application deployed. Correct the unapplied script, or add a new forward migration if it already ran anywhere. Retain expanded schemas when rolling an application back. Database restores are deliberate administrative operations. Keep backups under an explicit retention policy and periodically prove recovery by restoring to a separate test database.
+Before applying a Production database script, use **MyASP.NET Hosting Control Panel > Databases > MSSQL > Backup / Create Backup**, wait for completion, and download the backup from the account's `\\db` folder. Backup timing and retention are manual operational decisions; the deployment workflow does not inspect them.
+
+After manually applying and checking the required scripts, run **Deploy environment** and select `database_ready_confirmed`. This confirmation only unlocks application deployment. It does not inspect or modify SQL Server. If a release has no database changes, review `database/migrations`, confirm no new script is required, then select the same checkbox.
+
+A failed manual script must stop the release. Correct an unapplied script, or add a new forward correction if it already ran anywhere. Retain expanded schemas when rolling an application back. Database restores are deliberate administrative operations. Keep backups under an explicit retention policy and periodically prove recovery by restoring to a separate test database.
 
 ## GitHub Actions and environments
 
-`validate.yml` restores and builds the .NET solution, runs shared/client/component tests, applies DbUp to an isolated SQL Server, runs integration tests, verifies the journal, publishes the PWA, checks its assets, runs .NET Playwright offline/update tests, and publishes the exact API/PWA/migration artifacts.
+`validate.yml` restores and builds the .NET solution, runs shared/client/component tests, applies the SQL scripts with DbUp to an isolated SQL Server, runs integration tests, verifies the journal, publishes the PWA, checks its assets, runs .NET Playwright offline/update tests, and publishes the exact API/PWA artifacts.
 
-`deploy.yml` is manually dispatched for Development, Test, or Production. It first invokes the validation workflow for the selected commit and API origin, then runs distinct jobs:
+`deploy.yml` is manually dispatched for Test or Production. It first invokes the validation workflow for the selected commit and API origin, then runs distinct jobs:
 
-1. Database connectivity and production backup verification
-2. Pending DbUp migrations
-3. MyASP.NET API deployment and readiness check
-4. Firebase Hosting deployment of the validated PWA artifact
-5. Public release smoke checks
+1. Validation of the selected API origin and manual database-readiness confirmation
+2. MyASP.NET API deployment and readiness check
+3. Firebase Hosting deployment of the validated PWA artifact
+4. Public release smoke checks
+
+The deployment workflow has no hosted-database connection string and performs no database or backup operation.
 
 The workflow serializes deployments per environment and never cancels an active deployment. Configure Production required reviewers and deployment branch protection in **GitHub Settings → Environments**. YAML alone cannot enable required reviewers.
 
 ### Required GitHub Environment settings
 
-Create all three environments with separate databases, OAuth clients where appropriate, and deployment targets.
+Create the Test and Production environments with separate databases, OAuth clients, and deployment targets.
 
 | Setting | Kind | Purpose |
 |---|---|---|
-| SQL_MIGRATION_CONNECTION_STRING | Secret | Migration and backup login |
 | SQL_APP_CONNECTION_STRING | Secret | API login; DML access only, no schema/backup privileges |
-| SQL_BACKUP_PATH | Secret | Server-side backup directory, required for Production |
 | GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET | Secrets | Google OAuth application |
 | DATA_PROTECTION_CERTIFICATE_BASE64 | Secret | Base64 PKCS#12 certificate protecting persisted cookie keys |
 | DATA_PROTECTION_CERTIFICATE_PASSWORD | Secret | Password for that certificate |
@@ -193,11 +196,11 @@ Create all three environments with separate databases, OAuth clients where appro
 | MASHAL_ADMIN_EMAILS | Variable | Comma-separated, verified Google email addresses allowed to use Mashal Admin |
 | FIREBASE_PROJECT_ID | Variable | Environment-specific Firebase hosting project |
 
-Keep the selected dispatch API origin identical to the environment API_ORIGIN; preflight checks this. Recommended nonproduction naming is `dev.businessaid.mashalsystems.com` / `api.dev.businessaid.mashalsystems.com`, and equivalent `test` names. Use separate Firebase projects to avoid deployments replacing another environment.
+Keep the selected dispatch API origin identical to the environment API_ORIGIN; the deployment input check enforces this. Recommended Test naming is `test.businessaid.mashalsystems.com` / `api.test.businessaid.mashalsystems.com`. Use separate Firebase projects to avoid deployments replacing another environment.
 
 The API artifact contains no secrets. At deployment, the script inserts secrets into the IIS-protected web.config on the runner, publishes it over HTTPS, and removes them from the runner artifact afterward. Never upload that generated configuration or publish settings. API `App_Data/keys` is preserved by Web Deploy so existing sessions survive deployment; keep the certificate stable, protect it, and back it up separately. All hosted environments run with ASPNETCORE_ENVIRONMENT=Production security behavior.
 
-MyASP.NET must support the selected .NET 10 runtime, out-of-process hosting, Web Deploy, writable private App_Data, HTTPS, SQL connectivity from its API and from deployment runners, and the backup procedure. Configure SQL/network restrictions in the host where supported.
+MyASP.NET must support the selected .NET 10 runtime, out-of-process hosting, Web Deploy, writable private App_Data, HTTPS, SQL connectivity from the hosted API, and manual SQL script execution plus control-panel backup/download/restore. Configure SQL/network restrictions in the host where supported.
 
 ## Domains and first production cutover
 

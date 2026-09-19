@@ -1,6 +1,5 @@
 using System.Reflection;
 using DbUp;
-using Microsoft.Data.SqlClient;
 
 var connection = Environment.GetEnvironmentVariable("ConnectionStrings__Mashal");
 if (string.IsNullOrWhiteSpace(connection))
@@ -10,25 +9,6 @@ if (string.IsNullOrWhiteSpace(connection))
 }
 try
 {
-    if (args.Contains("--preflight"))
-    {
-        await using var sql = new SqlConnection(connection);
-        await sql.OpenAsync();
-        if (Environment.GetEnvironmentVariable("MASHAL_ENVIRONMENT") == "Production")
-        {
-            var path = Environment.GetEnvironmentVariable("MASHAL_BACKUP_PATH");
-            if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("Production backup path is required.");
-            var file = path.TrimEnd((char)92, '/') + "/Mashal-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N") + ".bak";
-            var database = sql.Database.Replace("]", "]]");
-            await using var backup = new SqlCommand($"BACKUP DATABASE [{database}] TO DISK=@path WITH COPY_ONLY,CHECKSUM; RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM;", sql);
-            backup.Parameters.AddWithValue("@path", file);
-            backup.CommandTimeout = 600;
-            await backup.ExecuteNonQueryAsync();
-            Console.WriteLine("Production backup created and verified.");
-        }
-        Console.WriteLine("Database preflight passed.");
-        return 0;
-    }
     var engine = DeployChanges.To.SqlDatabase(connection)
         .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
         .JournalToSqlTable("dbo", "SchemaVersions")

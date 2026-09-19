@@ -4,13 +4,17 @@ on:
     inputs:
       environment:
         type: choice
-        options: [Development, Test, Production]
+        options: [Test, Production]
         required: true
       api_origin:
         description: HTTPS API origin compiled into the PWA
         type: string
         default: https://api.businessaid.mashalsystems.com
         required: true
+      database_ready_confirmed:
+        description: I reviewed database/migrations and manually applied any required scripts to this environment
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -21,44 +25,30 @@ jobs:
     uses: ./.github/workflows/validate.yml
     with:
       api_origin: ${{ inputs.api_origin }}
-  migrate:
-    name: Back up and migrate SQL database
+  verify-deployment:
+    name: Verify deployment inputs
     needs: build-test
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
-      ConnectionStrings__Mashal: ${{ secrets.SQL_MIGRATION_CONNECTION_STRING }}
-      MASHAL_BACKUP_PATH: ${{ secrets.SQL_BACKUP_PATH }}
-      MASHAL_ENVIRONMENT: ${{ inputs.environment }}
       EXPECTED_API_ORIGIN: ${{ vars.API_ORIGIN }}
       REQUESTED_API_ORIGIN: ${{ inputs.api_origin }}
+      DATABASE_READY_CONFIRMED: ${{ inputs.database_ready_confirmed }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-      - uses: actions/download-artifact@v4
-        with:
-          name: migrations
-          path: artifacts/migrations
       - name: Validate deployment configuration
-        shell: pwsh
         run: |
-          if (!$env:EXPECTED_API_ORIGIN -or $env:EXPECTED_API_ORIGIN -ne $env:REQUESTED_API_ORIGIN) { throw 'API origin must match the selected GitHub Environment.' }
-          if (!$env:ConnectionStrings__Mashal) { throw 'Migration database secret is missing.' }
-      - name: Verify connectivity and production backup
-        shell: pwsh
-        run: |
-          dotnet artifacts/migrations/Mashal.BusinessAid.Migrations.dll --preflight
-          if ($LASTEXITCODE -ne 0) { throw 'Database preflight failed.' }
-      - name: Run pending DbUp migrations
-        shell: pwsh
-        run: |
-          dotnet artifacts/migrations/Mashal.BusinessAid.Migrations.dll
-          if ($LASTEXITCODE -ne 0) { throw 'Migration failed. Application deployment is blocked.' }
+          if [ -z "$EXPECTED_API_ORIGIN" ] || [ "$EXPECTED_API_ORIGIN" != "$REQUESTED_API_ORIGIN" ]; then
+            echo 'API origin must match the selected GitHub Environment.' >&2
+            exit 1
+          fi
+          if [ "$DATABASE_READY_CONFIRMED" != 'true' ]; then
+            echo 'Review and manually apply required database/migrations scripts, then confirm database readiness.' >&2
+            exit 1
+          fi
+          echo 'Database readiness was manually confirmed. This workflow did not access or modify the database.'
   deploy-api:
     name: Deploy ASP.NET Core to MyASP.NET
-    needs: migrate
+    needs: verify-deployment
     runs-on: windows-latest
     environment: ${{ inputs.environment }}
     env:
