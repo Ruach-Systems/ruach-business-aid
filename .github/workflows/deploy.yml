@@ -78,16 +78,33 @@ jobs:
           $connection = [System.Data.SqlClient.SqlConnection]::new($env:ConnectionStrings__Mashal)
           try {
             $connection.Open()
-            $command = $connection.CreateCommand()
-            $command.CommandText = 'SELECT TOP(0) ScriptName FROM dbo.SchemaVersions; SELECT TOP(0) Id FROM dbo.Businesses; SELECT TOP(0) PhoneNumber, EmailVerified FROM dbo.Users; SELECT TOP(0) Id FROM dbo.BusinessRequests; SELECT TOP(0) Id FROM dbo.AdminAudit;'
-            $command.CommandTimeout = 20
-            [void]$command.ExecuteNonQuery()
+            $checks = [ordered]@{
+              'dbo.Businesses' = "OBJECT_ID(N'dbo.Businesses', N'U')"
+              'dbo.Users.PhoneNumber' = "COL_LENGTH(N'dbo.Users', N'PhoneNumber')"
+              'dbo.Users.EmailVerified' = "COL_LENGTH(N'dbo.Users', N'EmailVerified')"
+              'dbo.Products.RecipeBatchYield' = "COL_LENGTH(N'dbo.Products', N'RecipeBatchYield')"
+              'dbo.BusinessRequests' = "OBJECT_ID(N'dbo.BusinessRequests', N'U')"
+              'dbo.AdminAudit' = "OBJECT_ID(N'dbo.AdminAudit', N'U')"
+            }
+            $missing = foreach ($check in $checks.GetEnumerator()) {
+              $command = $connection.CreateCommand()
+              $command.CommandText = "SELECT $($check.Value)"
+              $command.CommandTimeout = 20
+              try {
+                $result = $command.ExecuteScalar()
+                if ($null -eq $result -or $result -is [DBNull]) { $check.Key }
+              } finally {
+                $command.Dispose()
+              }
+            }
+            if ($missing) {
+              throw "Production database schema is missing: $($missing -join ', '). Apply the forward-only SQL migrations manually."
+            }
             Write-Host 'Production database connectivity and schema validation passed.'
           } catch [System.Data.SqlClient.SqlException] {
             $sql = $_.Exception
             throw "Production database validation failed with SQL error $($sql.Number), state $($sql.State), class $($sql.Class)."
           } finally {
-            if ($command) { $command.Dispose() }
             $connection.Dispose()
           }
       - name: Install Web Deploy

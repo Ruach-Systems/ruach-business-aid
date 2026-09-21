@@ -27,7 +27,7 @@ docs/                            Code navigation and maintenance guide
 
 The Client and API reference Shared. The Client never references SQL or the API assembly. Shared commands use either a local in-memory repository for provisional projections or a business-scoped Dapper repository inside the server transaction. Server authorization and transactions remain in the API. There is no mediator, generic application framework, or extra architecture layer.
 
-See [the code structure guide](docs/code-structure.md) for where to make changes and the contracts to preserve. DbUp remains the migration runner, including in validation and deployment; no manual SQL procedure is required.
+See [the code structure guide](docs/code-structure.md) for where to make changes and the contracts to preserve. DbUp remains the migration runner for local and CI validation. Hosted Test and Production scripts are applied manually.
 
 ## Run locally: no npm or pnpm required
 
@@ -173,7 +173,7 @@ A failed manual script must stop the release. Correct an unapplied script, or ad
 3. Firebase Hosting deployment of the validated PWA artifact
 4. Public release smoke checks
 
-The deployment workflow has no hosted-database connection string and performs no database or backup operation.
+The deployment workflow uses the application login for read-only connectivity and schema checks. It never applies migrations, takes backups, or uses schema-level credentials.
 
 The workflow serializes deployments per environment and never cancels an active deployment. Configure Production required reviewers and deployment branch protection in **GitHub Settings → Environments**. YAML alone cannot enable required reviewers.
 
@@ -223,7 +223,7 @@ IndexedDB compare-and-swap transactions preserve pending edits from concurrent t
 
 ## Owners, businesses, and Mashal Admin
 
-The consolidated `001_InitialSchema.sql` creates support for multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. It does not seed users/businesses. Quantities retain `decimal(19,6)` precision.
+The consolidated `001_InitialSchema.sql` creates support for multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. Existing databases created from the earlier baseline must apply `003_MultiBusinessAccounts.sql`; its guards make it a no-op when those objects already exist. Neither script seeds users/businesses. Quantities retain `decimal(19,6)` precision.
 
 Owners provide a Philippine mobile number during onboarding, submit a business request, and wait for approval. The server accepts `09`, `639`, or `+639` mobile notation (with common formatting), normalizes it to E.164, and enforces one account per number with a unique database index. This checks format and uniqueness, **not possession or reachability**. No SMS/OTP provider or charge is introduced; the UI never calls these numbers verified.
 
