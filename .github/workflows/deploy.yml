@@ -100,7 +100,7 @@ jobs:
 
           # Live isolates application startup from database connectivity. Ready
           # then verifies that the manually prepared database can be reached.
-          Wait-ForHealth '/health/live' 'live'
+          Wait-ForHealth '/health/live' 'ok'
           Wait-ForHealth '/health/ready' 'ready'
   deploy-pwa:
     name: Deploy PWA to Firebase Hosting
