@@ -30,6 +30,11 @@ $asp = $config.SelectSingleNode('//aspNetCore')
 $asp.SetAttribute('hostingModel','outofprocess')
 $asp.SetAttribute('processPath','dotnet')
 $asp.SetAttribute('arguments','.\Mashal.BusinessAid.Api.dll')
+$asp.SetAttribute('stdoutLogEnabled','true')
+$asp.SetAttribute('stdoutLogFile','.\logs\stdout')
+$logs = Join-Path $publish 'logs'
+[void](New-Item -ItemType Directory -Path $logs -Force)
+[void](New-Item -ItemType File -Path (Join-Path $logs '.keep') -Force)
 $variables = $config.CreateElement('environmentVariables')
 $values = @{
   ASPNETCORE_ENVIRONMENT = 'Production'
