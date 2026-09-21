@@ -9,7 +9,7 @@ on:
       api_origin:
         description: HTTPS API origin compiled into the PWA
         type: string
-        default: https://api.businessaid.mashalsystems.com
+        default: https://api-businessaid.mashalsystems.com
         required: true
       database_ready_confirmed:
         description: I reviewed database/migrations and manually applied any required scripts to this environment
@@ -80,8 +80,28 @@ jobs:
       - name: API readiness
         shell: pwsh
         run: |
-          $ready = Invoke-RestMethod "$env:API_ORIGIN/health/ready"
-          if ($ready.status -ne 'ready') { throw 'API readiness check failed.' }
+          $ErrorActionPreference = 'Stop'
+
+          function Wait-ForHealth([string]$Path, [string]$ExpectedStatus) {
+            $lastFailure = 'No response received.'
+            foreach ($attempt in 1..6) {
+              try {
+                $response = Invoke-RestMethod "$env:API_ORIGIN$Path" -TimeoutSec 20
+                if ($response.status -eq $ExpectedStatus) { return }
+                $lastFailure = "Unexpected status '$($response.status)'."
+              } catch {
+                $statusCode = [int]$_.Exception.Response.StatusCode
+                $lastFailure = if ($statusCode) { "HTTP $statusCode" } else { $_.Exception.Message }
+              }
+              if ($attempt -lt 6) { Start-Sleep -Seconds 5 }
+            }
+            throw "API health check $Path failed after 6 attempts: $lastFailure"
+          }
+
+          # Live isolates application startup from database connectivity. Ready
+          # then verifies that the manually prepared database can be reached.
+          Wait-ForHealth '/health/live' 'live'
+          Wait-ForHealth '/health/ready' 'ready'
   deploy-pwa:
     name: Deploy PWA to Firebase Hosting
     needs: deploy-api

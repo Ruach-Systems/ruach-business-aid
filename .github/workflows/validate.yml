@@ -7,14 +7,14 @@ on:
     inputs:
       api_origin:
         type: string
-        default: https://api.businessaid.mashalsystems.com
+        default: https://api-businessaid.mashalsystems.com
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      API_ORIGIN: ${{ inputs.api_origin || 'https://api.businessaid.mashalsystems.com' }}
+      API_ORIGIN: ${{ inputs.api_origin || 'https://api-businessaid.mashalsystems.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -60,8 +60,18 @@ jobs:
           MASHAL_BROWSER_TESTS: 'true'
         run: dotnet test tests/Mashal.BusinessAid.Tests --no-build -c Release --filter "Category=Browser"
       - name: Publish API
+        shell: pwsh
         run: |
-          dotnet publish src/Mashal.BusinessAid.Api -c Release -r win-x64 --self-contained false -o artifacts/api
+          # MyASP.NET supports framework-dependent deployments and launches them
+          # through the installed dotnet host. Avoid a machine-specific apphost.
+          dotnet publish src/Mashal.BusinessAid.Api -c Release -o artifacts/api
+          if ($LASTEXITCODE -ne 0) { throw 'API publish failed.' }
+
+          [xml]$config = Get-Content artifacts/api/web.config
+          $aspNetCore = $config.SelectSingleNode('//aspNetCore')
+          if ($aspNetCore.processPath -ne 'dotnet' -or $aspNetCore.arguments -ne '.\Mashal.BusinessAid.Api.dll') {
+            throw 'The API artifact is not configured as a portable framework-dependent deployment.'
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: api

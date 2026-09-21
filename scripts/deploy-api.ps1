@@ -4,11 +4,32 @@ $webConfig = Join-Path $publish 'web.config'
 $deploy = 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe'
 if (!(Test-Path -LiteralPath $deploy)) { throw 'Web Deploy is required on the deployment runner.' }
 if (!(Test-Path -LiteralPath $webConfig)) { throw 'The validated API publish artifact is missing web.config.' }
-$required = @('ConnectionStrings__Mashal','Google__ClientId','Google__ClientSecret','DataProtection__CertificateBase64','App__Origin','MASHAL_ADMIN_EMAILS','WEBDEPLOY_ENDPOINT','WEBDEPLOY_SITE','WEBDEPLOY_USERNAME','WEBDEPLOY_PASSWORD')
+$required = @('ConnectionStrings__Mashal','Google__ClientId','Google__ClientSecret','DataProtection__CertificateBase64','DataProtection__CertificatePassword','App__Origin','MASHAL_ADMIN_EMAILS','WEBDEPLOY_ENDPOINT','WEBDEPLOY_SITE','WEBDEPLOY_USERNAME','WEBDEPLOY_PASSWORD')
 foreach ($name in $required) { if (![Environment]::GetEnvironmentVariable($name)) { throw "Required environment value is missing: $name" } }
+
+$certificateBytes = $null
+$certificate = $null
+try {
+  try {
+    $certificateBytes = [Convert]::FromBase64String($env:DataProtection__CertificateBase64)
+    $certificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new(
+      $certificateBytes,
+      $env:DataProtection__CertificatePassword,
+      [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
+  } catch {
+    throw 'The data-protection certificate could not be loaded. Verify DATA_PROTECTION_CERTIFICATE_BASE64 and DATA_PROTECTION_CERTIFICATE_PASSWORD in the selected GitHub Environment.'
+  }
+  if (!$certificate.HasPrivateKey) { throw 'The data-protection certificate must contain its private key.' }
+} finally {
+  if ($certificate) { $certificate.Dispose() }
+  if ($certificateBytes) { [Array]::Clear($certificateBytes, 0, $certificateBytes.Length) }
+}
+
 [xml]$config = Get-Content -LiteralPath $webConfig
 $asp = $config.SelectSingleNode('//aspNetCore')
 $asp.SetAttribute('hostingModel','outofprocess')
+$asp.SetAttribute('processPath','dotnet')
+$asp.SetAttribute('arguments','.\Mashal.BusinessAid.Api.dll')
 $variables = $config.CreateElement('environmentVariables')
 $values = @{
   ASPNETCORE_ENVIRONMENT = 'Production'
