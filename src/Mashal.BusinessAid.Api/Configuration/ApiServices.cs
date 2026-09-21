@@ -35,7 +35,10 @@ public static class ApiServices
         if (!builder.Environment.IsDevelopment())
         {
             var cert = builder.Configuration["DataProtection:CertificateBase64"] ?? throw new InvalidOperationException("Data protection certificate is required.");
-            protection.ProtectKeysWithCertificate(X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(cert), builder.Configuration["DataProtection:CertificatePassword"], X509KeyStorageFlags.EphemeralKeySet));
+            // Shared IIS application pools don't necessarily load a user profile.
+            // Use the machine key store on Windows so PFX import doesn't depend on one.
+            var storage = OperatingSystem.IsWindows() ? X509KeyStorageFlags.MachineKeySet : X509KeyStorageFlags.EphemeralKeySet;
+            protection.ProtectKeysWithCertificate(X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(cert), builder.Configuration["DataProtection:CertificatePassword"], storage));
         }
 
         builder.Services.AddAuthentication(o =>

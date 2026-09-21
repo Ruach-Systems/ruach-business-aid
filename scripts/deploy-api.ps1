@@ -15,7 +15,7 @@ try {
     $certificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new(
       $certificateBytes,
       $env:DataProtection__CertificatePassword,
-      [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet)
+      [Security.Cryptography.X509Certificates.X509KeyStorageFlags]::MachineKeySet)
   } catch {
     throw 'The data-protection certificate could not be loaded. Verify DATA_PROTECTION_CERTIFICATE_BASE64 and DATA_PROTECTION_CERTIFICATE_PASSWORD in the selected GitHub Environment.'
   }
