@@ -16,7 +16,7 @@ public static class ApiEndpoints
         app.MapGet("/health/ready", async (SqlConnectionFactory f) =>
         {
             await using var c = await f.Open();
-            await c.ExecuteAsync("SELECT TOP(0) ScriptName FROM dbo.SchemaVersions; SELECT TOP(0) Id FROM dbo.Businesses; SELECT TOP(0) PhoneNumber,EmailVerified FROM dbo.Users; SELECT TOP(0) Id FROM dbo.BusinessRequests; SELECT TOP(0) Id FROM dbo.AdminAudit;");
+            await c.ExecuteAsync("SELECT TOP(0) Id FROM dbo.Businesses; SELECT TOP(0) PhoneNumber,EmailVerified FROM dbo.Users; SELECT TOP(0) RecipeBatchYield FROM dbo.Products; SELECT TOP(0) Id FROM dbo.BusinessRequests; SELECT TOP(0) Id FROM dbo.AdminAudit;");
             return Results.Ok(new { status = "ready" });
         });
         app.MapGet("/api/auth/google", () => Results.Challenge(new AuthenticationProperties { RedirectUri = origin + "/", IsPersistent = true }, [GoogleDefaults.AuthenticationScheme]));
