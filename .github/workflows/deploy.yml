@@ -71,6 +71,25 @@ jobs:
         with:
           name: api
           path: artifacts/api
+      - name: Verify database connectivity and schema
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $connection = [System.Data.SqlClient.SqlConnection]::new($env:ConnectionStrings__Mashal)
+          try {
+            $connection.Open()
+            $command = $connection.CreateCommand()
+            $command.CommandText = 'SELECT TOP(0) ScriptName FROM dbo.SchemaVersions; SELECT TOP(0) Id FROM dbo.Businesses; SELECT TOP(0) PhoneNumber, EmailVerified FROM dbo.Users; SELECT TOP(0) Id FROM dbo.BusinessRequests; SELECT TOP(0) Id FROM dbo.AdminAudit;'
+            $command.CommandTimeout = 20
+            [void]$command.ExecuteNonQuery()
+            Write-Host 'Production database connectivity and schema validation passed.'
+          } catch [System.Data.SqlClient.SqlException] {
+            $sql = $_.Exception
+            throw "Production database validation failed with SQL error $($sql.Number), state $($sql.State), class $($sql.Class)."
+          } finally {
+            if ($command) { $command.Dispose() }
+            $connection.Dispose()
+          }
       - name: Install Web Deploy
         shell: pwsh
         run: choco install webdeploy --yes --no-progress
