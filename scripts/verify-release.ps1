@@ -19,11 +19,18 @@ foreach ($file in Get-ChildItem (Join-Path $PublishRoot 'brand-assets') -File | 
 }
 if (!$worker.Contains('mashal-blazor-') -or !$worker.Contains('skipWaiting')) { throw 'Published PWA update handler is missing.' }
 if ($Origin) {
+    function Normalize-LiveFile([string]$File, [byte[]]$Bytes) {
+        if ($File -ne 'index.html') { return $Bytes }
+        $html = [Text.Encoding]::UTF8.GetString($Bytes)
+        $cloudflareBeacon = '(?s)\s*<script\b(?=[^>]*\bsrc=["'']https://static\.cloudflareinsights\.com/beacon\.min\.js/[^"'']+["''])[^>]*>\s*</script>'
+        $html = [regex]::Replace($html, $cloudflareBeacon, '') -replace "\r\n?", "`n"
+        return [Text.Encoding]::UTF8.GetBytes($html)
+    }
     $client = [Net.Http.HttpClient]::new()
     try {
         foreach ($file in @('index.html','sw.js','service-worker-assets.js','manifest.webmanifest')) {
-            $remote = $client.GetByteArrayAsync("$Origin/$file").GetAwaiter().GetResult()
-            $local = [IO.File]::ReadAllBytes((Join-Path $PublishRoot $file))
+            $remote = Normalize-LiveFile $file ($client.GetByteArrayAsync("$Origin/$file").GetAwaiter().GetResult())
+            $local = Normalize-LiveFile $file ([IO.File]::ReadAllBytes((Join-Path $PublishRoot $file)))
             if ([Convert]::ToBase64String($remote) -ne [Convert]::ToBase64String($local)) { throw "Live file differs: $file" }
         }
     } finally { $client.Dispose() }
