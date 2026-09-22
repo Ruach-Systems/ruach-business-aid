@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.DataProtection;
 namespace Mashal.BusinessAid.Api.Configuration;
 public static class ApiServices
 {
+    public static bool IsGoogleEmailVerified(System.Text.Json.JsonElement user)
+        => user.TryGetProperty("email_verified", out var verified) && verified.ValueKind == System.Text.Json.JsonValueKind.True;
+
     public static void AddApiServices(this WebApplicationBuilder builder, string origin)
     {
         var connection = builder.Configuration.GetConnectionString("Mashal") ?? throw new InvalidOperationException("SQL connection configuration is required.");
@@ -73,7 +76,7 @@ public static class ApiServices
             o.Events.OnCreatingTicket = async ctx =>
             {
                 var subject = ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Missing Google subject.");
-                var account = await ctx.HttpContext.RequestServices.GetRequiredService<IdentityRepository>().SignIn(subject, ctx.Principal?.FindFirstValue(ClaimTypes.Name) ?? "", ctx.Principal?.FindFirstValue(ClaimTypes.Email) ?? "", null, ctx.User.TryGetProperty("verified_email", out var verified) && verified.ValueKind == System.Text.Json.JsonValueKind.True);
+                var account = await ctx.HttpContext.RequestServices.GetRequiredService<IdentityRepository>().SignIn(subject, ctx.Principal?.FindFirstValue(ClaimTypes.Name) ?? "", ctx.Principal?.FindFirstValue(ClaimTypes.Email) ?? "", null, IsGoogleEmailVerified(ctx.User));
                 var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme);
                 identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, account.Uid.ToString()));
                 identity.AddClaim(new Claim(ClaimTypes.Name, account.DisplayName));
