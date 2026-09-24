@@ -82,9 +82,16 @@ jobs:
               'dbo.Businesses' = "OBJECT_ID(N'dbo.Businesses', N'U')"
               'dbo.Users.PhoneNumber' = "COL_LENGTH(N'dbo.Users', N'PhoneNumber')"
               'dbo.Users.EmailVerified' = "COL_LENGTH(N'dbo.Users', N'EmailVerified')"
-              'dbo.Products.RecipeBatchYield' = "COL_LENGTH(N'dbo.Products', N'RecipeBatchYield')"
               'dbo.BusinessRequests' = "OBJECT_ID(N'dbo.BusinessRequests', N'U')"
               'dbo.AdminAudit' = "OBJECT_ID(N'dbo.AdminAudit', N'U')"
+              'dbo.Items' = "OBJECT_ID(N'dbo.Items', N'U')"
+              'dbo.ItemSales' = "OBJECT_ID(N'dbo.ItemSales', N'U')"
+              'dbo.ItemSaleLines' = "OBJECT_ID(N'dbo.ItemSaleLines', N'U')"
+              'dbo.BusinessExpenses' = "OBJECT_ID(N'dbo.BusinessExpenses', N'U')"
+              'dbo.StockEntries' = "OBJECT_ID(N'dbo.StockEntries', N'U')"
+              'dbo.StockMovements' = "OBJECT_ID(N'dbo.StockMovements', N'U')"
+              'dbo.ItemProcessedOperations' = "OBJECT_ID(N'dbo.ItemProcessedOperations', N'U')"
+              'dbo.ItemSyncChanges' = "OBJECT_ID(N'dbo.ItemSyncChanges', N'U')"
             }
             $missing = foreach ($check in $checks.GetEnumerator()) {
               $command = $connection.CreateCommand()
