@@ -153,6 +153,7 @@ public partial class BrowserTests
         await page.GetByLabel("Bread quantity sold", new() { Exact = true }).FillAsync("3");
         await Expect(page.GetByText("One or more items will have negative stock.",new(){Exact=false})).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Save 3 items", Exact = true }).ClickAsync();
+        await Expect(page.GetByText("Sale saved on this device.", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/items/" + itemId);
         await Expect(page.GetByText("Stock is negative",new(){Exact=false})).ToBeVisibleAsync();
         state = await ReadState(page, account.Uid);
