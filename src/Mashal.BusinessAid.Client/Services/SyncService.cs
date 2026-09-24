@@ -9,7 +9,9 @@ public sealed class SyncService(ApiClient api, OfflineStorage storage)
         bool more;
         do
         {
-            var result = await api.Get<PullResult>($"/api/sync/pull?businessId={state.Data.Business!.Id}&cursor={state.Cursor}");
+            var result = await api.Get<PullResult>($"/api/sync/pull?businessId={state.Data.Business!.Id}&cursor={state.Cursor}&modelVersion={DataModel.CurrentVersion}");
+            if (result.ModelVersion != DataModel.CurrentVersion)
+                throw new ApiException(426, "client_upgrade_required", "Refresh MASHAL to finish the Items update.");
             state = await storage.Mutate(state, latest =>
             {
                 if (result.Cursor >= latest.Cursor)
@@ -42,7 +44,7 @@ public sealed class SyncService(ApiClient api, OfflineStorage storage)
             var op = state.Outbox.FirstOrDefault();
             if (op is null) break;
             if (op.Error is not null) throw new ApiException(409, "conflict", op.Error);
-            try { await api.Post("/api/sync/push", new PushRequest(state.Data.Business!.Id, [op.Command()])); }
+            try { await api.Post("/api/sync/push", new PushRequest(DataModel.CurrentVersion, state.Data.Business!.Id, [op.Command()])); }
             catch (ApiException error) when (error.Status is >= 400 and < 500 && error.Status is not (401 or 403) && error.Code != "csrf")
             {
                 state = await storage.Mutate(state, latest => { var failed = latest.Outbox.Find(x => x.Id == op.Id); if (failed is not null) failed.Error = error.Message; return Task.CompletedTask; });

@@ -1,4 +1,89 @@
+.inventory-toolbar {
+    display: grid;
+    gap: 12px;
+}
 
-.inventory-toolbar { display: grid; gap: 12px; }.search-box { display: flex; align-items: center; gap: 9px; background: var(--mashal-cloud); border-radius: 13px; padding: 0 13px; }.search-box:focus-within { box-shadow: 0 0 0 3px var(--mashal-focus); }.search-box .icon { color: var(--mashal-muted); }.search-box input { flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; outline: none; }.inventory-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }.inventory-grid { display: grid; gap: 10px; }.item-title { display: flex; align-items: center; gap: 8px; }.quantity { display: grid; text-align: right; }.quantity small { color: var(--mashal-muted); font-size: 10px; }.inventory-card .chevron { display: none; }
-.search-box:focus-within { box-shadow: 0 0 0 3px var(--mashal-focus); }
-@media (min-width: 700px) { .inventory-toolbar { grid-template-columns: 1fr auto; align-items: center; }.inventory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.inventory-card .chevron { display: block; } }
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 13px;
+    background: var(--mashal-cloud);
+    border: 1px solid transparent;
+    border-radius: 13px;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.search-box:focus-within {
+    border-color: var(--mashal-purple);
+    box-shadow: 0 0 0 2px rgb(91 44 131 / 12%);
+}
+
+.search-box .icon {
+    color: var(--mashal-muted);
+}
+
+.search-box input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    outline: none;
+}
+
+.search-box input:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.inventory-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.inventory-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.item-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quantity {
+    display: grid;
+    text-align: right;
+}
+
+.quantity strong {
+    font-size: 20px;
+    line-height: 1.1;
+}
+
+.quantity small {
+    color: var(--mashal-muted);
+    font-size: 10px;
+}
+
+.inventory-card .chevron {
+    display: none;
+}
+
+@media (min-width: 700px) {
+    .inventory-toolbar {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+    }
+
+    .inventory-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-card .chevron {
+        display: block;
+    }
+}

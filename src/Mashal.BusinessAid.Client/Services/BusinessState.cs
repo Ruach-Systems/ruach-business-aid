@@ -22,8 +22,8 @@ public sealed partial class BusinessState(OfflineStorage storage, ApiClient api,
     public bool ShowReset => Development && configuration.GetValue<bool>("EnableSignInReset");
     public bool CanResetLocalData => Development && User?.IsDemo == true;
     public int PendingCount => State?.Outbox.Count ?? 0;
-    public IEnumerable<InventoryItem> Inventory => Data.InventoryItems.Where(x => x.DeletedAt is null && x.IsActive);
-    public IEnumerable<Product> Products => Data.Products.Where(x => x.DeletedAt is null && x.IsActive);
+    public IEnumerable<Item> AllItems => Data.Items.Where(x => x.DeletedAt is null);
+    public IEnumerable<Item> Items => AllItems.Where(x => x.IsActive);
     public IEnumerable<Sale> Sales => Data.Sales.Where(x => x.DeletedAt is null);
     public IEnumerable<Expense> Expenses => Data.Expenses.Where(x => x.DeletedAt is null);
 

@@ -80,10 +80,20 @@ public sealed partial class BusinessState
         }
 
         if (account.IsDemo)
-            State = await storage.Read<OfflineState>("accounts", account.Uid) ?? new()
+        {
+            State = await storage.Read<OfflineState>("accounts", account.Uid) ?? new() { User = account };
+            if (State.ModelVersion != DataModel.CurrentVersion)
             {
-                User = account
-            };
+                State = new OfflineState
+                {
+                    ModelVersion = DataModel.CurrentVersion,
+                    User = account,
+                    ServerData = new AppData { Business = State.Data.Business ?? State.ServerData.Business }
+                };
+                State.Rebuild();
+                await storage.Write("accounts", account.Uid, State);
+            }
+        }
         else if (!PhoneRequired)
         {
             var selected = await storage.Read<Guid?>("meta", "selected:" + account.Uid);
@@ -134,16 +144,26 @@ public sealed partial class BusinessState
         if (Account?.Businesses.Any(x => x.Id == business) != true)
             throw new InvalidOperationException("This business is not available to your account.");
         var candidate = await storage.Read<OfflineState>("accounts", $"{User!.Uid}:{business}");
+        if (candidate is not null && candidate.ModelVersion != DataModel.CurrentVersion)
+        {
+            if (!Online)
+                throw new InvalidOperationException("Connect once to finish the simplified Items update. Your old business records will not be shown.");
+            await storage.Delete("accounts", candidate.StorageKey);
+            candidate = null;
+        }
         if (candidate is null)
         {
             if (!Online)
                 throw new InvalidOperationException("Open this business once while online to make its records available on this device.");
             candidate = new()
             {
+                ModelVersion = DataModel.CurrentVersion,
                 User = User,
                 WorkspaceId = business
             };
             var result = await api.Get<BootstrapResult>($"/api/bootstrap?businessId={business}");
+            if (result.ModelVersion != DataModel.CurrentVersion)
+                throw new InvalidOperationException("Refresh MASHAL to finish the simplified Items update.");
             if (result.User.Uid.ToString() != User.Uid || result.Data.Business?.Id != business)
                 throw new InvalidOperationException("The server returned a different workspace.");
             candidate = await storage.Mutate(candidate, latest =>
@@ -270,6 +290,7 @@ public sealed partial class BusinessState
             await storage.Delete("accounts", User!.Uid);
             State = new OfflineState
             {
+                ModelVersion = DataModel.CurrentVersion,
                 User = User
             };
             await storage.Write("accounts", User.Uid, State);

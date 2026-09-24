@@ -1,6 +1,6 @@
 # MASHAL Business Aid
 
-A .NET 10 Blazor WebAssembly PWA with offline operations and a separate ASP.NET Core API using Dapper and SQL Server.
+A simple .NET 10 Blazor WebAssembly sales aid with offline operations and a separate ASP.NET Core API using Dapper and SQL Server. Each sellable Item owns its price, fixed unit cost, whole-number stock balance, low-stock level, and active status.
 
 - PWA: https://businessaid.mashalsystems.com — Firebase Hosting
 - API: https://api.businessaid.mashalsystems.com — MyASP.NET
@@ -71,7 +71,7 @@ dotnet watch --project src/Mashal.BusinessAid.Client run
 
 Open http://localhost:5173. Use **Continue locally** to test operations without Google or SQL synchronization. For UI/demo testing alone, only terminal 2 is needed. Local mode intentionally has no authoritative financial reports.
 
-Use `localhost` consistently: `127.0.0.1` is a different browser origin. The development client retains port 5173 so existing SQL-era IndexedDB data remains available.
+Use `localhost` consistently: `127.0.0.1` is a different browser origin. The development client retains port 5173 and the existing IndexedDB namespace; the model-version reset controls whether a saved operational workspace is reusable.
 
 Register this Google OAuth development redirect URI:
 
@@ -127,7 +127,7 @@ This embeds only the public URL in the client assembly. It is never a secret. CI
 
 ## Offline data and updates
 
-The Client reuses IndexedDB `mashal-sql-v2` version 1 and its `accounts`/`meta` stores. Existing SQL-era state and prepared outbox payloads are compatible. A revision property supports atomic compare-and-swap saves across tabs; older records default to revision zero. JavaScript is limited to browser storage, locks, connectivity events, and service workers. C# owns calculations and synchronization.
+The Client reuses IndexedDB `mashal-sql-v2` version 1 and its `accounts`/`meta` stores, but every saved workspace carries a business-data model version. On this simplified-model cutover, legacy operational snapshots and outboxes are discarded while authentication and selected-business metadata are preserved. The first launch after updating must be online for a fresh bootstrap; an offline legacy workspace shows a connect-once message and never exposes stale data. A revision property supports atomic compare-and-swap saves across tabs. JavaScript is limited to browser storage, locks, connectivity events, and service workers. C# owns calculations and synchronization.
 
 A save commits its projection and operation to IndexedDB before success is shown. Synchronization runs in the background. A failed local write is shown as a save error. Server retries preserve the same operation ID and payload, and the client removes an operation only after pulling and durably storing the authoritative changes.
 
@@ -148,13 +148,13 @@ The approved exports remain in `public/brand`; master geometry and fonts remain 
 5. Keep scripts compatible with SQL Server, MyASP.NET's SQL editor, and the CI DbUp runner: no SQLCMD directives, `USE` statements, credentials, or manual transaction wrappers.
 6. State in the release notes which exact script filenames must be applied, in order, before deploying the corresponding API.
 
-`001_InitialSchema.sql` is the consolidated baseline for a **new, empty database**, including recipe batch yields and multi-business accounts. The runner embeds it as `Mashal.Migrations.001_InitialSchema.sql`. Future changes start at `002` and remain forward-only.
+`001_InitialSchema.sql` and `003_MultiBusinessAccounts.sql` are immutable historical scripts. `004_SimplifiedItemModel.sql` is the expand step: it creates the empty Items, item-sales, expense, stock, and versioned-sync model without changing identity, business, membership, request, or audit data. Deploy the simplified API/PWA and verify its reset behavior against 004 before manually applying the contract step, `005_RemoveLegacyOperationalModel.sql`. Migration 005 removes only the inaccessible legacy inventory, product, recipe, production, sale, expense, and synchronization structures.
 
 This fresh-start baseline replaces the former three-script chain; it is not an upgrade for a database created by that chain. DbUp skips scripts already recorded in `dbo.SchemaVersions`, so an existing `001` entry will not apply this consolidated definition. Use a new database for the fresh start; do not clear an existing journal or rerun the baseline over existing business data.
 
 Hosted Test and Production databases are updated manually through MyASP.NET. GitHub deployment and API startup never run migrations, take backups, or connect with schema credentials. DbUp remains a local/CI test tool so every supplied script is proven against an isolated SQL Server before release.
 
-For a new empty hosted database, execute `001_InitialSchema.sql`. For later releases, execute only the newly supplied scripts in filename order. Record the environment, script filename, execution time, and outcome outside the application so you can determine what was applied. Do not rerun a successful non-idempotent script.
+For a new empty hosted database, execute all supplied scripts in filename order. For this cutover on an existing hosted database, back up first, apply 004, deploy and verify the new application, then apply 005. Record the environment, script filename, execution time, and outcome outside the application so you can determine what was applied. Do not rerun a successful non-idempotent script.
 
 Before applying a Production database script, use **MyASP.NET Hosting Control Panel > Databases > MSSQL > Backup / Create Backup**, wait for completion, and download the backup from the account's `\\db` folder. Backup timing and retention are manual operational decisions; the deployment workflow does not inspect them.
 
@@ -215,25 +215,25 @@ MyASP.NET must support the selected .NET 10 runtime, out-of-process hosting, Web
 
 ## Sync and reporting contracts
 
-Every semantic operation contains `id`, `entityId`, `type`, `expectedVersion`, and `payload`. An operation ID must retain exactly the same contents across retries. The server journals its payload hash and rejects reuse with altered data. A push transaction either commits all its operations or rolls back all of them.
+Every bootstrap, pull, push, and saved offline workspace carries the current data-model version. Legacy clients are rejected before their old operations are processed. Every semantic operation contains `id`, `entityId`, `type`, `expectedVersion`, and `payload`. The simplified operation set is `saveItem`, `receiveStock`, `adjustStock`, `recordSale`, plus the existing expense saves/deletes. An operation ID must retain exactly the same contents across retries. The server journals its payload hash and rejects reuse with altered data. A push transaction either commits all its operations or rolls back all of them.
 
-SQL business locks serialize writes and change-feed reads, preventing cursor gaps caused by uncommitted transactions. Master edits use rowversion comparisons; stocks are adjusted through movements. Sales preserve entered selling-price snapshots; the server determines cost and stock effects when accepted. Offline projections are provisional until synchronization. Negative stock remains possible, matching the existing operational workflow.
+SQL business locks serialize writes and change-feed reads, preventing cursor gaps caused by uncommitted transactions. Item edits use rowversion comparisons; stock changes are recorded as movements. Stock additions use the item's fixed cost without changing it. Sales snapshot item name, selling price, and unit cost, always deduct stock, and may create a negative balance. Offline projections are provisional until synchronization.
 
 IndexedDB compare-and-swap transactions preserve pending edits from concurrent tabs. Each owner/business pair has its own snapshot, cursor, outbox, and sync Web Lock. The `mashal-sql-v2` database namespace and operation serialization remain unchanged. Conflicts remain visible until reviewed; accepting server data requires confirmation before discarding pending device changes. Sign-out preserves account data and outbox records but hides them until that account signs in again.
 
 ## Owners, businesses, and Mashal Admin
 
-The consolidated `001_InitialSchema.sql` creates support for multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. Existing databases created from the earlier baseline must apply `003_MultiBusinessAccounts.sql`; its guards make it a no-op when those objects already exist. Neither script seeds users/businesses. Quantities retain `decimal(19,6)` precision.
+The account schema supports multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. Neither 001 nor 003 seeds users or businesses. Simplified item, stock, and sale quantities are whole-number `bigint` values; negative current stock is allowed.
 
 Owners provide a Philippine mobile number during onboarding, submit a business request, and wait for approval. The server accepts `09`, `639`, or `+639` mobile notation (with common formatting), normalizes it to E.164, and enforces one account per number with a unique database index. This checks format and uniqueness, **not possession or reachability**. No SMS/OTP provider or charge is introduced; the UI never calls these numbers verified.
 
 `/businesses` lists approved workspaces and request history. Only one pending request per owner is allowed. A rejected request requires a new submission; the original decision is retained. Approval creates an empty business and owner membership atomically. Clients cannot create businesses through sync. Each business must be opened online once before it is available offline on that device. The last selected business resumes on sign-in.
 
-Configure `MashalAdmin:Emails` as an array in API configuration, or use environment variables `MashalAdmin__Emails__0`, `MashalAdmin__Emails__1`, etc. Set the exact Google email before starting the local API. No address is granted access by default. Google must report the email as verified. Sign in with an allowlisted account and open `/admin`. The deployment workflow maps `MASHAL_ADMIN_EMAILS` to these settings and refuses deployment without an administrator. Admins can review requests and see all owner/business metadata; admin status alone never grants access to sales, inventory, transactions, or financial reports.
+Configure `MashalAdmin:Emails` as an array in API configuration, or use environment variables `MashalAdmin__Emails__0`, `MashalAdmin__Emails__1`, etc. Set the exact Google email before starting the local API. No address is granted access by default. Google must report the email as verified. Sign in with an allowlisted account and open `/admin`. The deployment workflow maps `MASHAL_ADMIN_EMAILS` to these settings and refuses deployment without an administrator. Admins can review requests and see all owner/business metadata; admin status alone never grants access to items, stock, sales, expenses, or financial reports.
 
 Phone recovery requires the admin to complete an identity review outside the application, select the recipient, record a reason, and confirm the transfer. Transfers check the current holder and recipient's expected phone to reject stale decisions. The recipient's previous number is released; both numbers and the actors are retained in the audit. The former holder must add a different unique number before opening a business. Account settings and the business dashboard remain accessible. Requests, phone edits, approvals, and transfers are online-only. Cached offline records cannot be remotely revoked while a device is disconnected; the account is rechecked on reconnection before synchronization, and queued work is retained for recovery.
 
-Financial endpoints require authentication and business membership. Summary, trends, product performance, and expense categories use inclusive business dates. Reports exclude unsubmitted device activity and are not cached by the service worker. Periods use Asia/Manila; trend weeks start Monday. Current-day device activity remains available offline, clearly labeled as device-local.
+Financial endpoints require authentication and business membership. Today, This Week, and This Month reports include revenue, snapshotted item cost, gross profit, expenses, net profit, sales trends, and item performance over inclusive business dates. Reports exclude unsubmitted device activity and are not cached by the service worker. Periods use Asia/Manila; weeks start Monday.
 
 ## External acceptance checks
 

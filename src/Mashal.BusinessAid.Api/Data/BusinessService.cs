@@ -25,15 +25,17 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
         var account = await identities.Find(user) ?? throw new DomainException("unauthorized", "Sign in again.", 401);
         await using var c = await connections.Open(); await using var tx = c.BeginTransaction();
         var business = businessId;
-        if (business is null) return new BootstrapResult(account, new AppData(), 0);
+        if (business is null) return new BootstrapResult(DataModel.CurrentVersion, account, new AppData(), 0);
         await Lock(c, tx, business.Value);
         await Authorize(c, tx, user, business.Value);
         var data = await new EntityRepository(c, tx, business.Value).Load();
-        var cursor = await c.ExecuteScalarAsync<long>("SELECT ISNULL(MAX([Cursor]),0) FROM dbo.SyncChanges WHERE BusinessId=@business", new { business }, tx);
-        await tx.CommitAsync(); return new BootstrapResult(account, data, cursor);
+        var cursor = await c.ExecuteScalarAsync<long>("SELECT ISNULL(MAX([Cursor]),0) FROM dbo.ItemSyncChanges WHERE BusinessId=@business", new { business }, tx);
+        await tx.CommitAsync(); return new BootstrapResult(DataModel.CurrentVersion, account, data, cursor);
     }
     public async Task Push(Guid user, PushRequest request)
     {
+        if (request.ModelVersion != DataModel.CurrentVersion)
+            throw new DomainException("client_upgrade_required", "Refresh MASHAL to use the simplified Items update.", 426);
         Rules.Require(request.BusinessId != Guid.Empty && request.Operations is { Count: > 0 and <= 50 }, "Submit 1–50 operations for a business.");
         await using var c = await connections.Open(); await using var tx = c.BeginTransaction();
         await Lock(c, tx, request.BusinessId);
@@ -43,7 +45,7 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
         {
             Rules.Require(op.Id != Guid.Empty && op.EntityId != Guid.Empty, "Operation identifiers are required.");
             var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(op, Wire.Json))));
-            var previous = await c.QuerySingleOrDefaultAsync<string>("SELECT PayloadHash FROM dbo.ProcessedOperations WHERE BusinessId=@BusinessId AND Id=@Id", new { request.BusinessId, op.Id }, tx);
+            var previous = await c.QuerySingleOrDefaultAsync<string>("SELECT PayloadHash FROM dbo.ItemProcessedOperations WHERE BusinessId=@BusinessId AND Id=@Id", new { request.BusinessId, op.Id }, tx);
             if (previous is not null)
             {
                 await Authorize(c, tx, user, request.BusinessId);
@@ -56,10 +58,10 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
             }
             else
             {
-                await Authorize(c, tx, user, request.BusinessId, management: op.Type is "saveInventoryItem" or "saveProduct" or "adjustStock" or "deleteExpense");
+                await Authorize(c, tx, user, request.BusinessId, management: op.Type is "saveItem" or "adjustStock" or "deleteExpense");
                 await handler.Execute(op);
             }
-            await c.ExecuteAsync("INSERT dbo.ProcessedOperations(BusinessId,Id,UserId,PayloadHash) VALUES(@BusinessId,@Id,@user,@hash)", new { request.BusinessId, op.Id, user, hash }, tx);
+            await c.ExecuteAsync("INSERT dbo.ItemProcessedOperations(BusinessId,Id,UserId,PayloadHash) VALUES(@BusinessId,@Id,@user,@hash)", new { request.BusinessId, op.Id, user, hash }, tx);
         }
         await tx.CommitAsync();
     }
@@ -68,14 +70,14 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
         Rules.Require(cursor >= 0, "Invalid sync cursor.");
         await using var c = await connections.Open(); await using var tx = c.BeginTransaction();
         await Lock(c, tx, business); await Authorize(c, tx, user, business);
-        var rows = (await c.QueryAsync<ChangeRow>("SELECT TOP(501) [Cursor],CollectionName,EntityId,Payload FROM dbo.SyncChanges WHERE BusinessId=@business AND [Cursor]>@cursor ORDER BY [Cursor]", new { business, cursor }, tx)).ToList();
+        var rows = (await c.QueryAsync<ChangeRow>("SELECT TOP(501) [Cursor],CollectionName,EntityId,Payload FROM dbo.ItemSyncChanges WHERE BusinessId=@business AND [Cursor]>@cursor ORDER BY [Cursor]", new { business, cursor }, tx)).ToList();
         var result = rows.Take(500).Select(r =>
         {
             using var document = JsonDocument.Parse(r.Payload);
             return new Change(r.Cursor, r.CollectionName, r.EntityId, document.RootElement.Clone());
         }).ToList();
         await tx.CommitAsync();
-        return new PullResult(result.LastOrDefault()?.Cursor ?? cursor, result, rows.Count > 500);
+        return new PullResult(DataModel.CurrentVersion, result.LastOrDefault()?.Cursor ?? cursor, result, rows.Count > 500);
     }
     private sealed record ChangeRow(long Cursor, string CollectionName, Guid EntityId, string Payload);
 }

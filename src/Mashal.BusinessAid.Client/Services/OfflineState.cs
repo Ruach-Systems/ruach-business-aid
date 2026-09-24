@@ -19,10 +19,11 @@ public sealed class PendingOperation
     public bool Prepared { get; set; }
     public string? Error { get; set; }
     public Operation Command() => new(Id, EntityId, Type, ExpectedVersion, Payload);
-    public Guid VersionTarget => Type == "adjustStock" ? Payload.GetProperty("inventoryItemId").GetGuid() : EntityId;
+    public Guid VersionTarget => Type == "adjustStock" ? Payload.GetProperty("itemId").GetGuid() : EntityId;
 }
 public sealed class OfflineState
 {
+    public int ModelVersion { get; set; }
     public Guid? WorkspaceId { get; set; }
     [System.Text.Json.Serialization.JsonIgnore]
     public string StorageKey => WorkspaceId is { } id ? $"{User.Uid}:{id}" : User.Uid;

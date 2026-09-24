@@ -48,7 +48,7 @@
         var local = projection?.Entity ?? op.Payload;
         var entity = projection is null ? null : LocalData.Entities(Store.State!.ServerData).FirstOrDefault(x => x.Id == projection.Entity.GetProperty("id").GetGuid());
         var server = entity is null ? JsonSerializer.SerializeToElement(Store.State!.ServerData.Business, Wire.Json) : JsonSerializer.SerializeToElement(entity, entity.GetType(), Wire.Json);
-        foreach (var field in new[] { ("name","Name"), ("description","Description"), ("category","Category"), ("sellingPriceCentavos","Selling price (centavos)"), ("manualCostCentavos","Unit cost (centavos)"), ("amountCentavos","Expense (centavos)"), ("minimumQuantity","Minimum stock"), ("currentQuantity","Stock quantity"), ("inventoryMode","Inventory behavior"), ("status","Status"), ("plannedYield","Planned yield"), ("actualYield","Actual yield") })
+        foreach (var field in new[] { ("name","Name"), ("description","Description"), ("category","Category"), ("sellingPriceCentavos","Selling price (centavos)"), ("unitCostCentavos","Unit cost (centavos)"), ("amountCentavos","Expense (centavos)"), ("minimumQuantity","Low-stock level"), ("currentQuantity","Stock quantity"), ("isActive","Active") })
         {
             var a = local.ValueKind == JsonValueKind.Object && local.TryGetProperty(field.Item1, out var av) ? av.ToString() : null;
             var b = server.ValueKind == JsonValueKind.Object && server.TryGetProperty(field.Item1, out var bv) ? bv.ToString() : null;

@@ -32,12 +32,12 @@ public class AccountSqlTests
         var a=await AccountFixture.Provision(connections,owner.Uid); var b=await AccountFixture.Provision(connections,owner.Uid);
         var service=new BusinessService(connections,identities); var id=Guid.NewGuid();
         var op=new Operation(Guid.NewGuid(),id,"saveExpense",null,JsonSerializer.SerializeToElement(new Expense {Description="A only",Category="Transport",AmountCentavos=100,ExpenseDate=Calculations.Today().ToString("yyyy-MM-dd")},Wire.Json));
-        await service.Push(owner.Uid,new(a,[op]));
+        await service.Push(owner.Uid,new(DataModel.CurrentVersion,a,[op]));
         Assert.Single((await service.Bootstrap(owner.Uid,a)).Data.Expenses);
         Assert.Empty((await service.Bootstrap(owner.Uid,b)).Data.Expenses);
         Assert.DoesNotContain((await service.Pull(owner.Uid,b,0)).Changes,x=>x.CollectionName=="expenses");
         Assert.Null((await service.Bootstrap(owner.Uid)).Data.Business);
-        await Assert.ThrowsAsync<DomainException>(()=>service.Push(owner.Uid,new(a,[op with { Id=Guid.NewGuid(),Type="createBusiness" }])));
+        await Assert.ThrowsAsync<DomainException>(()=>service.Push(owner.Uid,new(DataModel.CurrentVersion,a,[op with { Id=Guid.NewGuid(),Type="createBusiness" }])));
         var outsider=await identities.SignIn(Guid.NewGuid().ToString(),"Other","other@example.invalid",null);
         await new AccountService(connections,identities).SavePhone(outsider.Uid,new(AccountFixture.Phone()));
         await Assert.ThrowsAsync<DomainException>(()=>service.Bootstrap(outsider.Uid,a));
@@ -96,7 +96,7 @@ public class AccountSqlTests
         var next=Guid.NewGuid(); await service.Request(owner.Uid,request with {Id=next,DefaultLocation="Cebu City"});
         await Task.WhenAll(service.Decide(admin.Uid,next,new(true,null)),service.Decide(admin.Uid,next,new(true,null)));
         var overview=await service.Overview(owner.Uid); Assert.Single(overview.Businesses); Assert.Equal(2,overview.Requests.Count);
-        Assert.Empty((await new BusinessService(connections,identities).Bootstrap(owner.Uid,next)).Data.Products);
+        Assert.Empty((await new BusinessService(connections,identities).Bootstrap(owner.Uid,next)).Data.Items);
         await service.SavePhone(admin.Uid,new(AccountFixture.Phone()));
         var forbidden=await Assert.ThrowsAsync<DomainException>(()=>new BusinessService(connections,identities).Bootstrap(admin.Uid,next));
         Assert.Equal("forbidden",forbidden.Code);

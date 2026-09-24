@@ -36,5 +36,4 @@ public static class Rules
     }
 
     public static long Round(decimal value) => checked((long)Math.Round(value, 0, MidpointRounding.AwayFromZero));
-    public static long Average(decimal quantity, long cost, decimal received, long purchase) => quantity + received <= 0 ? 0 : Round((Math.Max(0, quantity) * cost + purchase) / (Math.Max(0, quantity) + received));
 }

@@ -8,7 +8,7 @@
 <BrandLogo />
 <span class="eyebrow">First things first</span>
 <h1>@(Store.User?.IsDemo == true ? "Create a local workspace" : "Request your first business")</h1>
-<p>One account for all your businesses. Each has separate sales, products, stock, and transactions. Mashal Admin reviews each business request.</p>
+<p>One account for all your businesses. Each has separate items, sales, stock, expenses, and reports. Mashal Admin reviews each business request.</p>
 <div class="account-summary">
 <span>Signed in as</span>
 <strong>@Store.User?.Email</strong>
@@ -29,7 +29,7 @@
 <strong>Philippine peso · Asia/Manila</strong>
 <span>Your reporting day and currency are already configured.</span>
 </div>
-<p>Approval creates an empty workspace. No sample products are added.</p>
+<p>Approval creates an empty workspace. No sample items are added.</p>
 @if (!Store.Online && Store.User?.IsDemo != true) { <p role="status">Connect to submit your request. Your entered values stay in this form.</p> }
 <ErrorBanner Message="@Error" />
 <button class="button primary block" disabled="@(Saving || Store.Busy || (!Store.Online && Store.User?.IsDemo != true))">@(Saving ? "Submitting…" : Store.User?.IsDemo == true ? "Create local workspace" : "Submit request")</button>

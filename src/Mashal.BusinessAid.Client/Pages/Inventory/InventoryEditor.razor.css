@@ -1,0 +1,22 @@
+.cost-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cost-preview > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cost-preview strong {
+  font-family: var(--app-font-family);
+  font-size: clamp(22px, 6vw, 30px);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 340px) {
+  .cost-preview { grid-template-columns: 1fr; }
+}

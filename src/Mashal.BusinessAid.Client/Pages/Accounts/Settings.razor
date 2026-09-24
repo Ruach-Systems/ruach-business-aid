@@ -60,7 +60,7 @@
 @if(confirmingReset){
 <div class="reset-confirmation" role="alert" aria-live="assertive">
 <strong>Delete all local demo data?</strong>
-<span>Products, inventory, sales, expenses, production batches, and pending changes on this device will be permanently removed.</span>
+<span>Items, stock, sales, expenses, and pending changes on this device will be permanently removed.</span>
 <div>
 <button type="button" class="button ghost" disabled="@Saving" @onclick="()=>confirmingReset=false">Keep my data</button>
 <button type="button" class="button primary" disabled="@Saving" @onclick="ResetLocalData">Delete and start over</button>

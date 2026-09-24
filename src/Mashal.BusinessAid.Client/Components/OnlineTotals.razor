@@ -5,7 +5,7 @@
 <h2>Summary</h2>
 <a href="/reports">View reports</a>
 </div>
-<p class="reports-subtitle">Weekly and monthly sales, expenses, and estimated profit.</p>
+<p class="reports-subtitle">Weekly and monthly sales, expenses, and net profit.</p>
 @if (!Store.Online || Store.User?.IsDemo == true) {
 <div class="card">
 <p class="metric-note">Connect and sign in to view synchronized weekly and monthly totals.</p>
@@ -29,14 +29,14 @@ else
 <strong>@Money(total.ExpenseCentavos)</strong>
 </div>
 <div class="period-total">
-<span>Estimated profit</span>
+<span>Net profit</span>
 <strong>@Money(total.ProfitCentavos)</strong>
 </div> } else {
 <p class="metric-note">Loading synchronized totals…</p> }
 </article>
 }
 </div>
-<p class="field-help">Operational estimates from synchronized records.</p>
+<p class="field-help">Calculated from synchronized records.</p>
 }
 </section>
 @code {

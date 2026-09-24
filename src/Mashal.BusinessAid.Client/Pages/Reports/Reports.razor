@@ -3,131 +3,16 @@
 @inherits PageBase
 @inject ApiClient Api
 <div class="page">
-<PageHeading Title="Reports" Eyebrow="Business performance" Description="See sales, costs, expenses, and estimated profit." />
-@if(!Store.Online || Store.User?.IsDemo==true){
-<section class="card empty">
-<h2>Reports require an online account</h2>
-<p>Connect and synchronize your records to view financial reports.</p>
-</section>}
+<PageHeading Title="Reports" Eyebrow="Business performance" Description="See revenue, item cost, gross profit, expenses, and net profit." />
+@if(!Store.Online||Store.User?.IsDemo==true){<section class="card empty"><h2>Reports require an online account</h2><p>Connect and synchronize your records to view financial reports.</p></section>}
 else{
-<form class="card report-filters" @onsubmit="Load" @onsubmit:preventDefault>
-<div class="field">
-<label for="report-period">Period</label>
-<select id="report-period" @bind="period" @bind:after="SetPeriod">
-<option value="today">Today</option>
-<option value="week">This week</option>
-<option value="month">This month</option>
-<option value="year">This year</option>
-<option value="custom">Custom range</option>
-</select>
-</div>
-<div class="report-date-fields">
-<div class="field">
-<label for="report-from">From</label>
-<input id="report-from" type="date" @bind="from" />
-</div>
-<div class="field">
-<label for="report-to">To (inclusive)</label>
-<input id="report-to" type="date" @bind="to" />
-</div>
-</div>
-<div class="field report-group-field">
-<label for="report-group">Group trends by</label>
-<select id="report-group" @bind="grouping">
-<option value="day">Day</option>
-<option value="week">Week</option>
-<option value="month">Month</option>
-</select>
-</div>
-<button class="button primary" disabled="@Saving">View reports</button>
-</form>
-@if(Store.PendingCount>0){
-<p class="notice">@Store.PendingCount pending changes are excluded until synchronization finishes.</p>}
+<form class="card report-filters" @onsubmit="Load" @onsubmit:preventDefault><div class="field"><label for="report-period">Period</label><select id="report-period" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option></select></div><button class="button primary" disabled="@Saving">View reports</button></form>
+@if(Store.PendingCount>0){<p class="notice">@Store.PendingCount pending changes are excluded until synchronization finishes.</p>}
 <ErrorBanner Message="@Error" />
 @if(summary is {} total){
-<section class="metric-grid section">@foreach(var metric in new[]{("Revenue",total.RevenueCentavos),("Cost of goods sold",total.CostCentavos),("Expenses",total.ExpenseCentavos),("Estimated gross profit",total.GrossProfitCentavos),("Estimated net profit",total.ProfitCentavos)}){
-<article class="card">
-<span class="card-label">@metric.Item1</span>
-<div class="metric-value">@Money(metric.Item2)</div>
-</article>}<article class="card">
-<span class="card-label">Transactions / items sold</span>
-<div class="metric-value">@total.Transactions / @Quantity(total.ItemCount)</div>
-</article>
-</section>
-<section class="card section">
-<h2>Sales trends</h2>
-<div class="table-scroll">
-<table>
-<thead>
-<tr>
-<th>Period</th>
-<th>Revenue</th>
-<th>Cost</th>
-<th>Estimated gross profit</th>
-</tr>
-</thead>
-<tbody>@foreach(var row in trends){
-<tr>
-<td>@Mashal.BusinessAid.Shared.Calculations.FriendlyDate(row.Period, Today())</td>
-<td>@Money(row.RevenueCentavos)</td>
-<td>@Money(row.CostCentavos)</td>
-<td>@Money(row.GrossProfitCentavos)</td>
-</tr>}
-</tbody>
-</table>
+<section class="metric-grid section">@foreach(var metric in new[]{("Revenue",total.RevenueCentavos),("Item cost",total.CostCentavos),("Gross profit",total.GrossProfitCentavos),("Expenses",total.ExpenseCentavos),("Net profit",total.ProfitCentavos)}){<article class="card"><span class="card-label">@metric.Item1</span><div class="metric-value">@Money(metric.Item2)</div></article>}<article class="card"><span class="card-label">Transactions / items sold</span><div class="metric-value">@total.Transactions / @Quantity(total.ItemCount)</div></article></section>
+<section class="card section"><h2>Sales trends</h2><div class="table-scroll"><table><thead><tr><th>Period</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th></tr></thead><tbody>@foreach(var row in trends){<tr><td>@FriendlyDate(row.Period,Today())</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.GrossProfitCentavos)</td></tr>}</tbody></table></div>@if(trends.Count==0){<p>No sales in this period.</p>}</section>
+<section class="card section"><h2>Item performance</h2><div class="table-scroll"><table><thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th><th>Snapshotted cost</th><th>Gross profit</th></tr></thead><tbody>@foreach(var row in items){<tr><td>@row.ItemName</td><td>@Quantity(row.Quantity)</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.ProfitCentavos)</td></tr>}</tbody></table></div></section>
+<section class="card section"><h2>Expenses by category</h2><div class="table-scroll"><table><thead><tr><th>Category</th><th>Total</th><th>Percentage</th></tr></thead><tbody>@foreach(var row in expenses){<tr><td>@row.Category</td><td>@Money(row.AmountCentavos)</td><td>@(row.Percentage?.ToString("0.0")??"0")%</td></tr>}</tbody></table></div></section>}}
 </div>
-@if(trends.Count==0){
-<p>No sales in this period.</p>}
-</section>
-<section class="card section">
-<h2>Product performance</h2>
-<div class="table-scroll">
-<table>
-<thead>
-<tr>
-<th>Product</th>
-<th>Quantity</th>
-<th>Revenue</th>
-<th>Snapshotted cost</th>
-<th>Estimated profit</th>
-</tr>
-</thead>
-<tbody>@foreach(var row in products){
-<tr>
-<td>@row.ProductName</td>
-<td>@Quantity(row.Quantity)</td>
-<td>@Money(row.RevenueCentavos)</td>
-<td>@Money(row.CostCentavos)</td>
-<td>@Money(row.ProfitCentavos)</td>
-</tr>}
-</tbody>
-</table>
-</div>
-</section>
-<section class="card section">
-<h2>Expenses by category</h2>
-<div class="table-scroll">
-<table>
-<thead>
-<tr>
-<th>Category</th>
-<th>Total</th>
-<th>Percentage</th>
-</tr>
-</thead>
-<tbody>@foreach(var row in expenses){
-<tr>
-<td>@row.Category</td>
-<td>@Money(row.AmountCentavos)</td>
-<td>@(row.Percentage?.ToString("0.0")??"0")%</td>
-</tr>}
-</tbody>
-</table>
-</div>
-</section>}
-}
-</div>
-
-<style>.report-filters{display:flex;align-items:end;flex-wrap:wrap;gap:12px}.report-filters .field{flex:1;min-width:150px}.report-date-fields{display:contents}.metric-grid .card{display:flex;flex-direction:column;min-height:112px}.metric-grid .metric-value{margin-top:auto;font-size:clamp(23px,4vw,36px);line-height:1.15;overflow-wrap:anywhere}.report-filters + .notice{font-size:13px}.report-filters ~ .section h2{font-size:20px}
-@@media(max-width:600px){.report-date-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:1 1 100%}.report-date-fields .field{min-width:0}.report-filters .field{min-width:0}.report-filters > .field:first-child{flex-basis:100%}.report-filters > .button{width:100%}.report-group-field{border-top:1px solid var(--mashal-line);padding-top:16px}}
-</style>
+<style>.report-filters{display:flex;align-items:end;gap:12px}.report-filters .field{flex:1}.metric-grid .card{display:flex;flex-direction:column;min-height:112px}.metric-grid .metric-value{margin-top:auto;font-size:clamp(23px,4vw,36px);line-height:1.15;overflow-wrap:anywhere}.report-filters + .notice{font-size:13px}@@media(max-width:600px){.report-filters{display:grid}.report-filters>.button{width:100%}}</style>

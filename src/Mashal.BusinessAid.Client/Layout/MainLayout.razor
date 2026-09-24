@@ -35,9 +35,9 @@
 <Icon Name="cart" />
 <span>Sales</span>
 </NavLink>
-<NavLink href="/inventory">
+<NavLink href="/items">
 <Icon Name="cube" />
-<span>Inventory</span>
+<span>Items</span>
 </NavLink>
 <NavLink href="/more">
 <Icon Name="more" />
@@ -46,5 +46,5 @@
     </nav>
 </div>
 @code {
-    private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Overview", "home"), ("/sales", "Daily sales", "cart"), ("/expenses", "Expenses", "wallet"), ("/inventory", "Inventory", "cube"), ("/products", "Products & costing", "tag"), ("/production", "Production", "batch"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
+    private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Overview", "home"), ("/sales", "Daily sales", "cart"), ("/items", "Items", "tag"), ("/expenses", "Expenses", "wallet"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
 }

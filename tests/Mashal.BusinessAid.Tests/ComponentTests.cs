@@ -42,14 +42,6 @@ public class ComponentTests
         input.Find("input").Blur();
         Assert.Equal("0.00", input.Find("input").GetAttribute("value"));
     }
-    [Theory]
-    [InlineData("g", 33.33, "grams")]
-    [InlineData("g", 1, "gram")]
-    [InlineData("pc", 0, "pieces")]
-    [InlineData("pc", 1, "piece")]
-    [InlineData("ml", 200, "milliliters")]
-    public void UnitNamesAreReadable(string unit, decimal quantity, string expected) =>
-        Assert.Equal(expected, Mashal.BusinessAid.Shared.Calculations.UnitName(unit, quantity));
     private sealed class TestEnvironment : IWebAssemblyHostEnvironment
     {
         public string Environment => "Development"; public string ApplicationName => "Mashal.BusinessAid.Client"; public string BaseAddress => "http://localhost:5173/";
@@ -72,15 +64,26 @@ public class ComponentTests
         Assert.Contains("mashal-wordmark-reversed", page.Find("img").GetAttribute("src"));
     }
     [Fact]
-    public void ProductDefaultsToNotTrackedAndShowsPreparedSecond()
+    public void ItemEditorKeepsPriceAndCostTogetherWithoutProductionOptions()
     {
-        using var context = Context(); var page = context.Render<ProductEditor>();
-        var modes = page.FindAll("[role=radio]");
-        Assert.Equal(2, modes.Count); Assert.Contains("Not tracked", modes[0].TextContent); Assert.Equal("true", modes[0].GetAttribute("aria-checked"));
-        modes[1].Click(); Assert.Contains("Batch ingredients", page.Markup); Assert.Contains("How many finished items", page.Markup); Assert.DoesNotContain("Made when sold", page.Markup);
-        var yield = page.Find("#recipe-batch-yield"); yield.Input("10"); Assert.Equal("10", yield.GetAttribute("value"));
-        Assert.Contains("Create your first ingredient", page.Markup);
-        Assert.NotNull(page.Find("#quick-item-name"));
+        using var context = Context(); var page = context.Render<InventoryEditor>();
+        Assert.NotNull(page.Find("#item-name"));
+        Assert.NotNull(page.Find("#item-price"));
+        Assert.NotNull(page.Find("#item-cost"));
+        Assert.Contains("Profit per item", page.Markup);
+        Assert.Contains("Markup", page.Markup);
+        Assert.Equal("-", page.Find(".cost-preview div:nth-child(2) strong").TextContent);
+        Assert.DoesNotContain("Not applicable", page.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Margin", page.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("recipe", page.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("production", page.Markup, StringComparison.OrdinalIgnoreCase);
+    }
+    [Fact]
+    public void ReportsOfferOnlySimpleBusinessPeriods()
+    {
+        using var context = Context(); var page = context.Render<Reports>();
+        var options = page.FindAll("#report-period option").Select(x => x.TextContent).ToArray();
+        Assert.Equal(new[] { "Today", "This week", "This month" }, options);
     }
     [Fact]
     public void OnboardingProvidesAccountExitWithoutFakeProgress()
@@ -111,6 +114,6 @@ public class ComponentTests
         Assert.Equal("Record changed", error.Find("[role=alert]").TextContent);
         var totals = context.Render<OnlineTotals>();
         Assert.Equal("Summary", totals.Find("h2").TextContent);
-        Assert.Contains("Weekly and monthly sales, expenses, and estimated profit.", totals.Markup);
+        Assert.Contains("Weekly and monthly sales, expenses, and net profit.", totals.Markup);
     }
 }

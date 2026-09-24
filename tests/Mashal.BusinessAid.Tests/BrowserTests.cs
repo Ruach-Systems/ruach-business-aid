@@ -27,8 +27,8 @@ public partial class BrowserTests
         await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 390, Height = 844 } });
         var account = new AppUser(Guid.NewGuid(), "Browser tester", "browser@example.invalid", null) { PhoneNumber="+639171234567" };
         var business = new Business { Id = Guid.NewGuid(), OwnerUid = account.Uid, Name = "Browser test shop", DefaultLocation = "Main", CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow };
-        var product = new Product { Id = Guid.NewGuid(), BusinessId = business.Id, Name = "Buko Juice", InventoryMode = "untracked", IsActive = true, SellingPriceCentavos = 3500, ManualCostCentavos = 1630, Version = [0, 0, 0, 0, 0, 0, 0, 1], CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow };
-        var data = new AppData { Business = business, Products = [product] };
+        var item = new Item { Id = Guid.NewGuid(), BusinessId = business.Id, Name = "Buko Juice", IsActive = true, SellingPriceCentavos = 3500, UnitCostCentavos = 1630, Version = [0, 0, 0, 0, 0, 0, 0, 1], CreatedAt = DateTimeOffset.UtcNow, UpdatedAt = DateTimeOffset.UtcNow };
+        var data = new AppData { Business = business, Items = [item] };
         await MockApi(context, account, data);
         var page = await context.NewPageAsync();
         var consoleErrors = new List<string>(); page.PageError += (_, error) => consoleErrors.Add(error);
@@ -36,7 +36,7 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Button, new() { Name="Open Browser test shop", Exact=true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.WaitForFunctionAsync("() => navigator.serviceWorker.controller !== null");
-        // Seed exactly the former JavaScript shape: no revision property and a prepared outbox request.
+        // Seed a legacy model without modelVersion. The simplified release must discard it.
         var expenseId = Guid.NewGuid();
         var operation = new { id = Guid.NewGuid(), entityId = expenseId, type = "saveExpense", expectedVersion = (string?)null, payload = new { id = expenseId, description = "Legacy fare", category = "Transportation", amountCentavos = 2500, expenseDate = "2026-09-15" }, projections = Array.Empty<object>(), dependsOnPending = false, prepared = true };
         var oldState = JsonSerializer.Serialize(new { user = account, workspaceId=business.Id, data, serverData = data, cursor = 0, outbox = new[] { operation } }, Wire.Json);
@@ -44,13 +44,13 @@ public partial class BrowserTests
         await page.ReloadAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         var preserved = await ReadState(page, account.Uid);
-        Assert.Equal(operation.id, preserved.GetProperty("outbox")[0].GetProperty("id").GetGuid());
-        Assert.True(preserved.GetProperty("outbox")[0].GetProperty("prepared").GetBoolean());
+        Assert.Equal(DataModel.CurrentVersion, preserved.GetProperty("modelVersion").GetInt32());
+        Assert.Equal(0, preserved.GetProperty("outbox").GetArrayLength());
 
         foreach (var width in new[] { 320, 390, 768, 1366 })
         {
             await page.SetViewportSizeAsync(width, 900);
-            foreach (var route in new[] { "dashboard", "sales", "expenses", "inventory", "inventory/new", "stock/add", "stock/adjust", "products", "products/new", "production", "production/new", "more", "settings", "reports" })
+            foreach (var route in new[] { "dashboard", "sales", "expenses", "items", "items/new", "stock/add", "stock/adjust", "more", "settings", "reports" })
             {
                 await page.GotoAsync(host.Url + "/" + route);
                 await Expect(page.Locator("main h1")).ToBeVisibleAsync();
@@ -60,10 +60,23 @@ public partial class BrowserTests
             await page.ScreenshotAsync(new() { Path = Path.Combine(host.Root, "artifacts", "browser", $"blazor-reports-{width}.png"), FullPage = true });
         }
         await page.SetViewportSizeAsync(390, 844);
+        await page.GotoAsync(host.Url + "/items");
+        await page.Locator("#item-search").FocusAsync();
+        await page.WaitForTimeoutAsync(150);
+        Assert.Equal("none", await page.Locator("#item-search").EvaluateAsync<string>("element => getComputedStyle(element).boxShadow"));
+        var searchFocusRing = await page.Locator(".search-box").EvaluateAsync<string>("element => getComputedStyle(element).boxShadow");
+        Assert.Contains("2px", searchFocusRing);
+        Assert.DoesNotContain("6px", searchFocusRing);
+        await page.SetViewportSizeAsync(390, 844);
         await context.SetOfflineAsync(true);
         await page.GotoAsync(host.Url + "/sales");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "What sold today?" })).ToBeVisibleAsync();
-        await page.GetByLabel("Buko Juice quantity sold", new() { Exact = true }).FillAsync("2");
+        var saleQuantity = page.GetByLabel("Buko Juice quantity sold", new() { Exact = true });
+        await saleQuantity.FillAsync("2");
+        await page.WaitForTimeoutAsync(150);
+        var saleQuantityFocusRing = await saleQuantity.EvaluateAsync<string>("element => getComputedStyle(element).boxShadow");
+        Assert.Contains("2px", saleQuantityFocusRing);
+        Assert.DoesNotContain("6px", saleQuantityFocusRing);
         await page.GetByRole(AriaRole.Button, new() { Name = "Save 2 items", Exact = true }).ClickAsync();
         await Expect(page.GetByText("Sale saved on this device.", new() { Exact = true })).ToBeVisibleAsync();
         await page.ReloadAsync();
@@ -99,7 +112,7 @@ public partial class BrowserTests
     }
 
     [BrowserFact]
-    public async Task ProductionOnboardingAndOperationalFormsWorkWithoutDemoBypass()
+    public async Task OnboardingAndSimpleItemWorkflowWorkWithoutDemoBypass()
     {
         await using var host = await Preview.Start();
         using var playwright = await Playwright.CreateAsync();
@@ -121,66 +134,39 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Button,new(){Name="Refresh status",Exact=true}).ClickAsync();
         await page.GetByRole(AriaRole.Button,new(){Name="Open Form verification",Exact=true}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
-        await page.GotoAsync(host.Url + "/inventory/new");
-        await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Flour");
-        await page.GetByLabel("Base unit", new() { Exact = true }).SelectOptionAsync("g");
+        await page.GotoAsync(host.Url + "/items/new");
+        await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Bread");
+        await page.GetByLabel("Selling price (₱)", new() { Exact = true }).FillAsync("25");
+        await page.GetByLabel("Unit cost (₱)", new() { Exact = true }).FillAsync("10");
+        await CheckResponsiveForm(page, host.Root, "item-editor");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save item", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Inventory", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/stock/add");
         var state = await ReadState(page, account.Uid);
-        var item = state.GetProperty("data").GetProperty("inventoryItems")[0].GetProperty("id").GetString()!;
-        await page.GetByLabel("Inventory item", new() { Exact = true }).SelectOptionAsync(item);
-        await page.GetByLabel("Unit", new() { Exact = true }).SelectOptionAsync("kg");
+        var itemId = state.GetProperty("data").GetProperty("items").EnumerateArray().Single(x=>x.GetProperty("name").GetString()=="Bread").GetProperty("id").GetString()!;
+        await page.GetByLabel("Item", new() { Exact = true }).SelectOptionAsync(itemId);
         await page.GetByLabel("Quantity received", new() { Exact = true }).FillAsync("2");
-        await page.GetByLabel("Total purchase cost (₱)", new() { Exact = true }).FillAsync("100");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save stock receipt", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Inventory", Exact = true })).ToBeVisibleAsync();
-        await page.GotoAsync(host.Url + "/products/new");
-        await page.GetByLabel("Product name", new() { Exact = true }).FillAsync("Bread");
-        await page.GetByLabel("Selling price (₱)", new() { Exact = true }).FillAsync("25");
-        await page.GetByLabel("Selling price (₱)", new() { Exact = true }).PressAsync("Tab");
-        await Expect(page.GetByLabel("Selling price (₱)", new() { Exact = true })).ToHaveValueAsync("25.00");
-        await page.GetByRole(AriaRole.Radio, new() { Name = "Prepared in advance", Exact = false }).ClickAsync();
-        await page.GetByLabel("How many finished items does this batch normally make?", new() { Exact = true }).FillAsync("10");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Add ingredient", Exact = true }).ClickAsync();
-        await page.GetByLabel("Ingredient", new() { Exact = true }).SelectOptionAsync(item);
-        await page.GetByLabel("Batch ingredient quantity", new() { Exact = true }).FillAsync("1000");
-        await page.GetByLabel("Batch ingredient quantity", new() { Exact = true }).PressAsync("Tab");
-        await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Add ingredient", Exact = true })).ToBeDisabledAsync();
-        await CheckResponsiveForm(page, host.Root, "product-recipe");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Create inventory item", Exact = true }).ClickAsync();
-        await page.GetByLabel("Ingredient name", new() { Exact = true }).FillAsync("Sugar");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Create and add", Exact = true }).ClickAsync();
-        await Expect(page.GetByLabel("Ingredient", new() { Exact = true })).ToHaveCountAsync(2);
-        await Expect(page.GetByLabel("Product name", new() { Exact = true })).ToHaveValueAsync("Bread");
-        await Expect(page.GetByLabel("Selling price (₱)", new() { Exact = true })).ToHaveValueAsync("25.00");
+        await CheckResponsiveForm(page, host.Root, "stock-receipt");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Save stock", Exact = true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
+        await page.GotoAsync(host.Url + "/sales");
+        await page.GetByLabel("Bread quantity sold", new() { Exact = true }).FillAsync("3");
+        await Expect(page.GetByText("One or more items will have negative stock.",new(){Exact=false})).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Save 3 items", Exact = true }).ClickAsync();
+        await page.GotoAsync(host.Url + "/items/" + itemId);
+        await Expect(page.GetByText("Stock is negative",new(){Exact=false})).ToBeVisibleAsync();
         state = await ReadState(page, account.Uid);
-        Assert.Contains(state.GetProperty("data").GetProperty("inventoryItems").EnumerateArray(), x => x.GetProperty("name").GetString() == "Sugar");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Remove ingredient", Exact = true }).Last.ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save product", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Products", Exact = true })).ToBeVisibleAsync();
-        state = await ReadState(page, account.Uid);
-        var bread = state.GetProperty("data").GetProperty("products").EnumerateArray().Single(x => x.GetProperty("name").GetString() == "Bread");
-        Assert.Equal(10, bread.GetProperty("recipeBatchYield").GetDecimal());
-        Assert.Equal(100, bread.GetProperty("recipe")[0].GetProperty("quantity").GetDecimal());
-        await page.GotoAsync(host.Url + "/production/new");
-        await page.GetByRole(AriaRole.Radio).ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Continue to batch details", Exact = true }).ClickAsync();
-        await page.GetByLabel("Planned yield", new() { Exact = true }).FillAsync("5");
-        await CheckResponsiveForm(page, host.Root, "batch-requirements");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save draft", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Production", Exact = true })).ToBeVisibleAsync();
-        state = await ReadState(page, account.Uid);
-        var batch = state.GetProperty("data").GetProperty("batches")[0].GetProperty("id").GetString()!;
-        await page.GotoAsync(host.Url + "/production/" + batch + "/complete");
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "What was consumed?" })).ToBeVisibleAsync();
-        await CheckResponsiveForm(page, host.Root, "batch-actuals");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Complete batch", Exact = true }).ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Confirm & post", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Production", Exact = true })).ToBeVisibleAsync();
-        state = await ReadState(page, account.Uid);
-        Assert.Equal("completed", state.GetProperty("data").GetProperty("batches")[0].GetProperty("status").GetString());
-        Assert.Equal(1500, state.GetProperty("data").GetProperty("inventoryItems")[0].GetProperty("currentQuantity").GetDecimal());
+        Assert.Equal(-1, state.GetProperty("data").GetProperty("items").EnumerateArray().Single(x=>x.GetProperty("name").GetString()=="Bread").GetProperty("currentQuantity").GetInt64());
+        await page.GotoAsync(host.Url + "/expenses");
+        await page.GetByLabel("Description", new() { Exact = true }).FillAsync("Delivery fare");
+        await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("10");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
+        await Expect(page.GetByText("Delivery fare", new() { Exact = true })).ToBeVisibleAsync();
+        await page.GotoAsync(host.Url + "/reports");
+        await Expect(page.GetByText("Item performance", new() { Exact = true })).ToBeVisibleAsync();
+        Assert.Equal(new[] { "Today", "This week", "This month" }, await page.Locator("#report-period option").AllTextContentsAsync());
+        await page.GotoAsync(host.Url + "/products");
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
     }
 
     private static async Task CheckResponsiveForm(IPage page, string root, string name)
@@ -195,7 +181,7 @@ public partial class BrowserTests
                   .map(e => e.outerHTML)
                 """);
             Assert.True(overflowing.Length == 0, $"{name} at {width}px: {string.Join("; ", overflowing)}");
-            await page.Locator(name == "product-recipe" ? ".recipe-list" : name == "batch-actuals" ? ".actual-list" : ".requirement-list").ScrollIntoViewIfNeededAsync();
+            await page.Locator("main form").ScrollIntoViewIfNeededAsync();
             await page.ScreenshotAsync(new() { Path = Path.Combine(root, "artifacts", "browser", $"{name}-{width}.png") });
         }
     }
@@ -226,9 +212,9 @@ public partial class BrowserTests
         {
             "/api/auth/session" => account,
             "/api/account" => new AccountOverview(account,all.Where(x=>x.Business is not null).Select(x=>x.Business!).ToList(),requests),
-            "/api/bootstrap" => new BootstrapResult(account, selected, 0),
+            "/api/bootstrap" => new BootstrapResult(DataModel.CurrentVersion, account, selected, 0),
             "/api/auth/antiforgery" => new { token = "fixture" },
-            "/api/sync/pull" => new PullResult(0, [], false),
+            "/api/sync/pull" => new PullResult(DataModel.CurrentVersion, 0, [], false),
             "/api/sync/push" => new { code = "retry", title = "Test connection interrupted" },
             "/api/reports/summary" => new FinancialSummary(7000, 3260, 1000, 3740, 2740, 1, 2),
             _ => Array.Empty<object>()

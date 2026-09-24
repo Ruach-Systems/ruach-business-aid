@@ -2,47 +2,19 @@
 @page "/stock/add"
 @inherits PageBase
 <div class="page narrow">
-<BackLink To="/inventory" Text="Back to inventory" />
-<PageHeading Title="Add stock" Eyebrow="Purchases & costing" Description="Enter the quantity received and total purchase cost." />
+<BackLink To="/items" Text="Back to items" />
+<PageHeading Title="Add stock" Eyebrow="Stock received" Description="Add a whole-number quantity using the item's fixed cost." />
 <form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
-<div class="field">
-<label for="receipt-item">Inventory item</label>
-<select id="receipt-item" @bind="itemId" @bind:after="ChooseItem" required>
-<option value="@Guid.Empty">Select inventory item</option>
-@foreach(var item in Store.Inventory){
-<option value="@item.Id">@item.Name</option>}
-</select>
-</div>
-<div class="field-row">
-<div class="field">
-<label for="receipt-quantity">Quantity received</label>
-<input id="receipt-quantity" type="number" min="0.000001" step="any" @bind:get="decimal.Round(quantity, 2)" @bind:set="value => quantity = value" required @bind:event="oninput" />
-</div>
-<div class="field">
-<label for="receipt-unit">Unit</label>
-<select id="receipt-unit" @bind="unit">@foreach(var value in Units){
-<option value="@value">@value</option>}
-</select>
-</div>
-</div>
-<div class="field">
-<label for="receipt-cost">Total purchase cost (₱)</label>
-<MoneyInput id="receipt-cost" min="0" @bind-Value="cost" required />
-</div>
-<div class="field">
-<label for="receipt-note">Note</label>
-<textarea id="receipt-note" @bind="note">
-</textarea>
-</div>
-@if(Item is {} selected && quantity > 0){
-<div class="card soft">
-<span class="card-label">New average cost per @UnitName(selected.BaseUnit, 1)</span>
-<strong>@Money(Rules.Average(selected.CurrentQuantity,selected.AverageCostCentavos, quantity * Conversion(unit,selected.BaseUnit),Centavos(cost)))</strong>
+<div class="field"><label for="receipt-item">Item</label><select id="receipt-item" @bind="itemId" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
+<div class="field"><label for="receipt-quantity">Quantity received</label><input id="receipt-quantity" type="number" min="1" step="1" @bind="quantity" required /></div>
+<div class="field"><label for="receipt-note">Note</label><textarea id="receipt-note" @bind="note" placeholder="Optional supplier or delivery note"></textarea></div>
+@if(Item is {} selected){
+<div class="card soft stock-cost">
+<div class="stock-cost-heading"><span class="card-label">Cost used</span><a href="@($"/items/{selected.Id}/edit")">Edit item cost</a></div>
+<strong class="stock-cost-rate">@Money(selected.UnitCostCentavos)<small>per item</small></strong>
+<div class="stock-cost-total"><span>Total stock value added</span><strong>@Money(selected.UnitCostCentavos*quantity)</strong></div>
 </div>}
 <ErrorBanner Message="@Error" />
-<div class="form-actions">
-<a class="button ghost" href="/inventory">Cancel</a>
-<button class="button primary" disabled="@Saving">Save stock receipt</button>
-</div>
+<div class="form-actions"><a class="button ghost" href="/items">Cancel</a><button class="button primary" disabled="@Saving">Save stock</button></div>
 </form>
 </div>

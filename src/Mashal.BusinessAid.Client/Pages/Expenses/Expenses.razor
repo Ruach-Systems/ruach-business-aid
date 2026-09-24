@@ -3,7 +3,7 @@
 @inherits PageBase
 @inject IJSRuntime JS
 <div class="page">
-<PageHeading Title="Expenses" Eyebrow="Operating costs" Description="Keep daily costs simple and separate from product ingredients.">
+<PageHeading Title="Expenses" Eyebrow="Optional operating costs" Description="Record costs such as rent, transport, utilities, and labor.">
 <span class="date-chip">Today · @Money(Store.Expenses.Where(x=>x.ExpenseDate==Today().ToString("yyyy-MM-dd")).Sum(x=>x.AmountCentavos))</span>
 </PageHeading>
 <div class="split">

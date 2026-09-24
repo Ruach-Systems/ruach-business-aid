@@ -10,6 +10,6 @@ public partial class Dashboard
     private long Cost => TodaySales.Sum(x => x.TotalCostCentavos);
     private IEnumerable<Expense> TodayExpenses => Store.Expenses.Where(x => x.ExpenseDate == Today().ToString("yyyy-MM-dd"));
     private long ExpenseTotal => TodayExpenses.Sum(x => x.AmountCentavos);
-    private IEnumerable<InventoryItem> LowStock => Store.Inventory.Where(x => x.CurrentQuantity <= x.MinimumQuantity);
+    private IEnumerable<Item> LowStock => Store.Items.Where(x => x.CurrentQuantity <= x.MinimumQuantity);
 
 }

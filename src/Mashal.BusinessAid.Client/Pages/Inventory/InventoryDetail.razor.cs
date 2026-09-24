@@ -6,5 +6,10 @@ namespace Mashal.BusinessAid.Client.Pages;
 public partial class InventoryDetail
 {
     [Parameter] public Guid Id { get; set; }
-    private InventoryItem? Item => Store.Data.InventoryItems.Find(x => x.Id == Id);
+    private Item? Item => Store.Data.Items.Find(x => x.Id == Id && x.DeletedAt is null);
+    private static string MarkupText(long price, long unitCost)
+    {
+        var markup = Calculations.Markup(price, unitCost);
+        return markup is null ? "markup not applicable" : $"{markup:0.0}% markup";
+    }
 }

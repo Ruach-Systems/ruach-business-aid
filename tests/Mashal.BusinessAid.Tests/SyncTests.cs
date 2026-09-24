@@ -51,7 +51,7 @@ public class SyncTests
     {
         var state = Initial(); var storage = new MemoryStorage(state); var api = new FakeApi();
         api.OnPush = () => { if (api.Requests.Count == 1) { var extra = LocalData.Clone(storage.Current.Outbox[0]); extra.Id = Guid.NewGuid(); extra.EntityId = Guid.NewGuid(); extra.Prepared = false; storage.Current.Outbox.Add(extra); } };
-        api.Pages.Enqueue(new(1, [], true)); api.Pages.Enqueue(new(2, [], false));
+        api.Pages.Enqueue(new(DataModel.CurrentVersion, 1, [], true)); api.Pages.Enqueue(new(DataModel.CurrentVersion, 2, [], false));
         await new SyncService(api, storage).Synchronize(state, _ => { });
         Assert.Equal(2, api.Requests.Count); Assert.Empty(storage.Current.Outbox); Assert.Equal(2, storage.Current.Cursor);
     }
@@ -65,6 +65,6 @@ public class SyncTests
     {
         public Exception? Failure; public bool PullFailure; public Action? OnPush; public List<string> Requests = []; public Queue<PullResult> Pages = [];
         public override Task Post(string path, object body) { var push = (PushRequest)body; Requests.Add(JsonSerializer.Serialize(push.Operations.Single(), Wire.Json)); OnPush?.Invoke(); if (Failure is not null) throw Failure; return Task.CompletedTask; }
-        public override Task<T> Get<T>(string path) { if (PullFailure) throw new HttpRequestException("Connection interrupted"); var cursor = long.Parse(path.Split("cursor=")[1]); return Task.FromResult((T)(object)(Pages.Count > 0 ? Pages.Dequeue() : new PullResult(cursor, [], false))); }
+        public override Task<T> Get<T>(string path) { if (PullFailure) throw new HttpRequestException("Connection interrupted"); var cursor = long.Parse(path.Split("cursor=")[1].Split('&')[0]); return Task.FromResult((T)(object)(Pages.Count > 0 ? Pages.Dequeue() : new PullResult(DataModel.CurrentVersion, cursor, [], false))); }
     }
 }

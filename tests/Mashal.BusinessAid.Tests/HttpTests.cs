@@ -51,7 +51,7 @@ public class HttpTests
         using var client = host.CreateClient(new() { AllowAutoRedirect = false });
         client.DefaultRequestHeaders.Add("X-Test-User", account.Uid.ToString()); client.DefaultRequestHeaders.Add("Origin", Origin);
         var business = await AccountFixture.Provision(scope.ServiceProvider.GetRequiredService<SqlConnectionFactory>(), account.Uid);
-        var body = new { businessId = business, operations = new[] { new { id = Guid.NewGuid(), entityId = business, type = "createBusiness", payload = new { name = "HTTP Business", defaultLocation = "Main" } } } };
+        var body = new { modelVersion = DataModel.CurrentVersion, businessId = business, operations = new[] { new { id = Guid.NewGuid(), entityId = business, type = "createBusiness", payload = new { name = "HTTP Business", defaultLocation = "Main" } } } };
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/sync/push", body)).StatusCode);
         var csrf = await client.GetFromJsonAsync<Csrf>("/api/auth/antiforgery");
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
@@ -59,6 +59,7 @@ public class HttpTests
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin")).StatusCode);
         var bootstrap = await client.GetFromJsonAsync<Mashal.BusinessAid.Shared.BootstrapResult>("/api/bootstrap?businessId=" + business);
         Assert.Equal(business, bootstrap!.Data.Business!.Id);
+        Assert.Equal((HttpStatusCode)426, (await client.GetAsync($"/api/sync/pull?businessId={business}&cursor=0")).StatusCode);
         client.DefaultRequestHeaders.Remove("Origin"); client.DefaultRequestHeaders.Add("Origin", "https://untrusted.example");
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/sync/push", body)).StatusCode);
     }

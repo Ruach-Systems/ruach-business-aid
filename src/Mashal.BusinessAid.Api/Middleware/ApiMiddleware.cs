@@ -26,7 +26,7 @@ public static class ApiMiddleware
                     System.Text.Json.JsonException => (400, "validation", "Invalid request payload."),
                     BadHttpRequestException => (400, "validation", "Invalid request."),
                     _ => (500, "server_error", "The request could not be completed.")};
-                app.Logger.LogError("Request failed with code {Code} ({Type}).", code, e.GetType().Name);
+                app.Logger.LogError(e, "Request failed with code {Code} ({Type}).", code, e.GetType().Name);
                 if (ctx.Response.HasStarted)
                     throw;
                 ctx.Response.StatusCode = status;

@@ -24,7 +24,7 @@
 <strong>@Money(Revenue)</strong>
 </div>
 <div class="today-total">
-<span>Product cost</span>
+<span>Item cost</span>
 <strong>@Money(Cost)</strong>
 </div>
 <div class="today-total">
@@ -34,14 +34,14 @@
 <details class="activity-details">
 <summary>View today's breakdown</summary>
 <p class="metric-note">Based on records saved on this device, including changes waiting to synchronize. Profit is an operational estimate.</p>
-<h3>Sales by product</h3>
-@foreach(var group in TodaySales.SelectMany(x=>x.Lines).GroupBy(x=>new { x.ProductId, x.ProductName })){
+<h3>Sales by item</h3>
+@foreach(var group in TodaySales.SelectMany(x=>x.Lines).GroupBy(x=>new { x.ItemId, x.ItemName })){
 <div class="activity-entry">
-<strong>@group.Key.ProductName</strong>
+<strong>@group.Key.ItemName</strong>
 <small>@Quantity(group.Sum(x=>x.Quantity)) items sold</small>
 <dl>
 <div><dt>Sales</dt><dd>@Money(group.Sum(x=>x.LineRevenueCentavos))</dd></div>
-<div><dt>Product cost</dt><dd>@Money(group.Sum(x=>x.LineCostCentavos))</dd></div>
+<div><dt>Item cost</dt><dd>@Money(group.Sum(x=>x.LineCostCentavos))</dd></div>
 <div><dt>Gross profit</dt><dd>@Money(group.Sum(x=>x.LineRevenueCentavos-x.LineCostCentavos))</dd></div>
 </dl>
 </div>}
@@ -55,7 +55,7 @@
 @if(!TodayExpenses.Any()){<p class="metric-note">No expenses recorded today.</p>}
 <dl class="activity-reconciliation">
 <div><dt>Total sales</dt><dd>@Money(Revenue)</dd></div>
-<div><dt>Less product cost</dt><dd>@Money(Cost)</dd></div>
+<div><dt>Less item cost</dt><dd>@Money(Cost)</dd></div>
 <div><dt>Less expenses</dt><dd>@Money(ExpenseTotal)</dd></div>
 <div><dt>Estimated net profit</dt><dd>@Money(Revenue-Cost-ExpenseTotal)</dd></div>
 </dl>
@@ -69,8 +69,8 @@
 <div class="quick-actions">
 <a class="button primary" href="/sales">
 <Icon Name="cart" />Record sale</a>
-<a class="button ghost" href="/production/new">
-<Icon Name="batch" />Make batch</a>
+<a class="button ghost" href="/items/new">
+<Icon Name="tag" />Add item</a>
 <a class="button ghost" href="/stock/add">
 <Icon Name="cube" />Add stock</a>
 <a class="button ghost" href="/expenses">
@@ -92,7 +92,7 @@
 </span>
 <div class="list-main">
 <strong>@Quantity(sale.TotalItems) items · @sale.Location</strong>
-<small>@FriendlyDate(sale.SaleDate, Today()) · @string.Join(", ", sale.Lines.Select(x => x.ProductName))</small>
+<small>@FriendlyDate(sale.SaleDate, Today()) · @string.Join(", ", sale.Lines.Select(x => x.ItemName))</small>
 </div>
 <strong class="sale-amount">@Money(sale.TotalRevenueCentavos)</strong>
 </article> }
@@ -107,28 +107,28 @@ else {
 <section>
 <div class="section-heading">
 <h2>Low stock</h2>
-<a href="/inventory">View all</a>
+<a href="/items">View all</a>
 </div>
 @if (LowStock.Any()) {
 <div class="card warning stack">@foreach (var item in LowStock.Take(5)) {
-<a href="@($"/inventory/{item.Id}")" class="list-card compact">
+<a href="@($"/items/{item.Id}")" class="list-card compact">
 <div class="list-main">
 <strong>@item.Name</strong>
-<small>@Quantity(item.CurrentQuantity) @UnitName(item.BaseUnit, item.CurrentQuantity) remaining</small>
+<small>@Quantity(item.CurrentQuantity) remaining</small>
 </div>
 </a> }
 </div> }
-else if (Store.Inventory.Any()) {
+else if (Store.Items.Any()) {
 <div class="card success">
-<span class="card-label">Inventory health</span>
+<span class="card-label">Stock health</span>
 <h3 class="healthy">Everything looks stocked</h3>
 <p class="metric-note">No items are at or below their minimum.</p>
 </div> }
 else {
 <div class="card empty">
-<h3>No inventory to monitor</h3>
-<p>Add an inventory item to start tracking stock levels.</p>
-<a class="button ghost small" href="/inventory/new">Add inventory item</a>
+<h3>No items to monitor</h3>
+<p>Add an item to start tracking prices, costs, and stock.</p>
+<a class="button ghost small" href="/items/new">Add item</a>
 </div> }
 </section>
 </div>

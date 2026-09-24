@@ -2,38 +2,14 @@
 @page "/stock/adjust"
 @inherits PageBase
 <div class="page narrow">
-<BackLink To="/inventory" Text="Back to inventory" />
-<PageHeading Title="Adjust stock" Eyebrow="Stock count" Description="Use the actual counted quantity to correct your records." />
+<BackLink To="/items" Text="Back to items" />
+<PageHeading Title="Correct stock" Eyebrow="Physical count" Description="Replace the saved balance with the quantity you actually have." />
 <form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
-<div class="field">
-<label for="adjust-item">Inventory item</label>
-<select id="adjust-item" @bind="itemId" @bind:after="Choose" required>
-<option value="@Guid.Empty">Select inventory item</option>
-@foreach(var item in Store.Inventory){
-<option value="@item.Id">@item.Name</option>}
-</select>
-</div>
-<div class="field">
-<label for="counted">Actual counted quantity</label>
-<input id="counted" type="number" min="0" step="any" @bind:get="decimal.Round(count, 2)" @bind:set="value => count = value" required @bind:event="oninput" />
-</div>
-<div class="field">
-<label for="reason">Reason</label>
-<select id="reason" @bind="reason">
-<option>Stock count correction</option>
-<option>Waste / spoilage</option>
-<option>Other</option>
-</select>
-</div>
-<div class="field">
-<label for="adjust-note">Note</label>
-<textarea id="adjust-note" @bind="note">
-</textarea>
-</div>
+<div class="field"><label for="adjust-item">Item</label><select id="adjust-item" @bind="itemId" @bind:after="Choose" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
+<div class="field"><label for="adjust-count">Counted quantity</label><input id="adjust-count" type="number" min="0" step="1" @bind="count" required /></div>
+<div class="field"><label for="adjust-reason">Reason</label><select id="adjust-reason" @bind="reason"><option>Stock count correction</option><option>Waste / spoilage</option><option>Return</option><option>Other</option></select></div>
+<div class="field"><label for="adjust-note">Note</label><textarea id="adjust-note" @bind="note"></textarea></div>
 <ErrorBanner Message="@Error" />
-<div class="form-actions">
-<a class="button ghost" href="/inventory">Cancel</a>
-<button class="button primary" disabled="@Saving">Save adjustment</button>
-</div>
+<div class="form-actions"><a class="button ghost" href="/items">Cancel</a><button class="button primary" disabled="@Saving">Save correction</button></div>
 </form>
 </div>
