@@ -1,0 +1,38 @@
+.report-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+}
+
+.report-filters.custom {
+    grid-template-columns: minmax(150px, 1.1fr) repeat(2, minmax(145px, 1fr)) auto;
+}
+
+.metric-grid .card {
+    display: flex;
+    flex-direction: column;
+    min-height: 112px;
+}
+
+.metric-grid .metric-value {
+    margin-top: auto;
+    font-size: clamp(23px, 4vw, 36px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.report-filters + .notice {
+    font-size: 13px;
+}
+
+@media (max-width: 760px) {
+    .report-filters,
+    .report-filters.custom {
+        grid-template-columns: 1fr;
+    }
+
+    .report-filters > .button {
+        width: 100%;
+    }
+}

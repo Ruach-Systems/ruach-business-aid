@@ -79,11 +79,19 @@ public class ComponentTests
         Assert.DoesNotContain("production", page.Markup, StringComparison.OrdinalIgnoreCase);
     }
     [Fact]
-    public void ReportsOfferOnlySimpleBusinessPeriods()
+    public void ReportsOfferSimplePeriodsAndAValidatedCustomRange()
     {
         using var context = Context(); var page = context.Render<Reports>();
         var options = page.FindAll("#report-period option").Select(x => x.TextContent).ToArray();
-        Assert.Equal(new[] { "Today", "This week", "This month" }, options);
+        Assert.Equal(new[] { "Today", "This week", "This month", "Custom range" }, options);
+        Assert.Empty(page.FindAll("#report-from"));
+        page.Find("#report-period").Change("custom");
+        Assert.Equal("date", page.Find("#report-from").GetAttribute("type"));
+        Assert.Equal("date", page.Find("#report-to").GetAttribute("type"));
+        page.Find("#report-from").Change("2026-09-30");
+        page.Find("#report-to").Change("2026-09-01");
+        page.Find("form").Submit();
+        Assert.Contains("Choose a valid date range", page.Markup);
     }
     [Fact]
     public void OnboardingProvidesAccountExitWithoutFakeProgress()

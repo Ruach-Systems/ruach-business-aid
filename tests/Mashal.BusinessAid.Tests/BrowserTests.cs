@@ -196,7 +196,14 @@ public partial class BrowserTests
         Assert.Equal("₱35.00", await dayTotals.Locator(".day-profit-grid > div:nth-child(4) strong").TextContentAsync());
         await page.GotoAsync(host.Url + "/reports");
         await Expect(page.GetByText("Item performance", new() { Exact = true })).ToBeVisibleAsync();
-        Assert.Equal(new[] { "Today", "This week", "This month" }, await page.Locator("#report-period option").AllTextContentsAsync());
+        Assert.Equal(new[] { "Today", "This week", "This month", "Custom range" }, await page.Locator("#report-period option").AllTextContentsAsync());
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("custom");
+        await page.SetViewportSizeAsync(320, 900);
+        Assert.True(await page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= innerWidth + 1"), "Custom report range overflows at 320px");
+        await page.GetByLabel("From", new() { Exact = true }).FillAsync("2026-09-01");
+        await page.GetByLabel("To", new() { Exact = true }).FillAsync("2026-09-29");
+        await page.GetByRole(AriaRole.Button, new() { Name = "View reports", Exact = true }).ClickAsync();
+        await Expect(page.GetByText("Item performance", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/products");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
     }

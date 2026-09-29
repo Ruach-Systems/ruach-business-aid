@@ -6,7 +6,13 @@
 <PageHeading Title="Reports" Eyebrow="Business performance" Description="See revenue, item cost, gross profit, expenses, and net profit." />
 @if(!Store.Online||Store.User?.IsDemo==true){<section class="card empty"><h2>Reports require an online account</h2><p>Connect and synchronize your records to view financial reports.</p></section>}
 else{
-<form class="card report-filters" @onsubmit="Load" @onsubmit:preventDefault><div class="field"><label for="report-period">Period</label><select id="report-period" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option></select></div><button class="button primary" disabled="@Saving">View reports</button></form>
+<form class="card report-filters @(CustomRange?"custom":"")" @onsubmit="Load" @onsubmit:preventDefault>
+<div class="field"><label for="report-period">Period</label><select id="report-period" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="custom">Custom range</option></select></div>
+@if(CustomRange){
+<div class="field"><label for="report-from">From</label><input id="report-from" type="date" max="@to.ToString("yyyy-MM-dd")" @bind="from" required /></div>
+<div class="field"><label for="report-to">To</label><input id="report-to" type="date" min="@from.ToString("yyyy-MM-dd")" max="@TodayText" @bind="to" required /></div>}
+<button class="button primary" disabled="@Saving">View reports</button>
+</form>
 @if(Store.PendingCount>0){<p class="notice">@Store.PendingCount pending changes are excluded until synchronization finishes.</p>}
 <ErrorBanner Message="@Error" />
 @if(summary is {} total){
@@ -15,4 +21,3 @@ else{
 <section class="card section"><h2>Item performance</h2><div class="table-scroll"><table><thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th><th>Snapshotted cost</th><th>Gross profit</th></tr></thead><tbody>@foreach(var row in items){<tr><td>@row.ItemName</td><td>@Quantity(row.Quantity)</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.ProfitCentavos)</td></tr>}</tbody></table></div></section>
 <section class="card section"><h2>Expenses by category</h2><div class="table-scroll"><table><thead><tr><th>Category</th><th>Total</th><th>Percentage</th></tr></thead><tbody>@foreach(var row in expenses){<tr><td>@row.Category</td><td>@Money(row.AmountCentavos)</td><td>@(row.Percentage?.ToString("0.0")??"0")%</td></tr>}</tbody></table></div></section>}}
 </div>
-<style>.report-filters{display:flex;align-items:end;gap:12px}.report-filters .field{flex:1}.metric-grid .card{display:flex;flex-direction:column;min-height:112px}.metric-grid .metric-value{margin-top:auto;font-size:clamp(23px,4vw,36px);line-height:1.15;overflow-wrap:anywhere}.report-filters + .notice{font-size:13px}@@media(max-width:600px){.report-filters{display:grid}.report-filters>.button{width:100%}}</style>
