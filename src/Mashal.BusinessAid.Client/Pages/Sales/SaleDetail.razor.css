@@ -1,0 +1,127 @@
+.sale-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.sale-summary .card {
+    display: flex;
+    min-width: 0;
+    min-height: 118px;
+    flex-direction: column;
+}
+
+.sale-summary .metric-value {
+    margin-top: auto;
+    font-size: clamp(22px, 5vw, 30px);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+
+.sale-item {
+    display: grid;
+    gap: 16px;
+}
+
+.sale-item-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sale-item-heading > div {
+    min-width: 0;
+}
+
+.sale-item-heading strong,
+.sale-item-heading small {
+    display: block;
+}
+
+.sale-item-heading small {
+    margin-top: 5px;
+    color: var(--mashal-muted);
+    font-size: 12px;
+}
+
+.line-revenue {
+    flex: none;
+    font-size: 18px;
+    text-align: right;
+}
+
+.line-breakdown,
+.day-profit-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.line-breakdown > div,
+.day-profit-grid > div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--mashal-cloud);
+}
+
+.line-breakdown span,
+.day-profit-grid span {
+    color: var(--mashal-muted);
+    font-size: 11px;
+}
+
+.line-breakdown strong,
+.day-profit-grid strong {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+}
+
+.day-profit p {
+    margin: 0 0 16px;
+    color: var(--mashal-muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.day-profit-grid .net-profit {
+    background: var(--mashal-navy);
+    color: white;
+}
+
+.day-profit-grid .net-profit span {
+    color: #CBD5E1;
+}
+
+@media (max-width: 600px) {
+    .sale-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sale-summary .gross-profit {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 359px) {
+    .sale-summary,
+    .line-breakdown,
+    .day-profit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sale-summary .gross-profit {
+        grid-column: auto;
+    }
+
+    .sale-item-heading {
+        display: grid;
+    }
+
+    .line-revenue {
+        text-align: left;
+    }
+}

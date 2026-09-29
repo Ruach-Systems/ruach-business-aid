@@ -86,16 +86,16 @@
 </div>
 @if (Store.Sales.Any()) {
 <div class="stack">@foreach (var sale in Store.Sales.OrderByDescending(x => x.CreatedAt).Take(4)) {
-<article class="card list-card">
+<a class="card list-card sale-history-link" href="@($"/sales/{sale.Id}")" aria-label="@($"View sale of {Quantity(sale.TotalItems)} items for {Money(sale.TotalRevenueCentavos)}")">
 <span class="list-icon">
 <Icon Name="cart" />
 </span>
 <div class="list-main">
-<strong>@Quantity(sale.TotalItems) items · @sale.Location</strong>
+<strong>@SaleTitle(sale)</strong>
 <small>@FriendlyDate(sale.SaleDate, Today()) · @string.Join(", ", sale.Lines.Select(x => x.ItemName))</small>
 </div>
 <strong class="sale-amount">@Money(sale.TotalRevenueCentavos)</strong>
-</article> }
+</a> }
 </div> }
 else {
 <div class="card empty">

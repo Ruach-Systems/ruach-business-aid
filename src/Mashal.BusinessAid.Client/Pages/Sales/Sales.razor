@@ -17,7 +17,7 @@
 <button class="button primary block" disabled="@(Saving||TotalItems==0)">Save @Quantity(TotalItems) items</button>
 </form>
 <section id="sales-history" class="section sales-history"><div class="section-heading"><h2>Sales history</h2></div>
-@if(Store.Sales.Any()){<div class="stack">@foreach(var sale in Store.Sales.OrderByDescending(x=>x.CreatedAt)){<article class="card list-card"><span class="list-icon"><Icon Name="cart" /></span><div class="list-main"><strong>@Quantity(sale.TotalItems) items</strong><small>@FriendlyDate(sale.SaleDate,Today()) · @string.Join(", ",sale.Lines.Select(x=>x.ItemName))</small></div><strong class="sale-amount">@Money(sale.TotalRevenueCentavos)</strong></article>}</div>}
+@if(Store.Sales.Any()){<div class="stack">@foreach(var sale in Store.Sales.OrderByDescending(x=>x.CreatedAt)){<a class="card list-card sale-history-link" href="@($"/sales/{sale.Id}")" aria-label="@($"View sale of {Quantity(sale.TotalItems)} items for {Money(sale.TotalRevenueCentavos)}")"><span class="list-icon"><Icon Name="cart" /></span><div class="list-main"><strong>@Quantity(sale.TotalItems) items</strong><small>@FriendlyDate(sale.SaleDate,Today()) · @string.Join(", ",sale.Lines.Select(x=>x.ItemName))</small></div><strong class="sale-amount">@Money(sale.TotalRevenueCentavos)</strong></a>}</div>}
 else{<div class="card empty"><p>No sales recorded yet.</p></div>}
 </section>
 </div>

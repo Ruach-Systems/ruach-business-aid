@@ -14,6 +14,9 @@
 .totals-card > div { display: grid; gap: 6px; min-width: 0; }
 .totals-card strong { font-size: 18px; overflow-wrap: anywhere; }
 .success-banner { display: flex; align-items: center; gap: 7px; }
+.sale-history-link { transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
+.sale-history-link:hover { border-color: rgb(91 44 131 / 35%); transform: translateY(-1px); }
+.sale-history-link:focus-visible { outline: none; border-color: var(--mashal-purple); box-shadow: 0 0 0 2px rgb(91 44 131 / 12%); }
 @media(max-width: 420px) {
     .sale-line { grid-template-columns: minmax(0,1fr); gap: 14px; }
     .unit-pricing { display: flex; flex-wrap: wrap; gap: 4px 16px; }

@@ -1,0 +1,47 @@
+@namespace Mashal.BusinessAid.Client.Pages
+@page "/sales/{Id:guid}"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/sales#sales-history" Text="Back to sales" />
+@if (CurrentSale is {} sale) {
+<PageHeading Title="Sale details" Eyebrow="Itemized sale" Description="@HeadingDescription(sale)" />
+
+<section class="sale-summary" aria-label="This sale totals">
+<article class="card"><span class="card-label">Revenue</span><div class="metric-value">@Money(sale.TotalRevenueCentavos)</div></article>
+<article class="card"><span class="card-label">Item cost</span><div class="metric-value">@Money(sale.TotalCostCentavos)</div></article>
+<article class="card dark gross-profit"><span class="card-label">Gross profit</span><div class="metric-value">@Money(sale.TotalProfitCentavos)</div></article>
+</section>
+
+<section class="section" aria-labelledby="items-sold-heading">
+<div class="section-heading"><h2 id="items-sold-heading">Items sold</h2><span class="pill">@Quantity(sale.TotalItems) total</span></div>
+<div class="stack">
+@foreach (var line in sale.Lines) {
+<article class="card sale-item" aria-label="@($"{line.ItemName} sale line")">
+<div class="sale-item-heading">
+<div><strong>@line.ItemName</strong><small>@Quantity(line.Quantity) × @Money(line.UnitPriceCentavos) each</small></div>
+<strong class="line-revenue">@Money(line.LineRevenueCentavos)</strong>
+</div>
+<div class="line-breakdown">
+<div><span>Item cost</span><strong>@Money(line.LineCostCentavos)</strong></div>
+<div><span>Gross profit</span><strong>@Money(line.LineRevenueCentavos-line.LineCostCentavos)</strong></div>
+</div>
+</article>
+}
+</div>
+</section>
+
+<section class="card soft section day-profit" aria-label="Sale date totals">
+<div class="section-heading"><div><span class="section-kicker">Sale date totals</span><h2>@FriendlyDate(sale.SaleDate, Today())</h2></div></div>
+<p>Expenses are not assigned to individual sales. Net profit below covers all sales and expenses on this date.</p>
+<div class="day-profit-grid">
+<div><span>All sales</span><strong>@Money(DayRevenue)</strong></div>
+<div><span>Gross profit</span><strong>@Money(DayGrossProfit)</strong></div>
+<div><span>Expenses</span><strong>@Money(DayExpenses)</strong></div>
+<div class="net-profit"><span>Net profit</span><strong>@Money(DayNetProfit)</strong></div>
+</div>
+</section>
+}
+else {
+<div class="card empty"><h3>Sale not found</h3><p>This sale may no longer be available on this device.</p><a class="button primary small" href="/sales#sales-history">View sales history</a></div>
+}
+</div>

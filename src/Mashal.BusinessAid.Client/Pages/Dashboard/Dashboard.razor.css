@@ -20,6 +20,9 @@
 .period-sales-card .metric-note { display: block; margin-top: 7px; }
 .section-heading a { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; min-height: 44px; }
 .sale-amount { flex: none; margin: 0 !important; text-align: right; }
+.sale-history-link { transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease; }
+.sale-history-link:hover { border-color: rgb(91 44 131 / 35%); transform: translateY(-1px); }
+.sale-history-link:focus-visible { outline: none; border-color: var(--mashal-purple); box-shadow: 0 0 0 2px rgb(91 44 131 / 12%); }
 .list-icon.warning { background: var(--mashal-warning-soft); color: var(--mashal-warning-ink); }
 .list-card.compact { min-height: 54px; padding: 0; }
 .compact-empty { padding: 26px 18px; }
