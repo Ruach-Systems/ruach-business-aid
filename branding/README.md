@@ -36,11 +36,11 @@ It does not add a frontend npm dependency or require Python. The normal .NET
 application build consumes committed exports and does not run the authoring script.
 
 ```powershell
-dotnet build tests\Mashal.BusinessAid.Tests
-.\tests\Mashal.BusinessAid.Tests\bin\Debug\net10.0\playwright.ps1 install chromium
+dotnet build tests\Ruach.BusinessAid.Tests
+.\tests\Ruach.BusinessAid.Tests\bin\Debug\net10.0\playwright.ps1 install chromium
 .\scripts\build-brand.ps1
 .\branding\concepts\build-preview.ps1
-dotnet publish src\Mashal.BusinessAid.Client -c Release -o artifacts\pwa -p:ApiOrigin=https://api.businessaid.ruachsystems.dev
+dotnet publish src\Ruach.BusinessAid.Client -c Release -o artifacts\pwa -p:ApiOrigin=https://api.businessaid.ruachsystems.dev
 .\scripts\verify-release.ps1
 ```
 

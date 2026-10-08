@@ -29,7 +29,7 @@ try {
 $asp = $config.SelectSingleNode('//aspNetCore')
 $asp.SetAttribute('hostingModel','outofprocess')
 $asp.SetAttribute('processPath','dotnet')
-$asp.SetAttribute('arguments','.\Mashal.BusinessAid.Api.dll')
+$asp.SetAttribute('arguments','.\Ruach.BusinessAid.Api.dll')
 $asp.SetAttribute('stdoutLogEnabled','false')
 $asp.SetAttribute('stdoutLogFile','.\logs\stdout')
 $variables = $config.CreateElement('environmentVariables')

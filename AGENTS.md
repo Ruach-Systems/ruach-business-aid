@@ -36,15 +36,17 @@ forms and semantic states. Do not introduce a dark-mode feature.
 
 ## Compatibility and architecture
 
-- Use `Mashal.BusinessAid.slnx`: Client, API, Shared, Migrations and Tests.
+- Use `Ruach.BusinessAid.slnx`: Client, API, Shared, Migrations and Tests.
 - Keep business rules in Shared, Dapper SQL and authorization in API, browser
   UI/state in Client. Retain .NET 10, ASP.NET Core, Blazor and SQL Server.
 - Never introduce EF Core, FluentMigrator, MediatR, Supabase, extra architecture
   layers or frontend Node build dependencies.
-- Retain solution/project/assembly/namespace names, configuration keys, cookie
-  names, Data Protection application identity and keys, DbUp logical script
-  names, immutable SQL migrations, IndexedDB `mashal-sql-v2`, browser storage
-  keys, serialized outbox and model version.
+- Solution, project, assembly and namespace names use `Ruach.BusinessAid.*`.
+  Retain the legacy Mashal-named configuration keys (`ConnectionStrings:Mashal`,
+  `MashalAdmin`), cookie names, Data Protection application identity
+  (`Mashal.BusinessAid`) and keys, DbUp logical script names
+  (`Mashal.Migrations.*`), immutable SQL migrations, IndexedDB `mashal-sql-v2`,
+  browser storage keys, serialized outbox and model version.
 - Legacy `--mashal-*` CSS custom-property names remain private compatibility
   aliases with RUACH values; they are not the public brand.
 - For offline/synchronization changes verify ordinary tests and the existing

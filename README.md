@@ -17,17 +17,17 @@ pair remains `https://businessaid.mashalsystems.com` and
 
 ## Simple solution structure
 
-Open `Mashal.BusinessAid.slnx` in Visual Studio, Rider, or VS Code.
+Open `Ruach.BusinessAid.slnx` in Visual Studio, Rider, or VS Code.
 
 ```text
 src/
-  Mashal.BusinessAid.Client/       Feature-grouped Pages, Components, Layout, Services, wwwroot
-  Mashal.BusinessAid.Api/          Configuration, Middleware, Endpoints, Data
-  Mashal.BusinessAid.Shared/       Models, Contracts, Rules, Offline
+  Ruach.BusinessAid.Client/        Feature-grouped Pages, Components, Layout, Services, wwwroot
+  Ruach.BusinessAid.Api/           Configuration, Middleware, Endpoints, Data
+  Ruach.BusinessAid.Shared/        Models, Contracts, Rules, Offline
 tools/
-  Mashal.BusinessAid.Migrations/   DbUp console runner
+  Ruach.BusinessAid.Migrations/    DbUp console runner
 tests/
-  Mashal.BusinessAid.Tests/        Unit, component, SQL, HTTP and browser tests
+  Ruach.BusinessAid.Tests/         Unit, component, SQL, HTTP and browser tests
 database/migrations/              Immutable ordered SQL scripts
 docs/                            Code navigation and maintenance guide
 ```
@@ -44,7 +44,7 @@ In PowerShell, start from the repository root:
 
 ```powershell
 cd "D:\WORK\MY APPS\My Business\ruach-business-aid"
-dotnet restore Mashal.BusinessAid.slnx
+dotnet restore Ruach.BusinessAid.slnx
 ```
 
 Create an empty database named `MashalDevelopment` in SSMS. If SQL command-line tools are installed:
@@ -59,13 +59,13 @@ In terminal 1, migrate and run the API:
 
 ```powershell
 $env:ConnectionStrings__Mashal = 'Server=.\SQLDEVELOPER2025;Database=MashalDevelopment;Integrated Security=true;TrustServerCertificate=true'
-dotnet run --project tools/Mashal.BusinessAid.Migrations
+dotnet run --project tools/Ruach.BusinessAid.Migrations
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 $env:App__Origin = 'http://localhost:5173'
 $env:Google__ClientId = '<your-google-client-id>'
 $env:Google__ClientSecret = '<your-google-client-secret>'
 $env:MashalAdmin__Emails__0 = '<your-verified-google-email>'
-dotnet watch --project src/Mashal.BusinessAid.Api run
+dotnet watch --project src/Ruach.BusinessAid.Api run
 ```
 
 The API listens on http://localhost:5080. Check `/health/live` and `/health/ready`. Use credentials from a Google OAuth web application; invalid placeholder values will cause Google to reject sign-in.
@@ -73,7 +73,7 @@ The API listens on http://localhost:5080. Check `/health/live` and `/health/read
 In terminal 2:
 
 ```powershell
-dotnet watch --project src/Mashal.BusinessAid.Client run
+dotnet watch --project src/Ruach.BusinessAid.Client run
 ```
 
 Open http://localhost:5173. Use **Continue locally** to test operations without Google or SQL synchronization. For UI/demo testing alone, only terminal 2 is needed. Local mode intentionally has no authoritative financial reports.
@@ -93,8 +93,8 @@ The development API URL and optional reset control are in Client/wwwroot/appsett
 ## Tests and published PWA verification
 
 ```powershell
-dotnet build Mashal.BusinessAid.slnx
-dotnet test tests/Mashal.BusinessAid.Tests --filter "Category!=Integration&Category!=Browser"
+dotnet build Ruach.BusinessAid.slnx
+dotnet test tests/Ruach.BusinessAid.Tests --filter "Category!=Integration&Category!=Browser"
 ```
 
 Use a dedicated database for integration tests, never development business data or production:
@@ -102,21 +102,21 @@ Use a dedicated database for integration tests, never development business data 
 ```powershell
 sqlcmd -S ".\SQLDEVELOPER2025" -E -C -Q "IF DB_ID('MashalMigrationTests') IS NULL CREATE DATABASE MashalMigrationTests"
 $env:ConnectionStrings__Mashal = 'Server=.\SQLDEVELOPER2025;Database=MashalMigrationTests;Integrated Security=true;TrustServerCertificate=true'
-dotnet run --project tools/Mashal.BusinessAid.Migrations
-dotnet test tests/Mashal.BusinessAid.Tests --filter "Category=Integration"
-dotnet run --project tools/Mashal.BusinessAid.Migrations -- --verify-no-pending
+dotnet run --project tools/Ruach.BusinessAid.Migrations
+dotnet test tests/Ruach.BusinessAid.Tests --filter "Category=Integration"
+dotnet run --project tools/Ruach.BusinessAid.Migrations -- --verify-no-pending
 ```
 
 The tests insert isolated synthetic users/businesses and migration test tables. The migration verification must report **Pending migrations: 0**.
 
-Blazor's development worker intentionally does not cache the app. Test offline reload and updates using the published PWA. When changing publish directories, first run `dotnet clean src/Mashal.BusinessAid.Client -c Release` to avoid stale incremental service-worker output. Always run the release verification script before deployment. Browser tests default to `artifacts/pwa/wwwroot`; set `MASHAL_PWA_ROOT` to an absolute published wwwroot path to test another bundle.
+Blazor's development worker intentionally does not cache the app. Test offline reload and updates using the published PWA. When changing publish directories, first run `dotnet clean src/Ruach.BusinessAid.Client -c Release` to avoid stale incremental service-worker output. Always run the release verification script before deployment. Browser tests default to `artifacts/pwa/wwwroot`; set `MASHAL_PWA_ROOT` to an absolute published wwwroot path to test another bundle.
 
 ```powershell
-dotnet publish src/Mashal.BusinessAid.Client -c Release -o artifacts/pwa
-dotnet build tests/Mashal.BusinessAid.Tests
-powershell -NoProfile -ExecutionPolicy Bypass -File tests/Mashal.BusinessAid.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
+dotnet publish src/Ruach.BusinessAid.Client -c Release -o artifacts/pwa
+dotnet build tests/Ruach.BusinessAid.Tests
+powershell -NoProfile -ExecutionPolicy Bypass -File tests/Ruach.BusinessAid.Tests/bin/Debug/net10.0/playwright.ps1 install chromium
 $env:MASHAL_BROWSER_TESTS = 'true'
-dotnet test tests/Mashal.BusinessAid.Tests --filter "Category=Browser"
+dotnet test tests/Ruach.BusinessAid.Tests --filter "Category=Browser"
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-release.ps1
 ```
 
@@ -127,7 +127,7 @@ Browser tests start an isolated localhost preview of the published assets and us
 To publish for another environment, pass its public API origin:
 
 ```powershell
-dotnet publish src/Mashal.BusinessAid.Client -c Release -o artifacts/pwa -p:ApiOrigin=https://api.businessaid.ruachsystems.dev
+dotnet publish src/Ruach.BusinessAid.Client -c Release -o artifacts/pwa -p:ApiOrigin=https://api.businessaid.ruachsystems.dev
 ```
 
 This embeds only the public URL in the client assembly. It is never a secret. CI uses this option before validating and uploading the artifact.

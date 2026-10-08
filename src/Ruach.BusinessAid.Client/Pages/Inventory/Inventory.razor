@@ -1,0 +1,23 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/items"
+@inherits PageBase
+<div class="page">
+<PageHeading Title="Items" Eyebrow="What you sell" Description="Prices, costs, and stock in one simple list.">
+<a class="button primary small" href="/items/new"><Icon Name="plus" />Add item</a>
+</PageHeading>
+<div class="inventory-toolbar card">
+<div class="search-box"><label class="sr-only" for="item-search">Search items</label><input id="item-search" type="search" placeholder="Search items" @bind="search" @bind:event="oninput" /></div>
+<div class="inventory-actions"><a class="button dark small" href="/stock/add">Add stock</a><a class="button ghost small" href="/stock/adjust">Correct stock</a></div>
+</div>
+@if(Items.Any()){
+<div class="inventory-grid section">@foreach(var item in Items){
+<a class="card list-card inventory-card" href="@($"/items/{item.Id}")">
+<span class="list-icon"><Icon Name="tag" /></span>
+<span class="list-main"><span class="item-title"><strong>@item.Name</strong>@if(!item.IsActive){<span class="pill">Inactive</span>}else if(item.CurrentQuantity<0){<span class="pill warning">Negative stock</span>}else if(item.CurrentQuantity<=item.MinimumQuantity){<span class="pill warning">Low</span>}</span>
+<small>@Money(item.SellingPriceCentavos) price · @Money(item.UnitCostCentavos) cost · @Money(UnitProfit(item.SellingPriceCentavos,item.UnitCostCentavos)) profit</small></span>
+<span class="quantity"><strong>@Quantity(item.CurrentQuantity)</strong><small>in stock</small></span><span class="chevron">›</span>
+</a>}
+</div>}
+else{
+<div class="card empty section"><span class="list-icon"><Icon Name="tag" /></span><h3>@(search.Length>0?"No matching items":"No items yet")</h3><p>Add what you sell, including its price and cost.</p>@if(search.Length==0){<a class="button primary small" href="/items/new">Add first item</a>}</div>}
+</div>

@@ -2,12 +2,12 @@ param([string]$Configuration = 'Debug')
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 $brand = Join-Path $repo 'public\brand'
-$web = Join-Path $repo 'src\Mashal.BusinessAid.Client\wwwroot'
+$web = Join-Path $repo 'src\Ruach.BusinessAid.Client\wwwroot'
 $runtime = Join-Path $web 'brand-assets'
 $master = Join-Path $repo 'branding\balanced-record-master.svg'
 $fontRoot = Join-Path $repo 'branding\concepts\fonts'
 . (Join-Path $PSScriptRoot 'brand-drawing.ps1') -FontRoot $fontRoot
-$playwrightAssembly = Join-Path $repo "tests\Mashal.BusinessAid.Tests\bin\$Configuration\net10.0\Microsoft.Playwright.dll"
+$playwrightAssembly = Join-Path $repo "tests\Ruach.BusinessAid.Tests\bin\$Configuration\net10.0\Microsoft.Playwright.dll"
 if (!(Test-Path $playwrightAssembly)) { throw 'Build the existing test project and install its Chromium runtime first. See branding/README.md.' }
 Add-Type -Path $playwrightAssembly
 $playwright = [Microsoft.Playwright.Playwright]::CreateAsync().GetAwaiter().GetResult()
@@ -100,7 +100,7 @@ try {
         $mapping["$name$extension"] = $hashed
     }
     $targets = @((Join-Path $web 'index.html'), (Join-Path $web 'open.html'), (Join-Path $web 'manifest.webmanifest'),
-        (Join-Path $web 'css\app.css'), (Join-Path $repo 'src\Mashal.BusinessAid.Client\Components\BrandLogo.razor'))
+        (Join-Path $web 'css\app.css'), (Join-Path $repo 'src\Ruach.BusinessAid.Client\Components\BrandLogo.razor'))
     foreach ($target in $targets) {
         $text = [IO.File]::ReadAllText($target)
         foreach ($entry in $mapping.GetEnumerator()) {

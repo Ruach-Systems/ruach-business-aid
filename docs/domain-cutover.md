@@ -147,7 +147,7 @@ hosts and fixture Google/account data, **not live Google OAuth acceptance**.
 
 The non-deploying PowerShell origin-settings tests and script syntax checks
 passed. PWA publish and `scripts/verify-release.ps1` passed; the portable API
-publish retained the `dotnet .\Mashal.BusinessAid.Api.dll` launch configuration.
+publish retained the `dotnet .\Mashal.BusinessAid.Api.dll` launch configuration. The assembly is now `Ruach.BusinessAid.Api.dll`; the next authorized API publish updates `web.config` to launch it.
 Repeated asset export produced identical checksums. The bounded design scan
 reported only the intentional, parent-required Inter font choice.
 

@@ -1,0 +1,45 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/businesses"
+@layout AccountLayout
+@inherits PageBase
+<PageTitle>Your businesses | Business Aid by RUACH</PageTitle>
+<div class="page account-page">
+<PageHeading Title="Your businesses" Eyebrow="Owner dashboard" Description="Choose a business to pick up where you left off." />
+<ErrorBanner Message="@Error" />
+<div class="account-actions-row"><button class="button ghost" disabled="@(!Store.Online || Saving || Store.Busy)" @onclick="()=>Run(Store.RefreshAccount)">Refresh status</button><button class="button primary" disabled="@(!CanRequest)" @onclick="NewRequest">Request a business</button></div>
+@if (Store.PhoneRequired) { <div class="account-notice" role="status"><strong>Add a unique mobile number to continue</strong><p>Your businesses remain on your account. Update your number before entering a workspace.</p><a class="button primary" href="/settings">Update mobile number</a></div> }
+@if (!Store.Online) { <p class="account-notice" role="status">Offline: open a previously downloaded business. Requests and profile changes require a connection.</p> }
+<div class="business-grid">
+@foreach (var business in Store.Account?.Businesses ?? []) {
+<article class="card business-card" @key="business.Id"><span class="status-badge approved">Approved</span><h2>@business.Name</h2><p>@business.DefaultLocation</p><small>@(Store.Data.Business?.Id == business.Id ? "Current workspace" : "Independent business workspace")</small><button class="button primary" disabled="@(Saving || Store.Busy || Store.PhoneRequired)" @onclick="()=>Open(business.Id)">Open @business.Name</button></article>
+}
+</div>
+@if (Store.Account?.Businesses.Count == 0) { <section class="card empty-state"><h2>Your business journey starts here</h2><p>Request your first business. After approval, you can open its empty workspace.</p></section> }
+@if (showRequest) {
+<section class="card request-form"><h2>Request a business</h2><form class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
+<div class="field"><label for="request-name">Business name</label><input id="request-name" @bind="name" required maxlength="160" /></div>
+<div class="field"><label for="request-location">Default location</label><input id="request-location" @bind="location" required maxlength="500" /></div>
+<p>Only one request can be pending at a time. An approval is needed before the business is created.</p>
+<div class="account-actions-row"><button type="button" class="button ghost" @onclick="()=>showRequest=false">Cancel</button><button class="button primary" disabled="@(!CanRequest)">@(Saving ? "Submitting…" : "Submit request")</button></div>
+</form></section>
+}
+<h2 class="section">Business requests</h2>
+<div class="stack">@foreach (var request in Store.Account?.Requests ?? []) {
+<article class="card"><div class="section-heading"><h3>@request.Name</h3><span class="status-badge @request.Status.ToLowerInvariant()">@request.Status</span></div><p>@request.DefaultLocation · @request.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</p>
+@if(request.Status == "Pending") { <p>RUACH Admin is reviewing your request. Your other approved businesses remain available.</p> }
+@if(request.Status == "Rejected") { <p><strong>Reason:</strong> @request.Reason</p><button class="button ghost" disabled="@(!CanRequest)" @onclick="()=>Resubmit(request)">Update and resubmit</button> }
+@if(request.Status == "Approved") { <p>Your independent workspace is ready. Open it above to begin.</p> }
+</article> }
+@if (Store.Account?.Requests.Count == 0) { <p>No requests yet.</p> }
+</div><p class="account-notice">Every business has its own items, stock, sales, expenses, reports, and saved offline work.</p>
+</div>
+@code {
+    private bool showRequest;
+    private string name = "", location = "";
+    private Guid requestId = Guid.NewGuid();
+    private bool CanRequest => Store.Online && !Saving && !Store.Busy && !Store.PhoneRequired && Store.Account?.Requests.Any(x=>x.Status=="Pending") != true;
+    private void NewRequest() { name=""; location=""; requestId=Guid.NewGuid(); showRequest=true; }
+    private Task Open(Guid id) => Run(()=>Store.SelectBusiness(id), "/dashboard");
+    private void Resubmit(BusinessRequest request) { name=request.Name; location=request.DefaultLocation; requestId=Guid.NewGuid(); showRequest=true; }
+    private Task Submit() => Run(async()=> { await Store.RequestBusiness(requestId,name,location); showRequest=false; });
+}

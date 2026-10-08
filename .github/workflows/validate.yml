@@ -20,11 +20,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Restore
-        run: dotnet restore Mashal.BusinessAid.slnx
+        run: dotnet restore Ruach.BusinessAid.slnx
       - name: Build and unit/component tests
         run: |
-          dotnet build Mashal.BusinessAid.slnx --no-restore -c Release
-          dotnet test tests/Mashal.BusinessAid.Tests --no-build -c Release --filter "Category!=Integration&Category!=Browser"
+          dotnet build Ruach.BusinessAid.slnx --no-restore -c Release
+          dotnet test tests/Ruach.BusinessAid.Tests --no-build -c Release --filter "Category!=Integration&Category!=Browser"
       - name: Deployment configuration unit checks (no deployment)
         shell: pwsh
         run: ./tests/origin-settings.Tests.ps1
@@ -42,36 +42,36 @@ jobs:
           docker exec mashal-test-sql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$password" -C -b -Q 'CREATE DATABASE MashalTests'
       - name: Apply migrations and run SQL/API integration tests
         run: |
-          dotnet run --no-build -c Release --project tools/Mashal.BusinessAid.Migrations
-          dotnet test tests/Mashal.BusinessAid.Tests --no-build -c Release --filter "Category=Integration"
-          dotnet run --no-build -c Release --project tools/Mashal.BusinessAid.Migrations
-          dotnet run --no-build -c Release --project tools/Mashal.BusinessAid.Migrations -- --verify-no-pending
+          dotnet run --no-build -c Release --project tools/Ruach.BusinessAid.Migrations
+          dotnet test tests/Ruach.BusinessAid.Tests --no-build -c Release --filter "Category=Integration"
+          dotnet run --no-build -c Release --project tools/Ruach.BusinessAid.Migrations
+          dotnet run --no-build -c Release --project tools/Ruach.BusinessAid.Migrations -- --verify-no-pending
       - name: Publish PWA
         shell: pwsh
         run: |
           $uri = [Uri]$env:API_ORIGIN
           if ($uri.Scheme -ne 'https' -or $uri.AbsolutePath -ne '/' -or $uri.Query -or $uri.Fragment) { throw 'API_ORIGIN must be an HTTPS origin.' }
-          dotnet publish src/Mashal.BusinessAid.Client -c Release -o artifacts/pwa "-p:ApiOrigin=$env:API_ORIGIN"
+          dotnet publish src/Ruach.BusinessAid.Client -c Release -o artifacts/pwa "-p:ApiOrigin=$env:API_ORIGIN"
           if ($LASTEXITCODE -ne 0) { throw 'PWA publish failed.' }
           ./scripts/verify-release.ps1
       - name: Install browser test runtime
         shell: pwsh
-        run: ./tests/Mashal.BusinessAid.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: ./tests/Ruach.BusinessAid.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
       - name: Published PWA, responsive, offline and upgrade tests
         env:
           MASHAL_BROWSER_TESTS: 'true'
-        run: dotnet test tests/Mashal.BusinessAid.Tests --no-build -c Release --filter "Category=Browser"
+        run: dotnet test tests/Ruach.BusinessAid.Tests --no-build -c Release --filter "Category=Browser"
       - name: Publish API
         shell: pwsh
         run: |
           # MyASP.NET supports framework-dependent deployments and launches them
           # through the installed dotnet host. Avoid a machine-specific apphost.
-          dotnet publish src/Mashal.BusinessAid.Api -c Release -o artifacts/api
+          dotnet publish src/Ruach.BusinessAid.Api -c Release -o artifacts/api
           if ($LASTEXITCODE -ne 0) { throw 'API publish failed.' }
 
           [xml]$config = Get-Content artifacts/api/web.config
           $aspNetCore = $config.SelectSingleNode('//aspNetCore')
-          if ($aspNetCore.processPath -ne 'dotnet' -or $aspNetCore.arguments -ne '.\Mashal.BusinessAid.Api.dll') {
+          if ($aspNetCore.processPath -ne 'dotnet' -or $aspNetCore.arguments -ne '.\Ruach.BusinessAid.Api.dll') {
             throw 'The API artifact is not configured as a portable framework-dependent deployment.'
           }
       - uses: actions/upload-artifact@v4

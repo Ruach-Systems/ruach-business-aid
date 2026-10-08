@@ -1,0 +1,104 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/settings"
+@layout AccountLayout
+@inherits PageBase
+@inject IJSRuntime JS
+<div class="page narrow">
+<PageHeading Title="Settings" Eyebrow="Preferences & safety" Description="Manage your account, display, business details, and cloud sync." />
+<section class="card profile-card">
+<div>
+<strong>@Store.User?.DisplayName</strong>
+<span>@Store.User?.Email</span>
+<small>Owner · separate business workspaces</small>
+</div>
+</section>
+<section class="section stack">
+@if (Store.User?.IsDemo != true) {
+<article class="card"><h2>Owner mobile number</h2>
+@if(Store.PhoneRequired) { <p role="status">A unique Philippine mobile number is required to enter your businesses.</p> }
+<form class="form-card" @onsubmit="SavePhone" @onsubmit:preventDefault><div class="field"><label for="settings-phone">Philippine mobile number</label><input id="settings-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="settings-phone-help" /><small id="settings-phone-help">Use 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX. One account per number; not SMS-verified.</small></div><p>Already linked elsewhere? Contact RUACH Admin for an offline identity review.</p><button class="button primary" disabled="@(Saving || Store.Busy || !Store.Online)">Save mobile number</button></form><p role="status">@saved</p>
+</article> }
+@if (Store.Data.Business is not null) {
+<article class="card">
+<div class="section-heading">
+<h2>Cloud sync</h2>
+<SyncPill />
+</div>
+<p>@Store.PendingCount changes waiting to synchronize. Saved device records remain available offline.</p>
+<button class="button ghost block" @onclick="Store.Synchronize">Sync now</button>
+</article>
+<article class="card">
+<div class="section-heading">
+<h2>Business</h2>
+</div>
+<dl>
+<div>
+<dt>Name</dt>
+<dd>@Store.Data.Business?.Name</dd>
+</div>
+<div>
+<dt>Location</dt>
+<dd>@Store.Data.Business?.DefaultLocation</dd>
+</div>
+<div>
+<dt>Currency</dt>
+<dd>Philippine peso (PHP)</dd>
+</div>
+<div>
+<dt>Timezone</dt>
+<dd>Asia/Manila</dd>
+</div>
+</dl>
+</article>
+}
+<article class="card display-card">
+<div class="section-heading compact">
+<h2>Display</h2>
+</div>
+<label class="toggle-row" for="compact-mode">
+<span><strong>Compact view</strong><small>Tighter spacing so more items, sales, and stock fit on screen. Saved on this device.</small></span>
+<input id="compact-mode" class="toggle" type="checkbox" role="switch" checked="@compact" @onchange="ToggleCompact" />
+</label>
+</article>
+@if(Store.CanResetLocalData){
+<article class="card reset-card">
+<span class="card-label">Local development</span>
+<div class="section-heading compact">
+<h2>Fresh start</h2>
+</div>
+<p>Clear this local demo workspace and return to business setup. This does not affect server accounts or SQL data.</p>
+@if(confirmingReset){
+<div class="reset-confirmation" role="alert" aria-live="assertive">
+<strong>Delete all local demo data?</strong>
+<span>Items, stock, sales, expenses, and pending changes on this device will be permanently removed.</span>
+<div>
+<button type="button" class="button ghost" disabled="@Saving" @onclick="()=>confirmingReset=false">Keep my data</button>
+<button type="button" class="button primary" disabled="@Saving" @onclick="ResetLocalData">Delete and start over</button>
+</div>
+</div>}
+else{
+<button type="button" class="button danger block" disabled="@Saving" @onclick="()=>confirmingReset=true">Reset local data</button>}
+</article>}
+<ErrorBanner Message="@Error" />
+<button class="button danger block" @onclick="()=>Run(Store.Logout)">Sign out</button>
+</section>
+</div>
+
+@code {
+    private bool confirmingReset, compact;
+    private string phone="", saved="";
+    protected override void OnInitialized() { base.OnInitialized(); phone=Store.User?.PhoneNumber ?? ""; }
+    private Task SavePhone() => Run(async()=> { saved=""; await Store.SavePhone(phone); phone=Store.User?.PhoneNumber ?? ""; saved="Mobile number saved."; });
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        compact = await JS.InvokeAsync<bool>("mashalUi.isCompact");
+        StateHasChanged();
+    }
+    private async Task ToggleCompact(ChangeEventArgs e)
+    {
+        compact = e.Value is true;
+        compact = await JS.InvokeAsync<bool>("mashalUi.setCompact", compact);
+    }
+    private Task ResetLocalData() => Run(Store.ResetLocalData, "/onboarding");
+}

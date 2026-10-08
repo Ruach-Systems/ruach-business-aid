@@ -1,0 +1,25 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/items/new"
+@page "/items/{Id:guid}/edit"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="@(Id is null?"/items":$"/items/{Id}")" Text="Back to items" />
+<PageHeading Title="@(Id is null?"New item":"Edit item")" Eyebrow="Price & cost" Description="Enter what one item sells for and what one item costs you." />
+<form class="stack" @onsubmit="Save" @onsubmit:preventDefault>
+<section class="card form-card">
+<div class="field"><label for="item-name">Item name</label><input id="item-name" @bind="draft.Name" required placeholder="e.g. Buko Juice" /></div>
+<div class="field-row">
+<div class="field"><label for="item-price">Selling price (₱)</label><MoneyInput id="item-price" min="0.01" max="100000000" @bind-Value="price" required /></div>
+<div class="field"><label for="item-cost">Unit cost (₱)</label><MoneyInput id="item-cost" min="0" max="100000000" @bind-Value="cost" required /></div>
+</div>
+<div class="field"><label for="item-minimum">Low-stock warning at</label><input id="item-minimum" type="number" min="0" max="1000000" step="1" @bind="draft.MinimumQuantity" /></div>
+</section>
+<section class="card dark cost-preview">
+<div><span class="card-label">Profit per item</span><strong>@Money(UnitProfit(PriceCentavos,CostCentavos))</strong></div>
+<div><span class="card-label">Markup</span><strong>@MarkupText(PriceCentavos,CostCentavos)</strong></div>
+</section>
+<label class="toggle-row"><span><strong>Item is active</strong><small>Inactive items no longer appear in sales.</small></span><input type="checkbox" class="toggle" @bind="draft.IsActive" /></label>
+<ErrorBanner Message="@Error" />
+<div class="form-actions"><a class="button ghost" href="@(Id is null?"/items":$"/items/{Id}")">Cancel</a><button class="button primary" disabled="@Saving">Save item</button></div>
+</form>
+</div>

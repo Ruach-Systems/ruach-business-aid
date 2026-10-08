@@ -1,12 +1,12 @@
 # Code structure
 
-Open `Mashal.BusinessAid.slnx`. There are five projects: Client, API, Shared, Migrations and Tests. Folder names organize code inside those existing projects; they do not add architectural layers.
+Open `Ruach.BusinessAid.slnx`. There are five projects: Client, API, Shared, Migrations and Tests. Folder names organize code inside those existing projects; they do not add architectural layers.
 
 ## Where to work
 
 | Change | Location |
 |---|---|
-| A screen, form or page-specific styling | `src/Mashal.BusinessAid.Client/Pages/<feature>` |
+| A screen, form or page-specific styling | `src/Ruach.BusinessAid.Client/Pages/<feature>` |
 | A reusable UI element | Client `Components` |
 | Navigation and page shells | Client `App.razor` and `Layout` |
 | Sign-in, business selection or account state | Client `Services/BusinessState.Accounts.cs` |
@@ -21,12 +21,12 @@ Open `Mashal.BusinessAid.slnx`. There are five projects: Client, API, Shared, Mi
 | Request/response types and JSON settings | Shared `Contracts` |
 | Calculations, validation or operation processing | Shared `Rules` |
 | Local projections and the in-memory repository | Shared `Offline` |
-| A database schema change | `database/migrations` and `tools/Mashal.BusinessAid.Migrations` |
-| Regression coverage | `tests/Mashal.BusinessAid.Tests` |
+| A database schema change | `database/migrations` and `tools/Ruach.BusinessAid.Migrations` |
+| Regression coverage | `tests/Ruach.BusinessAid.Tests` |
 
 ## Client pages
 
-Pages are grouped into Accounts, Dashboard, Items, Sales, Expenses and Reports. The historical `Pages/Inventory` folder still contains the Item components; its public routes are `/items`, while old Inventory, Products, and Production URLs redirect to Items. Keep a page's `.razor`, `.razor.cs` and `.razor.css` files together. Existing page class names remain in `Mashal.BusinessAid.Client.Pages`; explicit Razor namespaces keep code-behind and component references stable. Routes are declared by `@page`, not derived from folders.
+Pages are grouped into Accounts, Dashboard, Items, Sales, Expenses and Reports. The historical `Pages/Inventory` folder still contains the Item components; its public routes are `/items`, while old Inventory, Products, and Production URLs redirect to Items. Keep a page's `.razor`, `.razor.cs` and `.razor.css` files together. Existing page class names remain in `Ruach.BusinessAid.Client.Pages`; explicit Razor namespaces keep code-behind and component references stable. Routes are declared by `@page`, not derived from folders.
 
 `BusinessState.cs` declares the shared state, dependencies and change notifications. Its three partial files are parts of the **same class**, using the same synchronization gate. They are not independently registered services. Keep the order of persistence, notification, locking and synchronization operations intact when editing them.
 
@@ -34,7 +34,7 @@ Pages are grouped into Accounts, Dashboard, Items, Sales, Expenses and Reports. 
 
 API `Program.cs` reads the public origin, registers services, builds the app, installs middleware, maps routes and runs the server. The extracted setup methods retain that order. Endpoints delegate to the existing data services; business authorization and transaction boundaries stay there.
 
-Shared code keeps the `Mashal.BusinessAid.Shared` namespace. Both server transactions and provisional device projections use the same command processor. Preserve the simplified operation names, JSON field names, centavo money calculations, and whole-number quantity rules when reorganizing files.
+Shared code keeps the `Ruach.BusinessAid.Shared` namespace. Both server transactions and provisional device projections use the same command processor. Preserve the simplified operation names, JSON field names, centavo money calculations, and whole-number quantity rules when reorganizing files.
 
 ## Database and release workflow
 

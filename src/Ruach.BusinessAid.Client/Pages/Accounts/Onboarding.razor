@@ -1,0 +1,43 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/onboarding"
+@layout EmptyLayout
+@inherits PageBase
+<PageTitle>Request your first business | Business Aid by RUACH</PageTitle>
+<main class="onboarding-page">
+<section class="onboarding-card">
+<BrandLogo Large="true" />
+<span class="eyebrow">First things first</span>
+<h1>@(Store.User?.IsDemo == true ? "Create a local workspace" : "Request your first business")</h1>
+<p>One account for all your businesses. Each has separate items, sales, stock, expenses, and reports. RUACH Admin reviews each business request.</p>
+<div class="account-summary">
+<span>Signed in as</span>
+<strong>@Store.User?.Email</strong>
+</div>
+<form class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
+@if (Store.User?.IsDemo != true) {
+<div class="field"><label for="owner-phone">Philippine mobile number</label><input id="owner-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="phone-help" /><small id="phone-help">09XXXXXXXXX or +639XXXXXXXXX. One account per number. Format-checked, not SMS-verified.</small></div>
+}
+<div class="field">
+<label for="business-name">Business name</label>
+<input id="business-name" @bind="name" required maxlength="160" placeholder="e.g. Aling Nena's Kakanin" />
+</div>
+<div class="field">
+<label for="business-location">Default location</label>
+<input id="business-location" @bind="location" required maxlength="500" />
+</div>
+<div class="info-panel">
+<strong>Philippine peso · Asia/Manila</strong>
+<span>Your reporting day and currency are already configured.</span>
+</div>
+<p>Approval creates an empty workspace. No sample items are added.</p>
+@if (!Store.Online && Store.User?.IsDemo != true) { <p role="status">Connect to submit your request. Your entered values stay in this form.</p> }
+<ErrorBanner Message="@Error" />
+<button class="button primary block" disabled="@(Saving || Store.Busy || (!Store.Online && Store.User?.IsDemo != true))">@(Saving ? "Submitting…" : Store.User?.IsDemo == true ? "Create local workspace" : "Submit request")</button>
+</form>
+<div class="account-actions">
+<button class="button ghost block" disabled="@Saving" @onclick="() => Run(Store.Logout)">Cancel and use a different account</button>
+</div>
+@if (Store.ShowReset) {
+<button class="button ghost block" @onclick="() => Run(Store.Logout)">Reset sign-in state</button> }
+</section>
+</main>

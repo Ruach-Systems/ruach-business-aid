@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/Ruach.BusinessAid.Client/Ruach.BusinessAid.Client.csproj" />
+  <Project Path="src/Ruach.BusinessAid.Api/Ruach.BusinessAid.Api.csproj" />
+  <Project Path="src/Ruach.BusinessAid.Shared/Ruach.BusinessAid.Shared.csproj" />
+  <Project Path="tools/Ruach.BusinessAid.Migrations/Ruach.BusinessAid.Migrations.csproj" />
+  <Project Path="tests/Ruach.BusinessAid.Tests/Ruach.BusinessAid.Tests.csproj" />
+</Solution>

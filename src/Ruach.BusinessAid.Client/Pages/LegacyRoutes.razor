@@ -1,0 +1,17 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/inventory"
+@page "/inventory/new"
+@page "/inventory/{Id:guid}"
+@page "/products"
+@page "/products/new"
+@page "/products/{Id:guid}"
+@page "/production"
+@page "/production/new"
+@page "/production/{Id:guid}"
+@page "/production/{Id:guid}/complete"
+@inject NavigationManager Navigation
+<div class="page"><p>Opening Items…</p></div>
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    protected override void OnInitialized() => Navigation.NavigateTo("/items", replace: true);
+}
