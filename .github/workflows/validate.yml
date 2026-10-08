@@ -1,8 +1,7 @@
 name: Build and test
 on:
-  pull_request:
-  push:
-    branches: [main, master]
+  # Automatic push/pull_request triggers are paused; run manually or via deploy.yml.
+  workflow_dispatch:
   workflow_call:
     inputs:
       api_origin:
