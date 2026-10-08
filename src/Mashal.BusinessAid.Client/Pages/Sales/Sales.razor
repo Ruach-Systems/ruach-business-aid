@@ -3,13 +3,17 @@
 @inherits PageBase
 <div class="page narrow">
 <PageHeading Title="What sold today?" Eyebrow="Fast daily entry" Description="Enter whole-item quantities. Stock is deducted automatically." />
+<form id="sale-item-search" @onsubmit:preventDefault></form>
 <form class="stack" @onsubmit="Save" @onsubmit:preventDefault>
 <section class="card form-card"><div class="field"><label for="sale-date">Sale date</label><input id="sale-date" type="date" max="@Today().ToString("yyyy-MM-dd")" @bind="date" required /></div></section>
-<section class="stack sale-lines">@foreach(var item in Store.Items){Ensure(item.Id);<article class="card sale-line">
+@if(Store.Items.Any()){<div class="sale-search"><div class="search-box"><label class="sr-only" for="sale-search">Search items to sell</label><input id="sale-search" form="sale-item-search" type="search" placeholder="Search items" autocomplete="off" @bind="search" @bind:event="oninput" /></div>
+@if(search.Length>0){<small class="search-summary" aria-live="polite">Showing @MatchCount of @Store.Items.Count() items@(SelectedHiddenByName>0?$" · {SelectedHiddenByName} selected item{(SelectedHiddenByName==1?"":"s")} kept":"")</small>}</div>}
+<section class="stack sale-lines">@foreach(var item in VisibleItems){Ensure(item.Id);<article class="card sale-line" @key="item.Id">
 <div class="list-main"><strong>@item.Name</strong><div class="unit-pricing"><span>Price <b>@Money(item.SellingPriceCentavos)</b></span><span>Cost <b>@Money(item.UnitCostCentavos)</b></span><span>Stock <b class="@(item.CurrentQuantity<0?"negative-stock":"")">@Quantity(item.CurrentQuantity)</b></span></div>
 @if(quantities[item.Id]>0 && quantities[item.Id]>item.CurrentQuantity){<small class="stock-warning" role="alert">This sale will leave @Quantity(item.CurrentQuantity-quantities[item.Id]) in stock.</small>}</div>
-<div class="stepper"><button type="button" aria-label="@($"Decrease {item.Name} quantity")" @onclick="()=>Change(item.Id,-1)">−</button><input type="number" min="0" step="1" inputmode="numeric" aria-label="@($"{item.Name} quantity sold")" @bind="quantities[item.Id]" @bind:event="oninput" /><button type="button" aria-label="@($"Increase {item.Name} quantity")" @onclick="()=>Change(item.Id,1)">+</button></div>
+<div class="stepper"><button type="button" aria-label="@($"Decrease {item.Name} quantity")" @onclick="()=>Change(item.Id,-1)">−</button><input type="number" min="0" max="1000000" step="1" inputmode="numeric" aria-label="@($"{item.Name} quantity sold")" @bind="quantities[item.Id]" @bind:event="oninput" /><button type="button" aria-label="@($"Increase {item.Name} quantity")" @onclick="()=>Change(item.Id,1)">+</button></div>
 </article>}</section>
+@if(Store.Items.Any() && !VisibleItems.Any()){<div class="card empty"><h3>No matching items</h3><p>Try another name.</p><button type="button" class="button ghost small" @onclick="ClearSearch">Clear search</button></div>}
 @if(!Store.Items.Any()){<div class="card empty"><h3>Add items first</h3><p>Active items appear here for quick sales entry.</p><a class="button primary" href="/items/new">Add item</a></div>}
 @if(HasNegativeResult){<div class="notice warning" role="alert">One or more items will have negative stock. You can still save and correct or add stock later.</div>}
 <section class="card dark totals-card" aria-label="Sale totals" aria-live="polite"><div><span class="card-label">Items</span><strong>@Quantity(TotalItems)</strong></div><div><span class="card-label">Sales</span><strong>@Money(Revenue)</strong></div><div><span class="card-label">Item cost</span><strong>@Money(Cost)</strong></div><div><span class="card-label">Gross profit</span><strong>@Money(Revenue-Cost)</strong></div></section>
