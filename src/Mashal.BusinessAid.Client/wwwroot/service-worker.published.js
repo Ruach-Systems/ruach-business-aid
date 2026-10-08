@@ -18,7 +18,9 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || url.origin !== self.location.origin || /^\/(api|health)(\/|$)/.test(url.pathname)) return;
   event.respondWith((async () => {
     const cache = await caches.open(cacheName);
-    const key = event.request.mode === 'navigate' ? 'index.html' : event.request;
+    const key = event.request.mode === 'navigate'
+      ? (/^\/open\/?$/.test(url.pathname) ? 'open.html' : 'index.html')
+      : event.request;
     return await cache.match(key) || fetch(event.request);
   })());
 });
