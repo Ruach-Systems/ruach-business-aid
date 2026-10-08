@@ -29,6 +29,22 @@ public static class Rules
         return name;
     }
 
+    // Bounds keep every quantity × amount product, and sale totals, within bigint centavos.
+    public const long MaxQuantity = 1_000_000;
+    public const long MaxCentavos = 10_000_000_000;
+    public const int MaxSaleLines = 500;
+    public const int MaxNoteLength = 400;
+    public const int MaxReasonLength = 80;
+
+    public static void Quantity(long value, long minimum, string message) =>
+        Require(value >= minimum && value <= MaxQuantity, $"{message} Use at most {MaxQuantity:N0}.");
+
+    public static void Centavos(long value, long minimum, string message) =>
+        Require(value >= minimum && value <= MaxCentavos, $"{message} Use at most ₱{MaxCentavos / 100:N0}.");
+
+    public static void Note(string? value) =>
+        Require((value?.Length ?? 0) <= MaxNoteLength, $"Notes can contain at most {MaxNoteLength} characters.");
+
     public static void Require(bool valid, string message)
     {
         if (!valid)

@@ -37,9 +37,9 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
         item.MinimumQuantity = input.MinimumQuantity;
         item.IsActive = input.IsActive;
         item.DeletedAt = null;
-        Rules.Require(item.SellingPriceCentavos > 0, "Selling price must be greater than zero.");
-        Rules.Require(item.UnitCostCentavos >= 0, "Unit cost cannot be negative.");
-        Rules.Require(item.MinimumQuantity >= 0, "Low-stock warning cannot be negative.");
+        Rules.Centavos(item.SellingPriceCentavos, 1, "Selling price must be greater than zero.");
+        Rules.Centavos(item.UnitCostCentavos, 0, "Unit cost cannot be negative.");
+        Rules.Quantity(item.MinimumQuantity, 0, "Low-stock warning cannot be negative.");
         await repository.Save(item);
     }
 
@@ -55,7 +55,7 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
         {
             value.Description = Rules.Name(value.Description);
             value.Category = Rules.Name(value.Category);
-            Rules.Require(value.AmountCentavos >= 0, "Expense cannot be negative.");
+            Rules.Centavos(value.AmountCentavos, 0, "Expense cannot be negative.");
             Date(value.ExpenseDate);
             value.DeletedAt = null;
         }
@@ -90,7 +90,8 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
     {
         await New<StockReceipt>(op.EntityId);
         var input = Input<ReceiptInput>(op);
-        Rules.Require(input.Quantity > 0, "Enter a positive whole-number stock quantity.");
+        Rules.Quantity(input.Quantity, 1, "Enter a positive whole-number stock quantity.");
+        Rules.Note(input.Note);
         var item = await repository.Required<Item>(input.ItemId);
         var receipt = new StockReceipt
         {
@@ -108,7 +109,9 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
         var input = Input<AdjustmentInput>(op);
         var item = await repository.Required<Item>(input.ItemId);
         CheckVersion(item, op.ExpectedVersion);
-        Rules.Require(input.CountedQuantity >= 0 && !string.IsNullOrWhiteSpace(input.Reason), "Provide a nonnegative whole-number count and reason.");
+        Rules.Require(!string.IsNullOrWhiteSpace(input.Reason) && input.Reason.Length <= Rules.MaxReasonLength, "Provide a nonnegative whole-number count and reason.");
+        Rules.Quantity(input.CountedQuantity, 0, "Provide a nonnegative whole-number count and reason.");
+        Rules.Note(input.Note);
         await Move(item, checked(input.CountedQuantity - item.CurrentQuantity), item.UnitCostCentavos,
             input.Reason == "Waste / spoilage" ? "waste" : "stock_correction", "adjustment", op.EntityId,
             input.Reason + (string.IsNullOrWhiteSpace(input.Note) ? "" : " · " + input.Note));
@@ -119,12 +122,13 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
         await New<Sale>(op.EntityId);
         var input = Input<SaleInput>(op);
         Date(input.SaleDate);
-        Rules.Require(input.Lines.Count > 0, "Enter at least one quantity.");
+        Rules.Require(input.Lines is { Count: > 0 }, "Enter at least one quantity.");
+        Rules.Require(input.Lines.Count <= Rules.MaxSaleLines, $"A sale can contain at most {Rules.MaxSaleLines} items.");
         Rules.Require(input.Lines.Select(x => x.ItemId).Distinct().Count() == input.Lines.Count, "Each item may appear only once.");
         var sale = new Sale { Id = op.EntityId, SaleDate = input.SaleDate, Location = "" };
         foreach (var line in input.Lines)
         {
-            Rules.Require(line.Quantity > 0, "Sale quantities must be positive whole numbers.");
+            Rules.Quantity(line.Quantity, 1, "Sale quantities must be positive whole numbers.");
             var item = await repository.Required<Item>(line.ItemId);
             Rules.Require(item.IsActive, "The item is inactive.");
             sale.Lines.Add(new SaleLine

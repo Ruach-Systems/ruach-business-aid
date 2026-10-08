@@ -65,6 +65,39 @@ public class ClientLogicTests
     }
 
     [Fact]
+    public async Task OversizedNotesAndQuantitiesAreRejectedBeforeQueueing()
+    {
+        var data = new AppData { Business = new() { Id = Guid.NewGuid() } };
+        var commands = new CommandProcessor(new LocalRepository(data), false);
+        var itemId = Guid.NewGuid();
+        await commands.Execute(Op("saveItem", itemId, new Item { Name = "Juice", SellingPriceCentavos = 500, UnitCostCentavos = 200, IsActive = true }));
+        var note = new string('x', Rules.MaxNoteLength + 1);
+        var today = Calculations.Today().ToString("yyyy-MM-dd");
+        Operation[] rejected =
+        [
+            Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, 1, note)),
+            Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, long.MaxValue / 10, null)),
+            Op("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, 1, "Other", note)),
+            Op("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, Rules.MaxQuantity + 1, "Other", null)),
+            Op("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, 1, new string('r', Rules.MaxReasonLength + 1), null)),
+            Op("recordSale", Guid.NewGuid(), new SaleInput([new(itemId, Rules.MaxQuantity + 1)], today)),
+            Op("saveItem", Guid.NewGuid(), new Item { Name = "Gold", SellingPriceCentavos = Rules.MaxCentavos + 1, UnitCostCentavos = 0, IsActive = true }),
+            Op("saveExpense", Guid.NewGuid(), new Expense { Description = "Rent", Category = "Rent", AmountCentavos = Rules.MaxCentavos + 1, ExpenseDate = today })
+        ];
+        foreach (var op in rejected)
+            Assert.Equal("validation", (await Assert.ThrowsAsync<DomainException>(() => commands.Execute(op))).Code);
+        Assert.Empty(data.Receipts);
+        Assert.Empty(data.Movements);
+        Assert.Empty(data.Sales);
+        Assert.Empty(data.Expenses);
+        Assert.Single(data.Items);
+
+        await commands.Execute(Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, Rules.MaxQuantity, new string('x', Rules.MaxNoteLength))));
+        await commands.Execute(Op("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, 0, "Stock count correction", new string('x', Rules.MaxNoteLength))));
+        Assert.True(data.Movements.All(x => x.Note!.Length <= 500));
+    }
+
+    [Fact]
     public async Task InactiveItemsCannotBeSoldButRemainEditable()
     {
         var data = new AppData { Business = new() { Id = Guid.NewGuid() } };

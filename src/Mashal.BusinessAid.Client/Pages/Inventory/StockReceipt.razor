@@ -6,8 +6,8 @@
 <PageHeading Title="Add stock" Eyebrow="Stock received" Description="Add a whole-number quantity using the item's fixed cost." />
 <form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
 <div class="field"><label for="receipt-item">Item</label><select id="receipt-item" @bind="itemId" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
-<div class="field"><label for="receipt-quantity">Quantity received</label><input id="receipt-quantity" type="number" min="1" step="1" @bind="quantity" required /></div>
-<div class="field"><label for="receipt-note">Note</label><textarea id="receipt-note" @bind="note" placeholder="Optional supplier or delivery note"></textarea></div>
+<div class="field"><label for="receipt-quantity">Quantity received</label><input id="receipt-quantity" type="number" min="1" max="1000000" step="1" @bind="quantity" required /></div>
+<div class="field"><label for="receipt-note">Note</label><textarea id="receipt-note" @bind="note" maxlength="400" placeholder="Optional supplier or delivery note"></textarea></div>
 @if(Item is {} selected){
 <div class="card soft stock-cost">
 <div class="stock-cost-heading"><span class="card-label">Cost used</span><a href="@($"/items/{selected.Id}/edit")">Edit item cost</a></div>

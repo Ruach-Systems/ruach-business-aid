@@ -6,9 +6,9 @@
 <PageHeading Title="Correct stock" Eyebrow="Physical count" Description="Replace the saved balance with the quantity you actually have." />
 <form class="card form-card" @onsubmit="Save" @onsubmit:preventDefault>
 <div class="field"><label for="adjust-item">Item</label><select id="adjust-item" @bind="itemId" @bind:after="Choose" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
-<div class="field"><label for="adjust-count">Counted quantity</label><input id="adjust-count" type="number" min="0" step="1" @bind="count" required /></div>
+<div class="field"><label for="adjust-count">Counted quantity</label><input id="adjust-count" type="number" min="0" max="1000000" step="1" @bind="count" required /></div>
 <div class="field"><label for="adjust-reason">Reason</label><select id="adjust-reason" @bind="reason"><option>Stock count correction</option><option>Waste / spoilage</option><option>Return</option><option>Other</option></select></div>
-<div class="field"><label for="adjust-note">Note</label><textarea id="adjust-note" @bind="note"></textarea></div>
+<div class="field"><label for="adjust-note">Note</label><textarea id="adjust-note" @bind="note" maxlength="400"></textarea></div>
 <ErrorBanner Message="@Error" />
 <div class="form-actions"><a class="button ghost" href="/items">Cancel</a><button class="button primary" disabled="@Saving">Save correction</button></div>
 </form>

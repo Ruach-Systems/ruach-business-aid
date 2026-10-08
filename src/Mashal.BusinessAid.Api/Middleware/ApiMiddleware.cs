@@ -23,6 +23,9 @@ public static class ApiMiddleware
                     AntiforgeryValidationException => (400, "csrf", "Refresh your session and try again."),
                     SqlException { Number: 2601 or 2627 } => (409, "conflict", "A record with this name or identifier already exists."),
                     SqlException { Number: 547 } => (400, "validation", "A referenced record or value is invalid."),
+                    // Deterministic data errors must not look retryable, or the outbox head never clears.
+                    SqlException { Number: 2628 or 8152 } => (400, "validation", "A note or name is too long."),
+                    OverflowException => (400, "validation", "A quantity or amount is too large."),
                     SqlException => (503, "retry", "The database is temporarily unavailable."),
                     System.Text.Json.JsonException => (400, "validation", "Invalid request payload."),
                     BadHttpRequestException => (400, "validation", "Invalid request."),

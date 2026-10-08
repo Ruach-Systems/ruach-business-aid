@@ -23,7 +23,7 @@
 </div>
 <div class="field">
 <label for="expense-amount">Amount (₱)</label>
-<MoneyInput id="expense-amount" min="0" @bind-Value="amount" required />
+<MoneyInput id="expense-amount" min="0" max="100000000" @bind-Value="amount" required />
 </div>
 <div class="field">
 <label for="expense-category">Category</label>

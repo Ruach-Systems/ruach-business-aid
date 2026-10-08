@@ -101,4 +101,24 @@ public class SqlTests
         var (other, otherBusiness, otherService) = await Setup();
         await Assert.ThrowsAsync<DomainException>(() => otherService.Push(other, new(DataModel.CurrentVersion, otherBusiness, [Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, 1, null))])));
     }
+
+    [Fact]
+    public async Task OversizedOperationsFailAsValidationAndRollBack()
+    {
+        var (user, business, service) = await Setup();
+        var itemId = Guid.NewGuid();
+        await service.Push(user, new(DataModel.CurrentVersion, business, [SaveItem(itemId)]));
+        Operation[] oversized =
+        [
+            Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, 1, new string('x', 600))),
+            Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, long.MaxValue / 10, null)),
+            Op("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, 0, "Other", new string('x', 600)), Convert.ToBase64String((await service.Bootstrap(user, business)).Data.Items.Single().Version!))
+        ];
+        foreach (var op in oversized)
+            Assert.Equal("validation", (await Assert.ThrowsAsync<DomainException>(() => service.Push(user, new(DataModel.CurrentVersion, business, [op])))).Code);
+        var data = (await service.Bootstrap(user, business)).Data;
+        Assert.Empty(data.Receipts);
+        Assert.Empty(data.Movements);
+        Assert.Equal(0, data.Items.Single().CurrentQuantity);
+    }
 }
