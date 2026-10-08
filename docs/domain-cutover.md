@@ -24,7 +24,10 @@ The coordinator verified the legacy PWA and API liveness/readiness return HTTP
 hostnames were also NXDOMAIN at the 8 October 2026 inventory.
 
 The destination Production environment contains `PWA_ORIGIN`, `API_ORIGIN` and
-`FIREBASE_PROJECT_ID` with the planned values above. Its branch policy permits
+`FIREBASE_PROJECT_ID` with the planned values above. The coordinator also copied
+`MASHAL_ADMIN_EMAILS` exactly from the source and verified it without printing
+addresses. These four non-secret settings are configured; secret values remain
+unconfigured. Its branch policy permits
 only `main`. Required reviewers could not be enabled: GitHub returned HTTP 422
 because the organization billing plan does not support that protection. Branch
 filtering and a workflow checkbox do not substitute for owner authorization.
@@ -34,8 +37,6 @@ or logs: `DATA_PROTECTION_CERTIFICATE_BASE64`, `DATA_PROTECTION_CERTIFICATE_PASS
 `FIREBASE_SERVICE_ACCOUNT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
 `SQL_APP_CONNECTION_STRING`, `WEBDEPLOY_ENDPOINT`, `WEBDEPLOY_PASSWORD`,
 `WEBDEPLOY_SITE`, `WEBDEPLOY_USERNAME`. GitHub cannot return stored secret values.
-Also configure the existing `MASHAL_ADMIN_EMAILS` public setting through the
-appropriate secure operational process.
 
 Provider access must establish the actual old and new Hosting site IDs, support
 for a separate site within the existing Firebase project, MyASP.NET's additional
