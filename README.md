@@ -178,6 +178,8 @@ A failed manual script must stop the release. Correct an unapplied script, or ad
 
 `validate.yml` restores and builds the .NET solution, runs shared/client/component tests, applies the SQL scripts with DbUp to an isolated SQL Server, runs integration tests, verifies the journal, publishes the PWA, checks its assets, runs .NET Playwright offline/update tests, and publishes the exact API/PWA artifacts.
 
+Automatic `push` and `pull_request` triggers are currently paused. Run validation manually with **Actions > Build and test > Run workflow** (or `gh workflow run validate.yml --ref <branch>`) before merging; `deploy.yml` still invokes it for the selected commit. Restore the triggers in `validate.yml` when continuous validation should resume.
+
 **Do not dispatch `deploy.yml` under the current user instruction.** Its future
 Test/Production path first invokes validation for the selected commit and API
 origin, then runs distinct jobs:
