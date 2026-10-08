@@ -2,8 +2,9 @@
 @page "/settings"
 @layout AccountLayout
 @inherits PageBase
+@inject IJSRuntime JS
 <div class="page narrow">
-<PageHeading Title="Settings" Eyebrow="Preferences & safety" Description="Manage your account, business details, and cloud sync." />
+<PageHeading Title="Settings" Eyebrow="Preferences & safety" Description="Manage your account, display, business details, and cloud sync." />
 <section class="card profile-card">
 <div>
 <strong>@Store.User?.DisplayName</strong>
@@ -50,6 +51,15 @@
 </dl>
 </article>
 }
+<article class="card display-card">
+<div class="section-heading compact">
+<h2>Display</h2>
+</div>
+<label class="toggle-row" for="compact-mode">
+<span><strong>Compact view</strong><small>Tighter spacing so more items, sales, and stock fit on screen. Saved on this device.</small></span>
+<input id="compact-mode" class="toggle" type="checkbox" role="switch" checked="@compact" @onchange="ToggleCompact" />
+</label>
+</article>
 @if(Store.CanResetLocalData){
 <article class="card reset-card">
 <span class="card-label">Local development</span>
@@ -75,9 +85,20 @@ else{
 </div>
 
 @code {
-    private bool confirmingReset;
+    private bool confirmingReset, compact;
     private string phone="", saved="";
     protected override void OnInitialized() { base.OnInitialized(); phone=Store.User?.PhoneNumber ?? ""; }
     private Task SavePhone() => Run(async()=> { saved=""; await Store.SavePhone(phone); phone=Store.User?.PhoneNumber ?? ""; saved="Mobile number saved."; });
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        compact = await JS.InvokeAsync<bool>("mashalUi.isCompact");
+        StateHasChanged();
+    }
+    private async Task ToggleCompact(ChangeEventArgs e)
+    {
+        compact = e.Value is true;
+        compact = await JS.InvokeAsync<bool>("mashalUi.setCompact", compact);
+    }
     private Task ResetLocalData() => Run(Store.ResetLocalData, "/onboarding");
 }

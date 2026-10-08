@@ -118,6 +118,20 @@ public class ComponentTests
         Assert.Contains("Delete and start over", page.Markup);
     }
     [Fact]
+    public async Task SettingsCompactViewToggleReadsAndPersistsPreference()
+    {
+        using var context = Context();
+        context.JSInterop.Setup<bool>("mashalUi.isCompact").SetResult(true);
+        var setCompact = context.JSInterop.Setup<bool>("mashalUi.setCompact", _ => true).SetResult(false);
+        await context.Services.GetRequiredService<BusinessState>().ContinueLocally();
+        var page = context.Render<Settings>();
+        page.WaitForAssertion(() => Assert.True(page.Find("#compact-mode").HasAttribute("checked")));
+        page.Find("#compact-mode").Change(false);
+        var call = Assert.Single(setCompact.Invocations);
+        Assert.Equal(false, call.Arguments[0]);
+        page.WaitForAssertion(() => Assert.False(page.Find("#compact-mode").HasAttribute("checked")));
+    }
+    [Fact]
     public void ErrorBannerUsesAlertSemanticsAndReportsUseOnlineNotice()
     {
         using var context = Context(); var error = context.Render<ErrorBanner>(p => p.Add(x => x.Message, "Record changed"));

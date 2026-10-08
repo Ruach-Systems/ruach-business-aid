@@ -13,3 +13,8 @@ dl { margin: 0; display: grid; gap: 12px; } dl div { display: flex; justify-cont
 .reset-confirmation span { color: var(--mashal-ink); font-size: 11px; line-height: 1.5; }
 .reset-confirmation > div { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 @media(max-width: 420px) { .reset-confirmation > div { grid-template-columns: 1fr; } }
+.display-card { display: grid; gap: 12px; }
+.display-card .section-heading { margin: 0; }
+.display-card .toggle-row { cursor: pointer; }
+.display-card .toggle-row > span { display: grid; gap: 4px; min-width: 0; }
+.display-card .toggle-row small { font-size: 12px; line-height: 1.45; }

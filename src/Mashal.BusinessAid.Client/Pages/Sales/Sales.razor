@@ -15,10 +15,12 @@
 </article>}</section>
 @if(Store.Items.Any() && !VisibleItems.Any()){<div class="card empty"><h3>No matching items</h3><p>Try another name.</p><button type="button" class="button ghost small" @onclick="ClearSearch">Clear search</button></div>}
 @if(!Store.Items.Any()){<div class="card empty"><h3>Add items first</h3><p>Active items appear here for quick sales entry.</p><a class="button primary" href="/items/new">Add item</a></div>}
-@if(HasNegativeResult){<div class="notice warning" role="alert">One or more items will have negative stock. You can still save and correct or add stock later.</div>}
+@if(HasNegativeResult){<div class="notice warning sale-warning" role="alert">One or more items will have negative stock. You can still save and correct or add stock later.</div>}
+@if(Store.Items.Any()){<div class="sale-checkout @(TotalItems>0?"active":"")">
 <section class="card dark totals-card" aria-label="Sale totals" aria-live="polite"><div><span class="card-label">Items</span><strong>@Quantity(TotalItems)</strong></div><div><span class="card-label">Sales</span><strong>@Money(Revenue)</strong></div><div><span class="card-label">Item cost</span><strong>@Money(Cost)</strong></div><div><span class="card-label">Gross profit</span><strong>@Money(Revenue-Cost)</strong></div></section>
 @if(message!=""){<div class="success-banner" role="status">@message</div>}<ErrorBanner Message="@Error" />
 <button class="button primary block" disabled="@(Saving||TotalItems==0)">Save @Quantity(TotalItems) items</button>
+</div>}
 </form>
 <section id="sales-history" class="section sales-history"><div class="section-heading"><h2>Sales history</h2></div>
 @if(Store.Sales.Any()){<div class="stack">@foreach(var sale in Store.Sales.OrderByDescending(x=>x.CreatedAt)){<a class="card list-card sale-history-link" href="@($"/sales/{sale.Id}")" aria-label="@($"View sale of {Quantity(sale.TotalItems)} items for {Money(sale.TotalRevenueCentavos)}")"><span class="list-icon"><Icon Name="cart" /></span><div class="list-main"><strong>@Quantity(sale.TotalItems) items</strong><small>@FriendlyDate(sale.SaleDate,Today()) · @string.Join(", ",sale.Lines.Select(x=>x.ItemName))</small></div><strong class="sale-amount">@Money(sale.TotalRevenueCentavos)</strong></a>}</div>}

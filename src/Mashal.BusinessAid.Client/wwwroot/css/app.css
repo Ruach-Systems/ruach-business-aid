@@ -259,3 +259,75 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
   .card { padding: 16px; }
   .field-row { grid-template-columns: 1fr; }
 }
+
+/* Compact view (Settings > Display): denser spacing, same hierarchy; touch targets stay at least 44px. */
+html.density-compact .page { padding-top: 14px; padding-bottom: 112px; }
+html.density-compact .page-back-link { margin: -6px 0 4px; }
+html.density-compact .page-heading { margin-bottom: 14px; gap: 12px; }
+html.density-compact .page-heading h1 { font-size: clamp(24px, 5vw, 34px); margin: 4px 0 4px; }
+html.density-compact .page-heading p { font-size: 13px; }
+html.density-compact .section { margin-top: 16px; }
+html.density-compact .section-heading { margin-bottom: 8px; }
+html.density-compact .section-heading h2 { font-size: 19px; }
+html.density-compact .stack, html.density-compact .metric-grid, html.density-compact .inventory-grid { gap: 8px; }
+html.density-compact .split { gap: 12px; }
+html.density-compact .card { padding: 12px 14px; border-radius: 11px; }
+html.density-compact .metric-value { font-size: 28px; margin: 6px 0 2px; }
+html.density-compact .list-card { min-height: 56px; gap: 10px; }
+html.density-compact .list-card strong { font-size: 13px; margin-bottom: 2px; }
+html.density-compact .list-card small { font-size: 12px; }
+html.density-compact .list-icon { width: 34px; height: 34px; border-radius: 6px; font-size: 18px; }
+html.density-compact .form-card { gap: 12px; }
+html.density-compact .field { gap: 5px; }
+html.density-compact .field input, html.density-compact .field select { min-height: 36px; padding: 6px 10px; border-radius: 6px; font-size: 14px; }
+html.density-compact .field textarea { min-height: 64px; padding: 7px 10px; border-radius: 6px; font-size: 14px; }
+html.density-compact .button { min-height: 36px; padding: 0 14px; border-radius: 7px; }
+html.density-compact .button.small, html.density-compact .sync-pill, html.density-compact .page-back-link { min-height: 32px; }
+html.density-compact .button.small { padding: 0 11px; border-radius: 5px; }
+html.density-compact .toggle-row { padding: 8px 12px; }
+html.density-compact .empty { padding: 24px 16px; }
+html.density-compact th, html.density-compact td { padding: 8px 10px; }
+html.density-compact .mobile-header { min-height: 60px; padding-bottom: 6px; padding-top: max(8px, env(safe-area-inset-top)); }
+html.density-compact .mobile-header .brand-mark { width: 30px; height: 30px; }
+html.density-compact .mobile-header .brand-name strong { font-size: 15px; }
+html.density-compact .bottom-nav { height: 58px; padding: 5px; border-radius: 11px; }
+html.density-compact .bottom-nav a { border-radius: 7px; gap: 1px; }
+html.density-compact .bottom-nav .icon { font-size: 20px; }
+html.density-compact .search-box input { min-height: 36px; font-size: 15px; }
+html.density-compact .search { min-height: 36px; padding: 7px 10px; border-radius: 6px; }
+html.density-compact .sale-line .stepper { grid-template-columns: 36px 56px 36px; gap: 4px; }
+html.density-compact .sale-line .stepper button { width: 36px; height: 36px; border-radius: 5px; }
+html.density-compact .sale-line .stepper input { width: 56px; height: 36px; border-radius: 5px; }
+html.density-compact .sale-line { gap: 10px; }
+html.density-compact .sale-line .list-main { gap: 4px; }
+html.density-compact .sale-line .list-main > strong { font-size: 14px; }
+html.density-compact .sale-line .unit-pricing { display: flex; flex-wrap: wrap; gap: 0 12px; line-height: 1.4; }
+html.density-compact .sale-line .stock-warning { margin-top: 0; }
+html.density-compact .quantity strong { font-size: 17px; }
+html.density-compact .today-total, html.density-compact .period-total { padding-top: 6px; padding-bottom: 6px; }
+html.density-compact .profit-card { min-height: 96px; }
+html.density-compact .sale-summary { gap: 8px; }
+html.density-compact .sale-summary .card, html.density-compact .metric-grid .card { min-height: 0; padding: 10px 12px; container-type: inline-size; }
+html.density-compact .sale-summary .metric-value, html.density-compact .metric-grid .metric-value { margin-top: 4px; font-size: clamp(16px, 14cqi, 26px); }
+html.density-compact .page-back-link, html.density-compact .account-nav a { border-radius: 5px; }
+html.density-compact .date-chip, html.density-compact .toggle-row, html.density-compact .notice, html.density-compact .account-notice, html.density-compact .reset-confirmation, html.density-compact .setup-note, html.density-compact .info-panel, html.density-compact .account-summary { border-radius: 7px; }
+html.density-compact .error-banner, html.density-compact .success-banner, html.density-compact .activity-details summary, html.density-compact .activity-entry, html.density-compact .line-breakdown > div, html.density-compact .day-profit-grid > div { border-radius: 6px; }
+html.density-compact .search-box { border-radius: 7px; }
+html.density-compact .row-actions button { border-radius: 6px; }
+html.density-compact .status-badge { border-radius: 4px; }
+html.density-compact .profile-avatar { border-radius: 9px; }
+html.density-compact .startup-error-card, html.density-compact .auth-card, html.density-compact .onboarding-card { border-radius: 12px; }
+@media (min-width: 360px) and (max-width: 420px) {
+  html.density-compact .sale-line { grid-template-columns: minmax(0, 1fr) auto; }
+  html.density-compact .sale-line .stepper { grid-template-columns: 36px 52px 36px; width: auto; gap: 4px; }
+  html.density-compact .sale-line .stepper input { width: 52px; }
+}
+@media (min-width: 760px) {
+  html.density-compact .page { padding-top: 24px; }
+}
+@media (min-width: 980px) {
+  html.density-compact .page { padding-bottom: 48px; }
+  html.density-compact .side-nav { gap: 22px; padding-top: 18px; }
+  html.density-compact .side-nav nav { gap: 4px; }
+  html.density-compact .side-nav nav a { min-height: 38px; border-radius: 7px; }
+}
