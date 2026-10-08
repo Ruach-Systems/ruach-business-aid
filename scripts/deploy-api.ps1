@@ -4,7 +4,7 @@ $webConfig = Join-Path $publish 'web.config'
 $deploy = 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe'
 if (!(Test-Path -LiteralPath $deploy)) { throw 'Web Deploy is required on the deployment runner.' }
 if (!(Test-Path -LiteralPath $webConfig)) { throw 'The validated API publish artifact is missing web.config.' }
-$required = @('ConnectionStrings__Mashal','Google__ClientId','Google__ClientSecret','DataProtection__CertificateBase64','DataProtection__CertificatePassword','App__Origin','MASHAL_ADMIN_EMAILS','WEBDEPLOY_ENDPOINT','WEBDEPLOY_SITE','WEBDEPLOY_USERNAME','WEBDEPLOY_PASSWORD')
+$required = @('ConnectionStrings__Mashal','Google__ClientId','Google__ClientSecret','DataProtection__CertificateBase64','DataProtection__CertificatePassword','App__Origin','APP_ORIGIN_PAIRS','MASHAL_ADMIN_EMAILS','WEBDEPLOY_ENDPOINT','WEBDEPLOY_SITE','WEBDEPLOY_USERNAME','WEBDEPLOY_PASSWORD')
 foreach ($name in $required) { if (![Environment]::GetEnvironmentVariable($name)) { throw "Required environment value is missing: $name" } }
 
 $certificateBytes = $null
@@ -42,11 +42,15 @@ $values = @{
   DataProtection__CertificatePassword = $env:DataProtection__CertificatePassword
   App__Origin = $env:App__Origin
 }
+. (Join-Path $PSScriptRoot 'origin-settings.ps1')
+foreach ($entry in (Get-OriginSettings $env:APP_ORIGIN_PAIRS).GetEnumerator()) {
+  $values[$entry.Key] = $entry.Value
+}
 $adminEmails = @($env:MASHAL_ADMIN_EMAILS.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -Unique)
-if ($adminEmails.Count -eq 0) { throw 'At least one Mashal Admin email is required.' }
+if ($adminEmails.Count -eq 0) { throw 'At least one RUACH Admin email is required.' }
 for ($index = 0; $index -lt $adminEmails.Count; $index++) {
   $address = [Net.Mail.MailAddress]::new($adminEmails[$index])
-  if ($address.Address -ne $adminEmails[$index]) { throw 'Mashal Admin entries must be plain email addresses.' }
+  if ($address.Address -ne $adminEmails[$index]) { throw 'RUACH Admin entries must be plain email addresses.' }
   $values["MashalAdmin__Emails__$index"] = $adminEmails[$index]
 }
 foreach ($entry in $values.GetEnumerator()) {

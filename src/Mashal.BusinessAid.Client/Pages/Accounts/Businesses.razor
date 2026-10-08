@@ -2,7 +2,7 @@
 @page "/businesses"
 @layout AccountLayout
 @inherits PageBase
-<PageTitle>Your businesses | Mashal Business Aid</PageTitle>
+<PageTitle>Your businesses | Business Aid by RUACH</PageTitle>
 <div class="page account-page">
 <PageHeading Title="Your businesses" Eyebrow="Owner dashboard" Description="Choose a business to pick up where you left off." />
 <ErrorBanner Message="@Error" />
@@ -26,7 +26,7 @@
 <h2 class="section">Business requests</h2>
 <div class="stack">@foreach (var request in Store.Account?.Requests ?? []) {
 <article class="card"><div class="section-heading"><h3>@request.Name</h3><span class="status-badge @request.Status.ToLowerInvariant()">@request.Status</span></div><p>@request.DefaultLocation · @request.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</p>
-@if(request.Status == "Pending") { <p>Mashal Admin is reviewing your request. Your other approved businesses remain available.</p> }
+@if(request.Status == "Pending") { <p>RUACH Admin is reviewing your request. Your other approved businesses remain available.</p> }
 @if(request.Status == "Rejected") { <p><strong>Reason:</strong> @request.Reason</p><button class="button ghost" disabled="@(!CanRequest)" @onclick="()=>Resubmit(request)">Update and resubmit</button> }
 @if(request.Status == "Approved") { <p>Your independent workspace is ready. Open it above to begin.</p> }
 </article> }

@@ -9,10 +9,14 @@ on:
       api_origin:
         description: HTTPS API origin compiled into the PWA
         type: string
-        default: https://api-businessaid.mashalsystems.com
+        default: https://api.businessaid.ruachsystems.dev
         required: true
       database_ready_confirmed:
         description: I reviewed database/migrations and manually applied any required scripts to this environment
+        type: boolean
+        default: false
+      deployment_authorized:
+        description: The owner explicitly authorized this deployment after reviewing provider readiness and old-origin recovery
         type: boolean
         default: false
 permissions:
@@ -34,13 +38,33 @@ jobs:
       EXPECTED_API_ORIGIN: ${{ vars.API_ORIGIN }}
       REQUESTED_API_ORIGIN: ${{ inputs.api_origin }}
       DATABASE_READY_CONFIRMED: ${{ inputs.database_ready_confirmed }}
+      DEPLOYMENT_AUTHORIZED: ${{ inputs.deployment_authorized }}
+      FIREBASE_HOSTING_SITE: ${{ vars.FIREBASE_HOSTING_SITE }}
+      FIREBASE_LEGACY_HOSTING_SITE: ${{ vars.FIREBASE_LEGACY_HOSTING_SITE }}
+      APP_ORIGIN_PAIRS: ${{ vars.APP_ORIGIN_PAIRS }}
+      PWA_ORIGIN: ${{ vars.PWA_ORIGIN }}
+      DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
     steps:
       - name: Validate deployment configuration
         run: |
+          if [ "$DEPLOYMENT_AUTHORIZED" != 'true' ]; then
+            echo 'Deployment is blocked without a new explicit owner go/no-go. Do not dispatch this workflow merely to validate.' >&2
+            exit 1
+          fi
           if [ -z "$EXPECTED_API_ORIGIN" ] || [ "$EXPECTED_API_ORIGIN" != "$REQUESTED_API_ORIGIN" ]; then
             echo 'API origin must match the selected GitHub Environment.' >&2
             exit 1
           fi
+          if [ -z "$FIREBASE_HOSTING_SITE" ] || [ -z "$FIREBASE_LEGACY_HOSTING_SITE" ] || [ "$FIREBASE_HOSTING_SITE" = "$FIREBASE_LEGACY_HOSTING_SITE" ]; then
+            echo 'Configure verified, distinct new and legacy Hosting site IDs before deployment.' >&2
+            exit 1
+          fi
+          echo "$APP_ORIGIN_PAIRS" | jq -e --arg api "$EXPECTED_API_ORIGIN" --arg pwa "$PWA_ORIGIN" --arg environment "$DEPLOY_ENVIRONMENT" '
+            type == "array" and length > 0
+            and all(.[]; (.ApiOrigin | type == "string") and (.PwaOrigin | type == "string"))
+            and any(.[]; .ApiOrigin == $api and .PwaOrigin == $pwa)
+            and ($environment != "Production" or any(.[]; .ApiOrigin == "https://api-businessaid.mashalsystems.com" and .PwaOrigin == "https://businessaid.mashalsystems.com"))
+          ' >/dev/null || { echo 'Explicit new and legacy API/PWA origin pairs are required.' >&2; exit 1; }
           if [ "$DATABASE_READY_CONFIRMED" != 'true' ]; then
             echo 'Review and manually apply required database/migrations scripts, then confirm database readiness.' >&2
             exit 1
@@ -59,6 +83,7 @@ jobs:
       DataProtection__CertificateBase64: ${{ secrets.DATA_PROTECTION_CERTIFICATE_BASE64 }}
       DataProtection__CertificatePassword: ${{ secrets.DATA_PROTECTION_CERTIFICATE_PASSWORD }}
       App__Origin: ${{ vars.PWA_ORIGIN }}
+      APP_ORIGIN_PAIRS: ${{ vars.APP_ORIGIN_PAIRS }}
       MASHAL_ADMIN_EMAILS: ${{ vars.MASHAL_ADMIN_EMAILS }}
       API_ORIGIN: ${{ vars.API_ORIGIN }}
       WEBDEPLOY_ENDPOINT: ${{ secrets.WEBDEPLOY_ENDPOINT }}
@@ -152,6 +177,7 @@ jobs:
     environment: ${{ inputs.environment }}
     env:
       FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      FIREBASE_HOSTING_SITE: ${{ vars.FIREBASE_HOSTING_SITE }}
       PWA_ORIGIN: ${{ vars.PWA_ORIGIN }}
       API_ORIGIN: ${{ vars.API_ORIGIN }}
     steps:
@@ -168,7 +194,8 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       - name: Deploy validated PWA artifact
         run: |
-          npx firebase-tools@14.12.1 deploy --only hosting --project "$FIREBASE_PROJECT_ID" --config firebase.json --non-interactive
+          npx firebase-tools@14.12.1 target:apply hosting business-aid "$FIREBASE_HOSTING_SITE" --project "$FIREBASE_PROJECT_ID" --non-interactive
+          npx firebase-tools@14.12.1 deploy --only hosting:business-aid --project "$FIREBASE_PROJECT_ID" --config firebase.json --non-interactive
       - name: Verify release and security boundaries
         shell: pwsh
         run: ./scripts/smoke-release.ps1

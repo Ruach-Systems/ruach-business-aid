@@ -61,7 +61,7 @@ public class ComponentTests
         using var context = Context(); var page = context.Render<SignIn>();
         Assert.Contains("Continue with Google", page.Markup); Assert.Contains("Continue locally", page.Markup);
         Assert.DoesNotContain("Reset sign-in state", page.Markup);
-        Assert.Contains("mashal-wordmark-reversed", page.Find("img").GetAttribute("src"));
+        Assert.Contains("business-aid-wordmark-reversed", page.Find("img").GetAttribute("src"));
     }
     [Fact]
     public void ItemEditorKeepsPriceAndCostTogetherWithoutProductionOptions()

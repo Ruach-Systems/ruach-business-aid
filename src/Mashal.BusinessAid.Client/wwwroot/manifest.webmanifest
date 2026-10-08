@@ -1,26 +1,26 @@
 {
   "id": "/",
-  "name": "Mashal Systems — Business Aid",
-  "short_name": "Mashal",
-  "description": "Customized software for business and life.",
-  "theme_color": "#0B1F3A",
-  "background_color": "#F7F9FC",
+  "name": "Business Aid by RUACH",
+  "short_name": "Business Aid",
+  "description": "Sales, stock and expenses for your business.",
+  "theme_color": "#141821",
+  "background_color": "#F7F3ED",
   "display": "standalone",
   "start_url": "/",
   "scope": "/",
   "icons": [
     {
-      "src": "/brand-assets/pwa-192x192.e71edd75d0396cc1.png",
+      "src": "/brand-assets/pwa-192x192.4a93f934fc97ce50.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/brand-assets/pwa-512x512.c660207d1077f374.png",
+      "src": "/brand-assets/pwa-512x512.8afdf523ed63f4cd.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/brand-assets/pwa-maskable-512x512.c660207d1077f374.png",
+      "src": "/brand-assets/pwa-maskable-512x512.8afdf523ed63f4cd.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

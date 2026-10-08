@@ -1,244 +1,102 @@
-{
-  "master": "scripts/brand-source/shield-master.svg",
-  "pngs": [
-    {
-      "file": "mashal-icon-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-icon-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-icon-1024.png",
-      "width": 1024,
-      "height": 1024
-    },
-    {
-      "file": "mashal-monochrome-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-monochrome-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-monochrome-1024.png",
-      "width": 1024,
-      "height": 1024
-    },
-    {
-      "file": "mashal-black-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-black-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-black-1024.png",
-      "width": 1024,
-      "height": 1024
-    },
-    {
-      "file": "mashal-white-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-white-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-white-1024.png",
-      "width": 1024,
-      "height": 1024
-    },
-    {
-      "file": "mashal-reversed-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-reversed-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-reversed-1024.png",
-      "width": 1024,
-      "height": 1024
-    },
-    {
-      "file": "mashal-wordmark-1520x512.png",
-      "width": 1520,
-      "height": 512
-    },
-    {
-      "file": "mashal-wordmark-3040x1024.png",
-      "width": 3040,
-      "height": 1024
-    },
-    {
-      "file": "mashal-wordmark-monochrome-1520x512.png",
-      "width": 1520,
-      "height": 512
-    },
-    {
-      "file": "mashal-wordmark-monochrome-3040x1024.png",
-      "width": 3040,
-      "height": 1024
-    },
-    {
-      "file": "mashal-wordmark-reversed-1520x512.png",
-      "width": 1520,
-      "height": 512
-    },
-    {
-      "file": "mashal-wordmark-reversed-3040x1024.png",
-      "width": 3040,
-      "height": 1024
-    },
-    {
-      "file": "mashal-dark-1520x512.png",
-      "width": 1520,
-      "height": 512
-    },
-    {
-      "file": "mashal-dark-3040x1024.png",
-      "width": 3040,
-      "height": 1024
-    },
-    {
-      "file": "mashal-stacked-1280.png",
-      "width": 1280,
-      "height": 1280
-    },
-    {
-      "file": "mashal-stacked-dark-1280.png",
-      "width": 1280,
-      "height": 1280
-    },
-    {
-      "file": "mashal-stacked-monochrome-1280.png",
-      "width": 1280,
-      "height": 1280
-    },
-    {
-      "file": "mashal-logotype-1360x460.png",
-      "width": 1360,
-      "height": 460
-    },
-    {
-      "file": "mashal-favicon-16.png",
-      "width": 16,
-      "height": 16
-    },
-    {
-      "file": "mashal-favicon-24.png",
-      "width": 24,
-      "height": 24
-    },
-    {
-      "file": "mashal-favicon-32.png",
-      "width": 32,
-      "height": 32
-    },
-    {
-      "file": "mashal-favicon-48.png",
-      "width": 48,
-      "height": 48
-    },
-    {
-      "file": "mashal-favicon-64.png",
-      "width": 64,
-      "height": 64
-    },
-    {
-      "file": "mashal-favicon-128.png",
-      "width": 128,
-      "height": 128
-    },
-    {
-      "file": "mashal-favicon-180.png",
-      "width": 180,
-      "height": 180
-    },
-    {
-      "file": "mashal-favicon-192.png",
-      "width": 192,
-      "height": 192
-    },
-    {
-      "file": "mashal-favicon-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-favicon-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-app-icon-48.png",
-      "width": 48,
-      "height": 48
-    },
-    {
-      "file": "mashal-app-icon-72.png",
-      "width": 72,
-      "height": 72
-    },
-    {
-      "file": "mashal-app-icon-96.png",
-      "width": 96,
-      "height": 96
-    },
-    {
-      "file": "mashal-app-icon-144.png",
-      "width": 144,
-      "height": 144
-    },
-    {
-      "file": "mashal-app-icon-180.png",
-      "width": 180,
-      "height": 180
-    },
-    {
-      "file": "mashal-app-icon-192.png",
-      "width": 192,
-      "height": 192
-    },
-    {
-      "file": "mashal-app-icon-256.png",
-      "width": 256,
-      "height": 256
-    },
-    {
-      "file": "mashal-app-icon-512.png",
-      "width": 512,
-      "height": 512
-    },
-    {
-      "file": "mashal-app-icon-1024.png",
-      "width": 1024,
-      "height": 1024
-    }
-  ],
-  "icoSizes": [
-    16,
-    24,
-    32,
-    48,
-    64,
-    128,
-    256
-  ]
-}
+[
+  {
+    "file": "apple-touch-icon.png",
+    "bytes": 2171,
+    "sha256": "8deb30a738bb04919911cef6f95b01f905956af394ca53ab3a009208a7b4b157"
+  },
+  {
+    "file": "brand-preview.png",
+    "bytes": 84556,
+    "sha256": "56f9a13c47a0b43c27701e2248c9f77d9b4c144f9912bcdef15b6eb2d064a1bb"
+  },
+  {
+    "file": "brand-preview.svg",
+    "bytes": 276835,
+    "sha256": "473e3ea08c91880ea3feeec6aa84162bb74d2c8b68ccfacbbe473845eff9e4c3"
+  },
+  {
+    "file": "business-aid-app-icon.svg",
+    "bytes": 551,
+    "sha256": "7770bafadf3a0ce0f98436c466a6f08b34383b3403d34ad65ab621656283b49c"
+  },
+  {
+    "file": "business-aid-symbol-monochrome.svg",
+    "bytes": 492,
+    "sha256": "acc07706aa990b9300477bc0a2a51e4a92dbd12b386117a1f836c1ddc4de6850"
+  },
+  {
+    "file": "business-aid-symbol.svg",
+    "bytes": 492,
+    "sha256": "f31fab6eeee4a9f50e6a57f6dc9718c9f5037c2a4ca1396809689d70fa8a7d1c"
+  },
+  {
+    "file": "business-aid-wordmark-monochrome.svg",
+    "bytes": 15151,
+    "sha256": "9aa417a9f6edc6ce1a87ec6c96d5f856d392385b693ffe2fe0d23487ee5373be"
+  },
+  {
+    "file": "business-aid-wordmark-reversed.svg",
+    "bytes": 15151,
+    "sha256": "bfe28919c4e44dabbf0917f1acd994fe59427e3a6c95a94922301f0ccf0b3b5a"
+  },
+  {
+    "file": "business-aid-wordmark.png",
+    "bytes": 19217,
+    "sha256": "84df10f949e7be68bcff8181d3fd1574332e97615074b767ef10e82d2a235fc5"
+  },
+  {
+    "file": "business-aid-wordmark.svg",
+    "bytes": 15151,
+    "sha256": "81d29e133077487ce0602225a34c515de64702f45f72411b9f6dc905f1f8444e"
+  },
+  {
+    "file": "favicon-16.png",
+    "bytes": 471,
+    "sha256": "28fc66d854c43c5ca3a7f461c521093c74f3716191e693fe67e24016f120e7d4"
+  },
+  {
+    "file": "favicon-32.png",
+    "bytes": 801,
+    "sha256": "a96fc054e2f33376ff94646131f7bb5bfbf46c56f356bcac2002b4b4b6cb6bf8"
+  },
+  {
+    "file": "favicon-48.png",
+    "bytes": 1164,
+    "sha256": "52fc6a320622eb54d7828859ea4239d503ce964dc18bd81ce30a3d1044d8358d"
+  },
+  {
+    "file": "favicon.ico",
+    "bytes": 2490,
+    "sha256": "f1a94234fedb9fe23360924c761e67f6892e04d9cb49b4600dd13a9cd6ecc482"
+  },
+  {
+    "file": "favicon.svg",
+    "bytes": 560,
+    "sha256": "1571b65291d087a0fc009fa92c02d3f6fc058dfb4b443a4ccbcd10ca674ac45f"
+  },
+  {
+    "file": "pwa-192x192.png",
+    "bytes": 2344,
+    "sha256": "4a93f934fc97ce50aad2437709360c0eb76aa2e0eaa33340b10cc2a72331c393"
+  },
+  {
+    "file": "pwa-512x512.png",
+    "bytes": 6357,
+    "sha256": "8afdf523ed63f4cd5b9ccb9da8f213f9df8406bc92365cefad367cb8cde698c2"
+  },
+  {
+    "file": "pwa-maskable-512x512.png",
+    "bytes": 6357,
+    "sha256": "8afdf523ed63f4cd5b9ccb9da8f213f9df8406bc92365cefad367cb8cde698c2"
+  },
+  {
+    "file": "README.md",
+    "bytes": 1448,
+    "sha256": "092d4c3ea9c8ad7e85b8566604b80e41a3055f1c2dabf17d836c43905d051f0d"
+  },
+  {
+    "file": "runtime-assets.json",
+    "bytes": 657,
+    "sha256": "da2fc3ae8a1637606f359ffa63e287b932040ba6ea30ff8b476efeae4905fa64"
+  }
+]

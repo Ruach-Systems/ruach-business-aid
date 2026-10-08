@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 namespace Mashal.BusinessAid.Api.Configuration;
 public static class ApiServices
@@ -13,7 +14,7 @@ public static class ApiServices
     public static bool IsGoogleEmailVerified(System.Text.Json.JsonElement user)
         => user.TryGetProperty("email_verified", out var verified) && verified.ValueKind == System.Text.Json.JsonValueKind.True;
 
-    public static void AddApiServices(this WebApplicationBuilder builder, string origin)
+    public static void AddApiServices(this WebApplicationBuilder builder, AppOrigins origins)
     {
         var connection = builder.Configuration.GetConnectionString("Mashal") ?? throw new InvalidOperationException("SQL connection configuration is required.");
         var googleId = builder.Configuration["Google:ClientId"] ?? throw new InvalidOperationException("Google client configuration is required.");
@@ -26,7 +27,9 @@ public static class ApiServices
         builder.Services.AddScoped<ReportQueries>();
         builder.Services.AddProblemDetails();
         builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
-        builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(origin).WithMethods("GET", "POST").WithHeaders("Content-Type", "X-CSRF-TOKEN").AllowCredentials()));
+        builder.Services.AddSingleton(origins);
+        builder.Services.AddCors();
+        builder.Services.AddSingleton<ICorsPolicyProvider, AppCorsPolicyProvider>();
         builder.Services.AddAntiforgery(o =>
         {
             o.HeaderName = "X-CSRF-TOKEN";
@@ -85,7 +88,7 @@ public static class ApiServices
             o.Events.OnRemoteFailure = ctx =>
             {
                 ctx.HandleResponse();
-                ctx.Response.Redirect(origin + "/sign-in?error=google");
+                ctx.Response.Redirect(origins.RequirePwaOrigin(ctx.Request) + "/sign-in?error=google");
                 return Task.CompletedTask;
             };
         });

@@ -2,13 +2,13 @@
 @page "/onboarding"
 @layout EmptyLayout
 @inherits PageBase
-<PageTitle>Request your first business | Mashal Business Aid</PageTitle>
+<PageTitle>Request your first business | Business Aid by RUACH</PageTitle>
 <main class="onboarding-page">
 <section class="onboarding-card">
 <BrandLogo />
 <span class="eyebrow">First things first</span>
 <h1>@(Store.User?.IsDemo == true ? "Create a local workspace" : "Request your first business")</h1>
-<p>One account for all your businesses. Each has separate items, sales, stock, expenses, and reports. Mashal Admin reviews each business request.</p>
+<p>One account for all your businesses. Each has separate items, sales, stock, expenses, and reports. RUACH Admin reviews each business request.</p>
 <div class="account-summary">
 <span>Signed in as</span>
 <strong>@Store.User?.Email</strong>

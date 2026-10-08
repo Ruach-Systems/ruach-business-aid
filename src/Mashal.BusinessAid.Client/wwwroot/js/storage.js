@@ -7,7 +7,7 @@ async function open() {
     request.onupgradeneeded = () => { request.result.createObjectStore('accounts'); request.result.createObjectStore('meta'); };
     request.onsuccess = () => { request.result.onversionchange = () => { request.result.close(); database = null; }; resolve(request.result); };
     request.onerror = () => reject(request.error);
-    request.onblocked = () => reject(new Error('Close other MASHAL tabs to upgrade local storage.'));
+    request.onblocked = () => reject(new Error('Close other Business Aid tabs to upgrade local storage.'));
   });
   return database;
 }

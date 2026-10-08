@@ -1,12 +1,19 @@
-# MASHAL Business Aid
+# Business Aid by RUACH
 
 A simple .NET 10 Blazor WebAssembly sales aid with offline operations and a separate ASP.NET Core API using Dapper and SQL Server. Each sellable Item owns its price, fixed unit cost, whole-number stock balance, low-stock level, and active status.
 
-- PWA: https://businessaid.mashalsystems.com — Firebase Hosting
-- API: https://api.businessaid.mashalsystems.com — MyASP.NET
+- Planned PWA: https://businessaid.ruachsystems.dev — existing Firebase project
+- Planned API: https://api.businessaid.ruachsystems.dev — existing MyASP.NET hosting
 - Authentication: API-hosted Google OAuth and HttpOnly session cookies
 - Device data: IndexedDB `mashal-sql-v2`, with a durable outbox
 - Schema updates: standalone DbUp runner, never API startup
+
+**Not deployed.** The RUACH domains and secure provider configuration remain
+pending. Balanced Record is the agent-selected product identity, with owner
+artwork review pending. See [identity source and rebuild](branding/README.md)
+and [cutover/recovery instructions](docs/domain-cutover.md). The existing live
+pair remains `https://businessaid.mashalsystems.com` and
+`https://api-businessaid.mashalsystems.com`.
 
 ## Simple solution structure
 
@@ -36,7 +43,7 @@ Install the .NET 10 SDK and SQL Server 2022 or later. Node.js is not needed to b
 In PowerShell, start from the repository root:
 
 ```powershell
-cd "D:\WORK\MY APPS\My Business\mashal-business-aid"
+cd "D:\WORK\MY APPS\My Business\ruach-business-aid"
 dotnet restore Mashal.BusinessAid.slnx
 ```
 
@@ -79,7 +86,7 @@ Register this Google OAuth development redirect URI:
 http://localhost:5080/api/auth/google/callback
 ```
 
-Replace the two Google environment variables with actual credentials and restart the API to test real sign-in. The old port-5173 callback is no longer used. Production callback remains `https://api.businessaid.mashalsystems.com/api/auth/google/callback`.
+Replace the two Google environment variables with actual credentials and restart the API to test real sign-in. The legacy production callback is `https://api-businessaid.mashalsystems.com/api/auth/google/callback`. Preserve it and the existing Google client; the future RUACH callback is `https://api.businessaid.ruachsystems.dev/api/auth/google/callback`.
 
 The development API URL and optional reset control are in Client/wwwroot/appsettings.Development.json. Reset is disabled by default. Local/demo mode and reset are unavailable in Release builds. No SQL connection string, OAuth secret, or certificate belongs in Client configuration.
 
@@ -120,7 +127,7 @@ Browser tests start an isolated localhost preview of the published assets and us
 To publish for another environment, pass its public API origin:
 
 ```powershell
-dotnet publish src/Mashal.BusinessAid.Client -c Release -o artifacts/pwa -p:ApiOrigin=https://api.test.businessaid.mashalsystems.com
+dotnet publish src/Mashal.BusinessAid.Client -c Release -o artifacts/pwa -p:ApiOrigin=https://api.businessaid.ruachsystems.dev
 ```
 
 This embeds only the public URL in the client assembly. It is never a secret. CI uses this option before validating and uploading the artifact.
@@ -137,7 +144,12 @@ A frontend replacement on the same origin preserves the installation. Moving fro
 
 ## Branding
 
-The approved exports remain in `public/brand`; master geometry and fonts remain in `scripts/brand-source`. The Client uses the existing content-hashed logo and launcher exports in `wwwroot/brand-assets`. Keep one geometry source and reuse those exports. The release check verifies filenames against SHA-256 and confirms every image is in the offline manifest. If a brand export changes, update its hashed copy and corresponding references together. No asset generator or Node package is required for normal builds.
+The agent-selected exports are in `public/brand`; master geometry, alternatives
+and font licenses are in `branding`. Owner artwork review is pending. Run
+`scripts/build-brand.ps1` to regenerate coherent content-hashed logo, icon and
+font URLs. The release verifier checks SHA-256 filenames and offline inclusion.
+Normal .NET builds consume committed exports without Node packages or an asset
+generator. See [identity instructions](branding/README.md).
 
 ## Database change scripts
 
@@ -166,20 +178,24 @@ A failed manual script must stop the release. Correct an unapplied script, or ad
 
 `validate.yml` restores and builds the .NET solution, runs shared/client/component tests, applies the SQL scripts with DbUp to an isolated SQL Server, runs integration tests, verifies the journal, publishes the PWA, checks its assets, runs .NET Playwright offline/update tests, and publishes the exact API/PWA artifacts.
 
-`deploy.yml` is manually dispatched for Test or Production. It first invokes the validation workflow for the selected commit and API origin, then runs distinct jobs:
+**Do not dispatch `deploy.yml` under the current user instruction.** Its future
+Test/Production path first invokes validation for the selected commit and API
+origin, then runs distinct jobs:
 
-1. Validation of the selected API origin and manual database-readiness confirmation
+1. Validation of owner authorization, explicit origin pairs, isolated site IDs,
+   selected API origin and manual database-readiness confirmation
 2. MyASP.NET API deployment and readiness check
 3. Firebase Hosting deployment of the validated PWA artifact
 4. Public release smoke checks
 
 The deployment workflow uses the application login for read-only connectivity and schema checks. It never applies migrations, takes backups, or uses schema-level credentials.
 
-The workflow serializes deployments per environment and never cancels an active deployment. Configure Production required reviewers and deployment branch protection in **GitHub Settings → Environments**. YAML alone cannot enable required reviewers.
+The workflow serializes deployments per environment and never cancels an active deployment. Destination Production permits only `main`. GitHub rejected required reviewers because the billing plan does not support them; a checkbox or branch restriction is not owner authorization. No paid upgrade was attempted.
 
 ### Required GitHub Environment settings
 
-Create the Test and Production environments with separate databases, OAuth clients, and deployment targets.
+Keep Test isolated. Production reuses the existing database, Google OAuth client
+and hosting resources; do not create replacement accounts or a replacement database.
 
 | Setting | Kind | Purpose |
 |---|---|---|
@@ -193,25 +209,27 @@ Create the Test and Production environments with separate databases, OAuth clien
 | FIREBASE_SERVICE_ACCOUNT | Secret | Firebase Hosting service account JSON |
 | API_ORIGIN | Variable | Environment API HTTPS origin |
 | PWA_ORIGIN | Variable | Environment PWA HTTPS origin |
-| MASHAL_ADMIN_EMAILS | Variable | Comma-separated, verified Google email addresses allowed to use Mashal Admin |
-| FIREBASE_PROJECT_ID | Variable | Environment-specific Firebase hosting project |
+| MASHAL_ADMIN_EMAILS | Variable | Comma-separated, verified Google email addresses allowed to use RUACH Admin; retained technical key |
+| FIREBASE_PROJECT_ID | Variable | Existing Production project `mashal-business-aid` |
+| FIREBASE_HOSTING_SITE / FIREBASE_LEGACY_HOSTING_SITE | Variables | Verified distinct new and legacy site IDs; not yet provisioned |
+| APP_ORIGIN_PAIRS | Variable | Explicit API/PWA pair JSON; see cutover instructions |
 
-Keep the selected dispatch API origin identical to the environment API_ORIGIN; the deployment input check enforces this. Recommended Test naming is `test.businessaid.mashalsystems.com` / `api.test.businessaid.mashalsystems.com`. Use separate Firebase projects to avoid deployments replacing another environment.
+Keep the selected API origin identical to the environment API_ORIGIN. The
+workflow binds the local `business-aid` target to a verified new site and deploys
+only `hosting:business-aid`. Do not guess provider IDs from the repository name
+or overwrite the old PWA with a new-API build.
 
 The API artifact contains no secrets. At deployment, the script inserts secrets into the IIS-protected web.config on the runner, publishes it over HTTPS, and removes them from the runner artifact afterward. Never upload that generated configuration or publish settings. API `App_Data/keys` is preserved by Web Deploy so existing sessions survive deployment; keep the certificate stable, protect it, and back it up separately. All hosted environments run with ASPNETCORE_ENVIRONMENT=Production security behavior.
 
 MyASP.NET must support the selected .NET 10 runtime, out-of-process hosting, Web Deploy, writable private App_Data, HTTPS, SQL connectivity from the hosted API, and manual SQL script execution plus control-panel backup/download/restore. Configure SQL/network restrictions in the host where supported.
 
-## Domains and first production cutover
+## Domain preparation and eventual cutover
 
-1. Register mashalsystems.com and configure DNS.
-2. Add businessaid.mashalsystems.com to Firebase Hosting and enter Firebase's verification/routing records.
-3. Add api.businessaid.mashalsystems.com to MyASP.NET and point it to the assigned server.
-4. Provision valid HTTPS certificates independently for each hostname.
-5. Configure the exact Google callback, PWA origin, SQL database, and GitHub Environment settings.
-6. Deploy Test, validate authenticated workflows on actual devices, then approve Production.
-7. Direct users from the old web.app address to the new domain with a clear fresh-start notice. Do not silently upload old browser data.
-8. Retire old Firebase Authentication and Firestore resources only after the replacement deployment is verified and an explicit retention decision is made. Source removal does not delete those remote resources.
+Follow [the cutover handoff](docs/domain-cutover.md). It records the actual legacy
+origin pair, pending DNS/TLS/site bindings, secure provisioning, preserved OAuth
+identity, device-by-device synchronization, rollback artifacts and the required
+new owner instruction. No live cutover is currently authorized. Never redirect
+or retire the old PWA/API while old-origin pending work may remain.
 
 ## Sync and reporting contracts
 
@@ -221,7 +239,7 @@ SQL business locks serialize writes and change-feed reads, preventing cursor gap
 
 IndexedDB compare-and-swap transactions preserve pending edits from concurrent tabs. Each owner/business pair has its own snapshot, cursor, outbox, and sync Web Lock. The `mashal-sql-v2` database namespace and operation serialization remain unchanged. Conflicts remain visible until reviewed; accepting server data requires confirmation before discarding pending device changes. Sign-out preserves account data and outbox records but hides them until that account signs in again.
 
-## Owners, businesses, and Mashal Admin
+## Owners, businesses, and RUACH Admin
 
 The account schema supports multiple businesses per owner, unique normalized phone numbers, business requests, and the administrative audit trail. Neither 001 nor 003 seeds users or businesses. Simplified item, stock, and sale quantities are whole-number `bigint` values; negative current stock is allowed.
 

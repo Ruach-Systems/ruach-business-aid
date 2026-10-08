@@ -3,12 +3,12 @@
 @layout AccountLayout
 @inherits PageBase
 @inject ApiClient Api
-<PageTitle>Mashal Admin | Business Aid</PageTitle>
+<PageTitle>RUACH Admin | Business Aid</PageTitle>
 <div class="page account-page">
-<PageHeading Title="Mashal Admin" Eyebrow="Platform management" Description="Review business requests and manage owner access. Operational and financial records are not available here." />
+<PageHeading Title="RUACH Admin" Eyebrow="Platform management" Description="Review business requests and manage owner access. Operational and financial records are not available here." />
 <ErrorBanner Message="@Error" />
 @if (!Store.Online) { <p class="account-notice" role="status">Connect to review requests or manage accounts. Admin data is not saved offline.</p> }
-@if (Store.User?.IsAdmin != true) { <p role="alert">Mashal Admin access is required.</p> }
+@if (Store.User?.IsAdmin != true) { <p role="alert">RUACH Admin access is required.</p> }
 else {
 <div class="account-actions-row"><button class="button ghost" disabled="@(Saving || !Store.Online)" @onclick="Load">Refresh</button></div>
 @if (data is null) { <p role="status">@(Saving ? "Loading account metadata…" : "Refresh to load account metadata.")</p> }

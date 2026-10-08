@@ -14,7 +14,7 @@ public sealed class AccountService(SqlConnectionFactory connections, IdentityRep
     }
     public async Task RequireAdmin(Guid actor)
     {
-        if ((await identities.Find(actor))?.IsAdmin != true) throw new DomainException("forbidden", "Mashal Admin access is required.", 403);
+        if ((await identities.Find(actor))?.IsAdmin != true) throw new DomainException("forbidden", "RUACH Admin access is required.", 403);
     }
     public async Task<AccountOverview> Overview(Guid user)
     {
@@ -27,7 +27,7 @@ public sealed class AccountService(SqlConnectionFactory connections, IdentityRep
     private static async Task SetPhone(SqlConnection c, SqlTransaction tx, Guid user, string phone)
     {
         if (await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM dbo.Users WHERE PhoneNumber=@phone AND Id<>@user", new { phone, user }, tx) != 0)
-            throw new DomainException("phone_in_use", "This mobile number is already linked to another account. Use another number or contact Mashal Admin.", 409);
+            throw new DomainException("phone_in_use", "This mobile number is already linked to another account. Use another number or contact RUACH Admin.", 409);
         if (await c.ExecuteAsync("UPDATE dbo.Users SET PhoneNumber=@phone WHERE Id=@user", new { phone, user }, tx) != 1)
             throw new DomainException("unauthorized", "Sign in again.", 401);
     }

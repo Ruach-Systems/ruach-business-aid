@@ -1,2 +1,7 @@
-# Content-addressed SVGs must retain the bytes used to generate their URLs.
-src/Mashal.BusinessAid.Client/wwwroot/brand-assets/*.svg text eol=lf
+# Generated inventories and content-addressed files must retain exact bytes on every OS.
+src/Mashal.BusinessAid.Client/wwwroot/brand-assets/* -text
+public/brand/* -text whitespace=cr-at-eol
+branding/concepts/fonts/* -text
+# Preserve upstream license text, including its original whitespace.
+branding/concepts/fonts/*-OFL.txt whitespace=-blank-at-eol
+src/Mashal.BusinessAid.Client/wwwroot/brand-assets/Inter-OFL.*.txt whitespace=-blank-at-eol

@@ -15,7 +15,7 @@
 @if (Store.User?.IsDemo != true) {
 <article class="card"><h2>Owner mobile number</h2>
 @if(Store.PhoneRequired) { <p role="status">A unique Philippine mobile number is required to enter your businesses.</p> }
-<form class="form-card" @onsubmit="SavePhone" @onsubmit:preventDefault><div class="field"><label for="settings-phone">Philippine mobile number</label><input id="settings-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="settings-phone-help" /><small id="settings-phone-help">Use 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX. One account per number; not SMS-verified.</small></div><p>Already linked elsewhere? Contact Mashal Admin for an offline identity review.</p><button class="button primary" disabled="@(Saving || Store.Busy || !Store.Online)">Save mobile number</button></form><p role="status">@saved</p>
+<form class="form-card" @onsubmit="SavePhone" @onsubmit:preventDefault><div class="field"><label for="settings-phone">Philippine mobile number</label><input id="settings-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="settings-phone-help" /><small id="settings-phone-help">Use 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX. One account per number; not SMS-verified.</small></div><p>Already linked elsewhere? Contact RUACH Admin for an offline identity review.</p><button class="button primary" disabled="@(Saving || Store.Busy || !Store.Online)">Save mobile number</button></form><p role="status">@saved</p>
 </article> }
 @if (Store.Data.Business is not null) {
 <article class="card">

@@ -11,7 +11,7 @@ public sealed class SyncService(ApiClient api, OfflineStorage storage)
         {
             var result = await api.Get<PullResult>($"/api/sync/pull?businessId={state.Data.Business!.Id}&cursor={state.Cursor}&modelVersion={DataModel.CurrentVersion}");
             if (result.ModelVersion != DataModel.CurrentVersion)
-                throw new ApiException(426, "client_upgrade_required", "Refresh MASHAL to finish the Items update.");
+                throw new ApiException(426, "client_upgrade_required", "Refresh Business Aid to finish the Items update.");
             state = await storage.Mutate(state, latest =>
             {
                 if (result.Cursor >= latest.Cursor)

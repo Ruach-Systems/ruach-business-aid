@@ -2,7 +2,7 @@
 @page "/sign-in"
 @layout EmptyLayout
 @inherits PageBase
-<PageTitle>Sign in | Mashal Business Aid</PageTitle>
+<PageTitle>Sign in | Business Aid by RUACH</PageTitle>
 <main class="auth-page">
 <section class="auth-story">
 <div class="auth-brand">
@@ -24,14 +24,14 @@
 </section>
 <section class="auth-panel">
 <div class="auth-card">
-<span class="eyebrow">Welcome to Mashal Business Aid</span>
+<span class="eyebrow">Welcome to Business Aid by RUACH</span>
 <h2>Sign in to your business</h2>
 <p>Securely manage your business with your Google account.</p>
 <ErrorBanner Message="@(string.IsNullOrEmpty(Error) ? Store.Error : Error)" />
 <button class="button primary google block" @onclick="Store.SignIn">Continue with Google</button>
 @if (Store.Development) {
 <button class="button dark block" @onclick="() => Run(Store.ContinueLocally)">Continue locally</button> }
-<small class="auth-fineprint">After your first online sign-in, MASHAL remains available offline on this device.</small>
+<small class="auth-fineprint">After your first online sign-in, Business Aid remains available offline on this device.</small>
 @if (Store.ShowReset) {
 <button class="button ghost block" @onclick="() => Run(Store.Logout)">Reset sign-in state</button> }
 </div>

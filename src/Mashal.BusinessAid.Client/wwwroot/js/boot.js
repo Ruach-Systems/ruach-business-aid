@@ -16,7 +16,7 @@
 
   try { await Blazor.start({ loadBootResource }); }
   catch (error) {
-    console.error('MASHAL startup failed after retries.', error);
+    console.error('Business Aid startup failed after retries.', error);
     const loading = document.querySelector('#app .app-loading');
     if (loading) loading.hidden = true;
     document.getElementById('blazor-error-ui')?.removeAttribute('hidden');

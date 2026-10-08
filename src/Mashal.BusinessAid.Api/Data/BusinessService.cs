@@ -35,7 +35,7 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
     public async Task Push(Guid user, PushRequest request)
     {
         if (request.ModelVersion != DataModel.CurrentVersion)
-            throw new DomainException("client_upgrade_required", "Refresh MASHAL to use the simplified Items update.", 426);
+            throw new DomainException("client_upgrade_required", "Refresh Business Aid to use the simplified Items update.", 426);
         Rules.Require(request.BusinessId != Guid.Empty && request.Operations is { Count: > 0 and <= 50 }, "Submit 1–50 operations for a business.");
         await using var c = await connections.Open(); await using var tx = c.BeginTransaction();
         await Lock(c, tx, request.BusinessId);
@@ -54,7 +54,7 @@ public sealed class BusinessService(SqlConnectionFactory connections, IdentityRe
             }
             if (op.Type == "createBusiness")
             {
-                throw new DomainException("approval_required", "Request a business from your account dashboard. Mashal Admin approval is required.", 403);
+                throw new DomainException("approval_required", "Request a business from your account dashboard. RUACH Admin approval is required.", 403);
             }
             else
             {

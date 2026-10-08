@@ -5,7 +5,7 @@
 <header class="account-header"><a href="/businesses"><BrandLogo Reversed="true" /></a><span>@Store.User?.DisplayName</span></header>
 <nav class="account-nav" aria-label="Account navigation">
 <NavLink href="/businesses">My businesses</NavLink><NavLink href="/settings">Account settings</NavLink>
-@if (Store.User?.IsAdmin == true) { <NavLink href="/admin">Mashal Admin</NavLink> }
+@if (Store.User?.IsAdmin == true) { <NavLink href="/admin">RUACH Admin</NavLink> }
 @if (Store.Data.Business is not null) { <a href="/dashboard">Return to @Store.Data.Business.Name</a> }
 </nav>
 <main>@Body</main>

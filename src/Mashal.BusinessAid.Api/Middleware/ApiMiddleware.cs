@@ -1,11 +1,12 @@
 using Mashal.BusinessAid.Shared;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.Data.SqlClient;
+using Mashal.BusinessAid.Api.Configuration;
 
 namespace Mashal.BusinessAid.Api.Middleware;
 public static class ApiMiddleware
 {
-    public static void UseApiMiddleware(this WebApplication app, string origin)
+    public static void UseApiMiddleware(this WebApplication app, AppOrigins origins)
     {
         app.Use(async (ctx, next) =>
         {
@@ -46,7 +47,7 @@ public static class ApiMiddleware
         {
             if (HttpMethods.IsPost(ctx.Request.Method))
             {
-                if (ctx.Request.Headers.Origin.ToString() != origin)
+                if (ctx.Request.Headers.Origin.ToString() != origins.RequirePwaOrigin(ctx.Request))
                     throw new DomainException("forbidden", "Origin is not allowed.", 403);
                 if (ctx.User.Identity?.IsAuthenticated != true)
                     throw new DomainException("unauthorized", "Sign in again to synchronize.", 401);

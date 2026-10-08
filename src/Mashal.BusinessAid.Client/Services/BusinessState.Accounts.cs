@@ -163,7 +163,7 @@ public sealed partial class BusinessState
             };
             var result = await api.Get<BootstrapResult>($"/api/bootstrap?businessId={business}");
             if (result.ModelVersion != DataModel.CurrentVersion)
-                throw new InvalidOperationException("Refresh MASHAL to finish the simplified Items update.");
+                throw new InvalidOperationException("Refresh Business Aid to finish the simplified Items update.");
             if (result.User.Uid.ToString() != User.Uid || result.Data.Business?.Id != business)
                 throw new InvalidOperationException("The server returned a different workspace.");
             candidate = await storage.Mutate(candidate, latest =>

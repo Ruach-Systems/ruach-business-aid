@@ -5,11 +5,12 @@ using Mashal.BusinessAid.Api.Data;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Mashal.BusinessAid.Api.Configuration;
 
 namespace Mashal.BusinessAid.Api.Endpoints;
 public static class ApiEndpoints
 {
-    public static void MapApiEndpoints(this WebApplication app, string origin)
+    public static void MapApiEndpoints(this WebApplication app, AppOrigins origins)
     {
         Guid UserId(HttpContext ctx) => Guid.Parse(ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
@@ -19,7 +20,7 @@ public static class ApiEndpoints
             await c.ExecuteAsync("SELECT TOP(0) Id FROM dbo.Businesses; SELECT TOP(0) PhoneNumber,EmailVerified FROM dbo.Users; SELECT TOP(0) SellingPriceCentavos,UnitCostCentavos FROM dbo.Items; SELECT TOP(0) [Cursor] FROM dbo.ItemSyncChanges; SELECT TOP(0) Id FROM dbo.BusinessRequests; SELECT TOP(0) Id FROM dbo.AdminAudit;");
             return Results.Ok(new { status = "ready" });
         });
-        app.MapGet("/api/auth/google", () => Results.Challenge(new AuthenticationProperties { RedirectUri = origin + "/", IsPersistent = true }, [GoogleDefaults.AuthenticationScheme]));
+        app.MapGet("/api/auth/google", (HttpContext ctx) => Results.Challenge(new AuthenticationProperties { RedirectUri = origins.RequirePwaOrigin(ctx.Request) + "/", IsPersistent = true }, [GoogleDefaults.AuthenticationScheme]));
         app.MapGet("/api/auth/session", async (HttpContext ctx, IdentityRepository repo) =>
         {
             if (ctx.User.Identity?.IsAuthenticated != true)
@@ -64,7 +65,7 @@ public static class ApiEndpoints
         app.MapGet("/api/sync/pull", async (HttpContext ctx, Guid businessId, long cursor, int? modelVersion, IBusinessService service) =>
         {
             if (modelVersion != DataModel.CurrentVersion)
-                throw new DomainException("client_upgrade_required", "Refresh MASHAL to use the simplified Items update.", 426);
+                throw new DomainException("client_upgrade_required", "Refresh Business Aid to use the simplified Items update.", 426);
             return await service.Pull(UserId(ctx), businessId, cursor);
         }).RequireAuthorization();
         app.MapGet("/api/reports/{report}", async (HttpContext ctx, string report, Guid businessId, string from, string to, string? grouping, ReportQueries reports) => await reports.Query(UserId(ctx), businessId, report, from, to, grouping ?? "day")).RequireAuthorization();

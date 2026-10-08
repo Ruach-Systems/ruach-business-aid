@@ -1,55 +1,63 @@
-# Mashal Systems Brand Instructions
+# Business Aid by RUACH
 
-## Official brand
+## Product identity
 
-Mashal Systems provides customized software applications for business and personal use. The brand should communicate structured systems, purposeful governance, progress, intelligence, trust, and clarity.
+The public name is **Business Aid by RUACH**. RUACH is the parent identity;
+Ruach Software Development Services is the legal business identity.
+The read-only parent authority is `D:\WORK\MY APPS\My Business\ruach-brand-guide`.
+Do not write to that guide or its product catalog from this repository.
 
-The name **Mashal** is based on the Hebrew root מָשַׁל (*māshal*), meaning to rule, govern, reign, or exercise dominion. Use this meaning as a subtle foundation for the brand; avoid overly literal religious imagery.
+**Balanced Record (concept C) is agent-selected; owner artwork review is pending.**
+The coordinator authorized reversible, non-deploying integration after the owner
+was unavailable. Do not describe this artwork as owner-approved. Retain the
+alternatives in `branding/concepts` and use `branding/balanced-record-master.svg`
+as the single geometry source for the integrated emblem.
 
-## Official color palette
+Use Crimson `#B21F32`, Obsidian `#141821`, Royal Aubergine `#321C3B`, Ivory
+`#F7F3ED`, Graphite `#292530`, Slate `#696270` and White. Crimson is the primary
+action, Aubergine the selected/information state, and Obsidian the navigation
+surface. Success uses `#2E6B57`; warnings retain distinct amber semantics.
+Never communicate functional state with a decorative gold accent.
 
-- Deep Navy: `#0B1F3A` — primary navigation, headings, and authority
-- Royal Red: `#A61B29` — primary calls to action, urgent actions, and decisive emphasis
-- Royal Purple: `#5B2C83` — selected states, analytics, information, and secondary emphasis
-- Gold: `#C99A2E` — logo details, decorative lines, and premium brand accents only
-- Cloud White: `#F7F9FC` — application surfaces and backgrounds
-- Slate Gray: `#536273` — secondary text and neutral UI elements
+Manrope is the brand/wordmark face; Inter is product typography. Bundled font
+licenses are in `branding/concepts/fonts`. Lettering in SVG logos must be
+outlined, all gaps transparent, and all variants derived from one master.
+Do not reuse or alter RUACH Living Breath, Steward Royal Exchange, ChordKeep
+Royal Folio or the superseded Mashal shield.
 
-Use Deep Navy as the dominant color. Use Royal Red selectively, generally for the main call to action or urgent emphasis. Use Royal Purple for active states, information, and data visualization. Gold must remain decorative and must not communicate warnings, completion, progress, or other functional status. Maintain strong contrast and accessible typography.
+Use `BrandLogo.razor` and content-hashed assets in the Client `wwwroot/brand-assets`
+directory. Rebuild with `scripts/build-brand.ps1` as documented in
+`branding/README.md`; it updates hashed references coherently. Run
+`scripts/verify-release.ps1` after publishing. Keep Firebase immutable caching
+for hashed assets and revalidation for HTML, manifests and service workers.
 
-## Semantic UI colors
+Preserve the established layout, responsive patterns, interactions, hierarchy,
+forms and semantic states. Do not introduce a dark-mode feature.
 
-- Success / completed: `#2E8B57`
-- Warning: `#C58A00`
-- Urgent / destructive: `#A61B29`
-- Information / selected: `#5B2C83`
+## Compatibility and architecture
 
-Do not use Gold as a warning or status color. Do not give multiple accent colors equal prominence within the same control group.
+- Use `Mashal.BusinessAid.slnx`: Client, API, Shared, Migrations and Tests.
+- Keep business rules in Shared, Dapper SQL and authorization in API, browser
+  UI/state in Client. Retain .NET 10, ASP.NET Core, Blazor and SQL Server.
+- Never introduce EF Core, FluentMigrator, MediatR, Supabase, extra architecture
+  layers or frontend Node build dependencies.
+- Retain solution/project/assembly/namespace names, configuration keys, cookie
+  names, Data Protection application identity and keys, DbUp logical script
+  names, immutable SQL migrations, IndexedDB `mashal-sql-v2`, browser storage
+  keys, serialized outbox and model version.
+- Legacy `--mashal-*` CSS custom-property names remain private compatibility
+  aliases with RUACH values; they are not the public brand.
+- For offline/synchronization changes verify ordinary tests and the existing
+  published-PWA browser suite. SQL/HTTP integration tests require a uniquely
+  named dedicated test database, never an existing or production database.
 
-## Approved logo and export consistency
+## Deployment boundary
 
-The approved business logo is the shielded M with a diamond above it, in Navy and Royal Red. This selected shield is an intentional exception to generic abstract-logo guidance. The source image is `scripts/brand-source/approved-reference.png`.
+**Do not trigger a deployment workflow, deploy directly or perform production
+cutover under the current user instruction.** Non-deploying validation is allowed.
+See `docs/domain-cutover.md` for verified resource IDs, pending provider/secret
+configuration, required future authorization and old-origin recovery.
 
-- Use `scripts/brand-source/shield-master.svg` as the single geometry master. Preserve mirrored shoulders, two lower panels, vertical center gap, and diamond; do not replace them with stacked chevrons.
-- Reuse the approved SVG, PNG, and ICO exports in `public/brand`. Keep their geometry consistent with the master; do not draw individual icon versions independently or append another SVG root to a file.
-- Use transparent gaps, not white or background-colored overlays. Monochrome includes the shield and diamond in the same ink.
-- Export lettering as vector outlines. The generator uses bundled Montserrat fonts and license so exports have no font dependency.
-- Logo colors are Navy and Royal Red, with Slate supporting type; reversed logos use Cloud White. Purple and Gold remain available in the wider UI palette, not in this logo.
-- Rounded favicon tiles and opaque square app tiles use identical mark geometry and consistent safe padding. Review `public/brand/brand-preview.png` and actual-size icons after export.
-- In the app, use `BrandLogo.razor` and the content-hashed files in `src/Mashal.BusinessAid.Client/wwwroot/brand-assets`. Preserve those URLs in HTML/manifest references and Firebase revalidation rules. Run `scripts/verify-release.ps1` after publishing to verify content hashes and offline inclusion.
-
-## Visual direction
-
-Favor clean, modern, premium SaaS interfaces with generous whitespace, clear information hierarchy, structured cards, tables, charts, task lists, and responsive layouts. Abstract geometric marks suggesting networks, structure, command, or progression are preferred. The visual identity should feel confident, premium, authoritative, and technology-focused. Avoid crowns, halos, crosses, church imagery, ornate religious styling, excessive gradients, and visual clutter.
-
-Approved positioning line for concepts and mockups:
-
-> Customized software for business and life.
-
-## Maintainable .NET solution
-
-- Use the root Mashal.BusinessAid.slnx: Client, API, Shared, Migrations, and Tests.
-- Keep business rules in Shared, Dapper SQL and authorization in API, and browser UI/state in Client.
-- Never introduce EF Core, FluentMigrator, MediatR, extra architecture layers, or frontend Node build dependencies.
-- Preserve the IndexedDB namespace and serialized outbox format, and the DbUp logical script names.
-- Verify both ordinary tests and the published PWA browser tests for offline/synchronization changes.
+Keep the original repository, checkout, remote configuration and live origins
+untouched. Never clear browser storage or automatically migrate outboxes across
+origins. New-origin sign-in/bootstrap does not prove old devices have synchronized.

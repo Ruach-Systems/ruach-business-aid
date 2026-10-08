@@ -3,6 +3,21 @@ $ErrorActionPreference = 'Stop'
 $worker = Get-Content -Raw (Join-Path $PublishRoot 'sw.js')
 $assetsText = Get-Content -Raw (Join-Path $PublishRoot 'service-worker-assets.js')
 $assets = ($assetsText -replace '^self.assetsManifest\s*=\s*','' -replace ';\s*$','') | ConvertFrom-Json
+$manifest = Get-Content -Raw (Join-Path $PublishRoot 'manifest.webmanifest') | ConvertFrom-Json
+if ($manifest.name -ne 'Business Aid by RUACH' -or $manifest.short_name -ne 'Business Aid' -or $manifest.id -ne '/' -or $manifest.start_url -ne '/') {
+    throw 'PWA identity or installation scope is incorrect.'
+}
+$references = @(
+    (Get-Content -Raw (Join-Path $PublishRoot 'index.html')),
+    (Get-Content -Raw (Join-Path $PublishRoot 'open.html')),
+    (Get-Content -Raw (Join-Path $PublishRoot 'manifest.webmanifest')),
+    (Get-Content -Raw (Join-Path $PublishRoot 'css/app.css'))
+)
+foreach ($reference in [regex]::Matches(($references -join "`n"), '/brand-assets/[^"''\s)]+')) {
+    if (!(Test-Path -LiteralPath (Join-Path $PublishRoot $reference.Value.TrimStart('/')))) {
+        throw "Branded shell reference is missing: $($reference.Value)"
+    }
+}
 foreach ($asset in $assets.assets) {
     if ($asset.url -eq 'sw.js' -or $asset.url.Contains('service-worker')) { continue }
     $path = Join-Path $PublishRoot $asset.url

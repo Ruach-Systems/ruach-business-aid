@@ -73,7 +73,7 @@ public partial class BrowserTests
         await context.RouteAsync("**/api/account/phone", async route =>
         {
             if (route.Request.Method == "POST" && route.Request.PostData!.Contains("9171234567"))
-                await route.FulfillAsync(new() { Status = 409, ContentType = "application/json", Headers = ApiHeaders(route), Body = JsonSerializer.Serialize(new { code = "phone_in_use", title = "This mobile number is already linked to another account. Use another number or contact Mashal Admin." }) });
+                await route.FulfillAsync(new() { Status = 409, ContentType = "application/json", Headers = ApiHeaders(route), Body = JsonSerializer.Serialize(new { code = "phone_in_use", title = "This mobile number is already linked to another account. Use another number or contact RUACH Admin." }) });
             else await route.FallbackAsync();
         });
         var page = await context.NewPageAsync();
@@ -100,7 +100,7 @@ public partial class BrowserTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true, Channel = Environment.GetEnvironmentVariable("MASHAL_BROWSER_CHANNEL") });
         await using var context = await browser.NewContextAsync();
-        var admin = new AppUser(Guid.NewGuid(), "Mashal Admin", "admin@example.invalid", null) { IsAdmin = true };
+        var admin = new AppUser(Guid.NewGuid(), "RUACH Admin", "admin@example.invalid", null) { IsAdmin = true };
         var first = new AdminUser(Guid.NewGuid(), "First owner", "first@example.invalid", "+639181234567", DateTimeOffset.UtcNow, 0);
         var second = new AdminUser(Guid.NewGuid(), "Second owner", "second@example.invalid", null, DateTimeOffset.UtcNow, 0);
         var request = new BusinessRequest { Id = Guid.NewGuid(), OwnerUid = first.Uid, Name = "Review shop", DefaultLocation = "Cebu", CreatedAt = DateTimeOffset.UtcNow };
@@ -124,7 +124,7 @@ public partial class BrowserTests
             await route.FulfillAsync(new() { Status = 200, ContentType = "application/json", Headers = ApiHeaders(route), Body = JsonSerializer.Serialize(metadata, Wire.Json) });
         });
         var page = await context.NewPageAsync(); await page.GotoAsync(host.Url);
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Mashal Admin", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "RUACH Admin", Exact = true })).ToBeVisibleAsync();
         await CheckAccountLayout(page, host.Root, "admin-requests");
         await page.GetByRole(AriaRole.Button, new() { Name = "Review request", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Reject with reason", Exact = true })).ToBeDisabledAsync();
