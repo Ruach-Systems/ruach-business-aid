@@ -47,9 +47,10 @@ public partial class BrowserTests
         foreach (var width in new[] { 320, 1366 })
         {
             await newPage.SetViewportSizeAsync(width, 900);
-            var logo = newPage.Locator("img[alt='Business Aid by RUACH']:visible").First;
-            await Expect(logo).ToBeVisibleAsync();
-            Assert.True(await logo.EvaluateAsync<bool>("img => img.complete && img.naturalWidth > 0"));
+            var brand = newPage.Locator(".brand-compact:visible").First;
+            await Expect(brand).ToBeVisibleAsync();
+            await Expect(brand).ToContainTextAsync("Business Aid");
+            Assert.True(await brand.Locator("img.brand-mark").EvaluateAsync<bool>("img => img.complete && img.naturalWidth > 0"));
             Assert.True(await newPage.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= innerWidth + 1"));
             Directory.CreateDirectory(Path.Combine(newHost.Root, "artifacts", "browser"));
             await newPage.ScreenshotAsync(new() { Path = Path.Combine(newHost.Root, "artifacts", "browser", $"ruach-dashboard-{width}.png"), FullPage = true });

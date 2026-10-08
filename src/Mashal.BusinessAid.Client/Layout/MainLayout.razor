@@ -4,8 +4,6 @@
     <aside class="side-nav">
         <a class="side-brand" href="/dashboard">
 <BrandLogo Reversed="true" />
-<span class="product-label">Business Aid</span>
-<small>@Store.Data.Business?.Name</small>
 </a>
         <nav aria-label="Main navigation">@foreach (var item in links) {
 <NavLink href="@item.Path">
@@ -18,7 +16,6 @@
         <header class="mobile-header">
 <a href="/dashboard" class="mobile-brand">
 <BrandLogo Reversed="true" />
-<span>Business Aid</span>
 </a>
 <SyncPill />
 </header>

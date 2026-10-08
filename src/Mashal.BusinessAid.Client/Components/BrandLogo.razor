@@ -1,2 +1,7 @@
-<img class="brand-logo" src="@(Reversed ? "/brand-assets/business-aid-wordmark-reversed.bfe28919c4e44dab.svg" : "/brand-assets/business-aid-wordmark.81d29e133077487c.svg")" alt="Business Aid by RUACH" width="210" height="51" />
-@code { [Parameter] public bool Reversed { get; set; } }
+<span class="@CssClass" role="img" aria-label="Business Aid by RUACH"><img class="brand-mark" src="/brand-assets/favicon.1571b65291d087a0.svg" alt="" width="36" height="36" /><span class="brand-name"><strong>Business Aid</strong><span class="brand-endorsement">by RUACH</span></span></span>
+@code {
+    // Emblem with live text: outlined wordmark lettering blurs at small sizes on phones.
+    [Parameter] public bool Reversed { get; set; }
+    [Parameter] public bool Large { get; set; }
+    private string CssClass => "brand-compact" + (Reversed ? " reversed" : "") + (Large ? " large" : "");
+}

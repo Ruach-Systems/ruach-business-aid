@@ -253,7 +253,7 @@ public sealed partial class BusinessState
     {
         if (!Development)
             throw new InvalidOperationException("Local mode is available only in development.");
-        await Hydrate(new("local-owner", "Local business owner", "local@mashal.app", null, true));
+        await Hydrate(new("local-owner", "Local business owner", "local@businessaid.local", null, true));
         Ready = true;
         Notify();
     }
