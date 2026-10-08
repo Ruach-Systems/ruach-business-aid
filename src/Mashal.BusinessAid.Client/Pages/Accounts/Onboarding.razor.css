@@ -1,13 +1,13 @@
 
 .onboarding-page { height: 100%; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; display: flex; align-items: flex-start; justify-content: center; padding: max(26px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(26px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); background: var(--mashal-navy); }
-.onboarding-card { width: min(100%, 560px); min-width: 0; flex: none; background: var(--mashal-paper); border-radius: 28px; padding: clamp(26px, 6vw, 44px); box-shadow: var(--mashal-shadow); }
+.onboarding-card { width: min(100%, 560px); min-width: 0; flex: none; background: var(--mashal-paper); border-radius: 18px; padding: clamp(26px, 6vw, 44px); box-shadow: var(--mashal-shadow); }
 h1 { max-width: 100%; font-family: var(--app-font-family); color: var(--mashal-navy); font-size: clamp(30px, 8vw, 38px); line-height: 1.12; margin: 10px 0 8px; overflow-wrap: anywhere; }
 section > p { color: var(--mashal-muted); margin: 0 0 28px; line-height: 1.5; }
 .onboarding-card > .eyebrow { display: block; margin-top: 30px; }
-.account-summary { margin: -10px 0 24px; padding: 12px 14px; border: 1px solid var(--mashal-line); border-radius: 14px; display: grid; gap: 3px; }
+.account-summary { margin: -10px 0 24px; padding: 12px 14px; border: 1px solid var(--mashal-line); border-radius: 9px; display: grid; gap: 3px; }
 .account-summary span { color: var(--mashal-muted); font-size: 11px; }
 .account-summary strong { color: var(--mashal-navy); font-size: 13px; overflow-wrap: anywhere; }
-.info-panel { padding: 14px; border-radius: 14px; background: var(--mashal-purple-soft); display: grid; gap: 4px; }
+.info-panel { padding: 14px; border-radius: 9px; background: var(--mashal-purple-soft); display: grid; gap: 4px; }
 .info-panel strong { font-size: 12px; color: var(--mashal-navy); }
 .info-panel span { color: var(--mashal-muted); font-size: 11px; }
 .toggle-row > span { min-width: 0; }
@@ -20,7 +20,7 @@ section > p { color: var(--mashal-muted); margin: 0 0 28px; line-height: 1.5; }
 .debug-message { color: var(--mashal-danger); font-size: 11px; line-height: 1.4; text-align: center; }
 @media (max-width: 359px) {
   .onboarding-page { padding: max(12px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom)); }
-  .onboarding-card { border-radius: 20px; padding: 22px 18px; }
+  .onboarding-card { border-radius: 13px; padding: 22px 18px; }
   .onboarding-card > .eyebrow { margin-top: 24px; }
   section > p { margin-bottom: 22px; }
   .toggle-row { align-items: flex-start; gap: 12px; padding: 12px; }

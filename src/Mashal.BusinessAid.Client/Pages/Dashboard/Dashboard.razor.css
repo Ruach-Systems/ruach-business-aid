@@ -35,10 +35,10 @@
 }
 .today-summary { align-items: start; }
 .activity-details { margin-top: 12px; min-width: 0; }
-.activity-details summary { min-height: 44px; padding: 12px; border: 1px solid var(--mashal-line); border-radius: 12px; color: var(--mashal-purple); font-size: 13px; font-weight: 700; cursor: pointer; }
+.activity-details summary { min-height: 44px; padding: 12px; border: 1px solid var(--mashal-line); border-radius: 8px; color: var(--mashal-purple); font-size: 13px; font-weight: 700; cursor: pointer; }
 .activity-details summary:focus-visible { outline: 3px solid var(--mashal-focus); outline-offset: 3px; }
 .activity-details h3 { margin: 18px 0 10px; font-size: 14px; }
-.activity-entry { min-width: 0; padding: 12px; margin: 8px 0; border-radius: 12px; background: var(--mashal-cloud); font-size: 13px; overflow-wrap: anywhere; }
+.activity-entry { min-width: 0; padding: 12px; margin: 8px 0; border-radius: 8px; background: var(--mashal-cloud); font-size: 13px; overflow-wrap: anywhere; }
 .activity-entry strong, .activity-entry small { display: block; }
 .activity-entry small { margin-top: 4px; color: var(--mashal-muted); }
 .activity-details dl { display: grid; gap: 8px; font-size: 12px; }

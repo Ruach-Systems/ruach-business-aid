@@ -3,7 +3,7 @@
 .account-header img { max-width:190px; }
 .account-header span { overflow-wrap:anywhere; }
 .account-nav { display:flex; flex-wrap:wrap; gap:8px; padding:12px max(20px,calc((100% - 1150px)/2)); background:var(--mashal-paper); border-bottom:1px solid var(--mashal-line); }
-.account-nav a { padding:12px 16px; min-height:44px; border-radius:10px; font-size:14px; }
+.account-nav a { padding:12px 16px; min-height:44px; border-radius:7px; font-size:14px; }
 .account-nav a.active { background:var(--mashal-purple-soft); color:var(--mashal-purple); font-weight:600; }
 .account-page { max-width:1190px; margin:0 auto; padding-bottom:48px; }
 .account-actions-row { display:flex; flex-wrap:wrap; gap:12px; margin:18px 0; }
@@ -12,8 +12,8 @@
 .business-card h2,.business-card p { margin:0; overflow-wrap:anywhere; }
 .business-card .button { width:100%; margin-top:auto; }
 .business-card small { color:var(--mashal-muted); }
-.account-notice { margin:22px 0; padding:20px; border-radius:16px; background:var(--mashal-purple-soft); color:var(--mashal-purple); line-height:1.6; }
-.status-badge { display:inline-block; padding:5px 9px; border-radius:7px; font-size:12px; background:var(--mashal-purple-soft); color:var(--mashal-purple); }
+.account-notice { margin:22px 0; padding:20px; border-radius:10px; background:var(--mashal-purple-soft); color:var(--mashal-purple); line-height:1.6; }
+.status-badge { display:inline-block; padding:5px 9px; border-radius:5px; font-size:12px; background:var(--mashal-purple-soft); color:var(--mashal-purple); }
 .status-badge.approved { background:var(--mashal-success-soft); color:var(--mashal-success-ink); }
 .status-badge.pending { background:var(--mashal-warning-soft); color:var(--mashal-warning-ink); }
 .status-badge.rejected { background:var(--mashal-danger-soft); color:var(--mashal-danger); }

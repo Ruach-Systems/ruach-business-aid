@@ -10,7 +10,7 @@
     padding: 0 13px;
     background: var(--mashal-cloud);
     border: 1px solid transparent;
-    border-radius: 13px;
+    border-radius: 8px;
     transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
