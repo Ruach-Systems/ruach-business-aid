@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "target": "business-aid",
     "public": "artifacts/pwa/wwwroot",
     "ignore": [
       "firebase.json",

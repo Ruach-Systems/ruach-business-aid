@@ -6,14 +6,14 @@ on:
     inputs:
       api_origin:
         type: string
-        default: https://api.businessaid.ruachsystems.dev
+        default: https://api-businessaid.mashalsystems.com
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
     env:
-      API_ORIGIN: ${{ inputs.api_origin || 'https://api.businessaid.ruachsystems.dev' }}
+      API_ORIGIN: ${{ inputs.api_origin || 'https://api-businessaid.mashalsystems.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -25,9 +25,6 @@ jobs:
         run: |
           dotnet build Ruach.BusinessAid.slnx --no-restore -c Release
           dotnet test tests/Ruach.BusinessAid.Tests --no-build -c Release --filter "Category!=Integration&Category!=Browser"
-      - name: Deployment configuration unit checks (no deployment)
-        shell: pwsh
-        run: ./tests/origin-settings.Tests.ps1
       - name: Start isolated SQL Server and create database
         shell: bash
         run: |

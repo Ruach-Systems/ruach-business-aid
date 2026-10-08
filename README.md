@@ -180,12 +180,10 @@ A failed manual script must stop the release. Correct an unapplied script, or ad
 
 Automatic `push` and `pull_request` triggers are currently paused. Run validation manually with **Actions > Build and test > Run workflow** (or `gh workflow run validate.yml --ref <branch>`) before merging; `deploy.yml` still invokes it for the selected commit. Restore the triggers in `validate.yml` when continuous validation should resume.
 
-**Do not dispatch `deploy.yml` under the current user instruction.** Its future
-Test/Production path first invokes validation for the selected commit and API
-origin, then runs distinct jobs:
+`deploy.yml` is manually dispatched for Test or Production. It first invokes the
+validation workflow for the selected commit and API origin, then runs distinct jobs:
 
-1. Validation of owner authorization, explicit origin pairs, isolated site IDs,
-   selected API origin and manual database-readiness confirmation
+1. Validation of the selected API origin and manual database-readiness confirmation
 2. MyASP.NET API deployment and readiness check
 3. Firebase Hosting deployment of the validated PWA artifact
 4. Public release smoke checks
@@ -213,13 +211,8 @@ and hosting resources; do not create replacement accounts or a replacement datab
 | PWA_ORIGIN | Variable | Environment PWA HTTPS origin |
 | MASHAL_ADMIN_EMAILS | Variable | Comma-separated, verified Google email addresses allowed to use RUACH Admin; retained technical key |
 | FIREBASE_PROJECT_ID | Variable | Existing Production project `mashal-business-aid` |
-| FIREBASE_HOSTING_SITE / FIREBASE_LEGACY_HOSTING_SITE | Variables | Verified distinct new and legacy site IDs; not yet provisioned |
-| APP_ORIGIN_PAIRS | Variable | Explicit API/PWA pair JSON; see cutover instructions |
 
-Keep the selected API origin identical to the environment API_ORIGIN. The
-workflow binds the local `business-aid` target to a verified new site and deploys
-only `hosting:business-aid`. Do not guess provider IDs from the repository name
-or overwrite the old PWA with a new-API build.
+Keep the selected dispatch API origin identical to the environment API_ORIGIN; the deployment input check enforces this.
 
 The API artifact contains no secrets. At deployment, the script inserts secrets into the IIS-protected web.config on the runner, publishes it over HTTPS, and removes them from the runner artifact afterward. Never upload that generated configuration or publish settings. API `App_Data/keys` is preserved by Web Deploy so existing sessions survive deployment; keep the certificate stable, protect it, and back it up separately. All hosted environments run with ASPNETCORE_ENVIRONMENT=Production security behavior.
 
