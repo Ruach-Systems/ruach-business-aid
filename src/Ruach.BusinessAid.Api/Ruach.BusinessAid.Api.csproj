@@ -6,6 +6,8 @@
     <ProjectReference Include="../Ruach.BusinessAid.Shared/Ruach.BusinessAid.Shared.csproj" />
     <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
+    <!-- Override SqlClient's vulnerable transitive version; retain NuGet auditing. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.0" />
   </ItemGroup>
 </Project>
