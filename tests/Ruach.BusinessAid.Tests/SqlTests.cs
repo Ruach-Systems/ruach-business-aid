@@ -102,6 +102,54 @@ public class SqlTests
         await Assert.ThrowsAsync<DomainException>(() => otherService.Push(other, new(DataModel.CurrentVersion, otherBusiness, [Op("receiveStock", Guid.NewGuid(), new ReceiptInput(itemId, 1, null))])));
     }
 
+    [Theory]
+    [InlineData("day", "2026-09-15", 3)]
+    [InlineData("week", "2026-09-14", 1)]
+    [InlineData("month", "2026-09-01", 1)]
+    public async Task SalesTrendsIncludeExpensesWithoutDuplicatingSalesAndMatchSummary(string grouping, string firstPeriod, int count)
+    {
+        var (user, business, service) = await Setup();
+        var item = Guid.NewGuid();
+        var deletedExpense = Guid.NewGuid();
+        await service.Push(user, new(DataModel.CurrentVersion, business,
+        [
+            SaveItem(item),
+            Op("recordSale", Guid.NewGuid(), new SaleInput([new(item, 1)], "2026-09-15")),
+            Op("recordSale", Guid.NewGuid(), new SaleInput([new(item, 2)], "2026-09-15")),
+            Op("recordSale", Guid.NewGuid(), new SaleInput([new(item, 1)], "2026-09-17")),
+            Op("saveExpense", Guid.NewGuid(), new Expense { Description = "First", Category = "Other", AmountCentavos = 40, ExpenseDate = "2026-09-15" }),
+            Op("saveExpense", Guid.NewGuid(), new Expense { Description = "Second", Category = "Other", AmountCentavos = 60, ExpenseDate = "2026-09-15" }),
+            Op("saveExpense", Guid.NewGuid(), new Expense { Description = "Expense only", Category = "Other", AmountCentavos = 500, ExpenseDate = "2026-09-16" }),
+            Op("saveExpense", deletedExpense, new Expense { Description = "Deleted", Category = "Other", AmountCentavos = 900, ExpenseDate = "2026-09-15" }),
+            Op("saveExpense", Guid.NewGuid(), new Expense { Description = "Outside range", Category = "Other", AmountCentavos = 800, ExpenseDate = "2026-09-18" })
+        ]));
+        var saved = (await service.Bootstrap(user, business)).Data.Expenses.Single(x => x.Id == deletedExpense);
+        await service.Push(user, new(DataModel.CurrentVersion, business,
+            [Op("deleteExpense", deletedExpense, new { }, Convert.ToBase64String(saved.Version!))]));
+        var (other, otherBusiness, otherService) = await Setup();
+        await otherService.Push(other, new(DataModel.CurrentVersion, otherBusiness,
+            [Op("saveExpense", Guid.NewGuid(), new Expense { Description = "Other business", Category = "Other", AmountCentavos = 700, ExpenseDate = "2026-09-15" })]));
+
+        var reports = new ReportQueries(connections);
+        var rows = (List<SalesTrend>)await reports.Query(user, business, "sales-trend", "2026-09-15", "2026-09-17", grouping);
+        var summary = (FinancialSummary)await reports.Query(user, business, "summary", "2026-09-15", "2026-09-17");
+        Assert.Equal(count, rows.Count);
+        Assert.Equal(firstPeriod, rows[0].Period);
+        Assert.Equal(1000, rows.Sum(x => x.RevenueCentavos));
+        Assert.Equal(400, rows.Sum(x => x.CostCentavos));
+        Assert.Equal(600, rows.Sum(x => x.ExpenseCentavos));
+        Assert.Equal(summary.GrossProfitCentavos, rows.Sum(x => x.GrossProfitCentavos));
+        Assert.Equal(summary.ProfitCentavos, rows.Sum(x => x.ProfitCentavos));
+        if (grouping == "day")
+        {
+            Assert.Equal(350, rows[0].ProfitCentavos);
+            Assert.Equal(new SalesTrend("2026-09-16", 0, 0, 0, 500, -500), rows[1]);
+            Assert.Equal(0, rows[2].ExpenseCentavos);
+            Assert.Equal(150, rows[2].ProfitCentavos);
+        }
+        Assert.Empty((List<SalesTrend>)await reports.Query(user, business, "sales-trend", "2026-08-01", "2026-08-31", grouping));
+    }
+
     [Fact]
     public async Task OversizedOperationsFailAsValidationAndRollBack()
     {

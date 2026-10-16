@@ -41,11 +41,20 @@ public sealed class ReportQueries(SqlConnectionFactory connections)
             """, p)).ToList();
         if (report == "sales-trend")
         {
-            var bucket = grouping switch { "month" => "DATEFROMPARTS(YEAR(SaleDate),MONTH(SaleDate),1)", "week" => "DATEADD(day,-(DATEDIFF(day,'19000101',SaleDate)%7),SaleDate)", _ => "SaleDate" };
+            var bucket = grouping switch { "month" => "DATEFROMPARTS(YEAR(ActivityDate),MONTH(ActivityDate),1)", "week" => "DATEADD(day,-(DATEDIFF(day,'19000101',ActivityDate)%7),ActivityDate)", _ => "ActivityDate" };
             return (await c.QueryAsync<SalesTrend>($"""
-                SELECT CONVERT(varchar(10),{bucket},23) Period,SUM(TotalRevenueCentavos) RevenueCentavos,
-                 SUM(TotalCostCentavos) CostCentavos,SUM(TotalRevenueCentavos-TotalCostCentavos) GrossProfitCentavos
-                FROM dbo.ItemSales WHERE BusinessId=@business AND SaleDate BETWEEN @from AND @to AND DeletedAt IS NULL
+                WITH Activity AS (
+                    SELECT SaleDate ActivityDate,TotalRevenueCentavos RevenueCentavos,
+                     TotalCostCentavos CostCentavos,CAST(0 AS bigint) ExpenseCentavos
+                    FROM dbo.ItemSales WHERE BusinessId=@business AND SaleDate BETWEEN @from AND @to AND DeletedAt IS NULL
+                    UNION ALL
+                    SELECT ExpenseDate,CAST(0 AS bigint),CAST(0 AS bigint),AmountCentavos
+                    FROM dbo.BusinessExpenses WHERE BusinessId=@business AND ExpenseDate BETWEEN @from AND @to AND DeletedAt IS NULL
+                )
+                SELECT CONVERT(varchar(10),{bucket},23) Period,SUM(RevenueCentavos) RevenueCentavos,
+                 SUM(CostCentavos) CostCentavos,SUM(RevenueCentavos-CostCentavos) GrossProfitCentavos,
+                 SUM(ExpenseCentavos) ExpenseCentavos,SUM(RevenueCentavos-CostCentavos-ExpenseCentavos) ProfitCentavos
+                FROM Activity
                 GROUP BY {bucket} ORDER BY Period
                 """, p)).ToList();
         }

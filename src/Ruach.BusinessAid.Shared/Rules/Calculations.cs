@@ -62,4 +62,4 @@ public sealed record SaleInput(List<SaleLineInput> Lines, string SaleDate);
 public sealed record FinancialSummary(long RevenueCentavos, long CostCentavos, long ExpenseCentavos, long GrossProfitCentavos, long ProfitCentavos, int Transactions, long ItemCount);
 public sealed record ItemReport(Guid ItemId, string ItemName, long Quantity, long RevenueCentavos, long CostCentavos, long ProfitCentavos);
 public sealed record ExpenseReport(string Category, long AmountCentavos, decimal? Percentage);
-public sealed record SalesTrend(string Period, long RevenueCentavos, long CostCentavos, long GrossProfitCentavos);
+public sealed record SalesTrend(string Period, long RevenueCentavos, long CostCentavos, long GrossProfitCentavos, long ExpenseCentavos = 0, long ProfitCentavos = 0);
