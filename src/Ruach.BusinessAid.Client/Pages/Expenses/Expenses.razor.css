@@ -1,2 +1,15 @@
-
-.expense-form { align-self: start; }.money-input { position: relative; }.money-input span { position: absolute; left: 14px; top: 14px; color: var(--mashal-purple); font-weight: 800; }.money-input input { padding-left: 34px; }.row-actions { display: flex; gap: 6px; }.row-actions button { width: 44px; height: 44px; border: 0; border-radius: 7px; color: var(--mashal-purple); background: var(--mashal-purple-soft); }.row-actions button.delete { color: var(--mashal-danger); background: #fbe9e6; }.list-card { flex-wrap: wrap; }.list-card .list-main { min-width: 150px; }
+.expense-form { align-self: start; }
+.money-input { position: relative; }
+.money-input span { position: absolute; left: 14px; top: 14px; color: var(--mashal-purple); font-weight: 800; }
+.money-input input { padding-left: 34px; }
+.expense-entry { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.expense-entry .list-main { min-width: 0; overflow-wrap: anywhere; }
+.expense-entry .list-main strong, .expense-entry .list-main small { display: block; }
+.expense-entry .list-main small { margin-top: 4px; color: var(--mashal-muted); font-size: 12px; }
+.expense-amount { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--mashal-line); padding-top: 4px; }
+.row-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 7px; background: transparent; color: var(--mashal-purple); font-size: 12px; font-weight: 650; cursor: pointer; }
+.row-actions button:hover { background: var(--mashal-purple-soft); }
+.row-actions button.delete { color: var(--mashal-danger); }
+.row-actions button.delete:hover { background: #fbe9e6; }
+.row-actions button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

@@ -82,7 +82,7 @@
 <section>
 <div class="section-heading">
 <h2>Recent sales</h2>
-<a href="/sales#sales-history">View all</a>
+<a href="/sales/history">View all</a>
 </div>
 @if (Store.Sales.Any()) {
 <div class="stack">@foreach (var sale in Store.Sales.OrderByDescending(x => x.CreatedAt).Take(4)) {

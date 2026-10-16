@@ -1,0 +1,47 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/sales/history"
+@inherits PageBase
+<div class="page narrow">
+<BackLink To="/sales" Text="Back to sales" />
+<PageHeading Title="Sales history" Eyebrow="Sales by date" Description="Browse your sales and expand each sale to see the items sold." />
+<section class="card history-filters" aria-label="Filter sales by date">
+    <div class="field"><label for="history-from">From</label><input id="history-from" type="date" max="@ToLimit" @bind="from" /></div>
+    <div class="field"><label for="history-to">To</label><input id="history-to" type="date" min="@FromLimit" max="@Today().ToString("yyyy-MM-dd")" @bind="to" /></div>
+    <button type="button" class="button ghost" @onclick="ClearDates">All dates</button>
+</section>
+@if (InvalidRange) {
+    <p class="notice warning" role="alert">Choose a valid date range ending today or earlier.</p>
+}
+else {
+    @if (!Store.Online) { <p class="notice">Showing sales saved on this device. Connect and synchronize to get the latest history.</p> }
+    @if (Store.PendingCount > 0) { <p class="notice">Includes pending sales saved on this device.</p> }
+    var sales = FilteredSales.ToList();
+    <p class="history-count" role="status">@sales.Count sale@(sales.Count == 1 ? "" : "s") · @Money(sales.Sum(x => x.TotalRevenueCentavos))</p>
+    @foreach (var day in sales.GroupBy(x => x.SaleDate)) {
+        <section class="section history-day" aria-label="@($"Sales on {day.Key}")" @key="day.Key">
+            <div class="section-heading"><h2>@FriendlyDate(day.Key, Today())</h2><span>@Money(day.Sum(x => x.TotalRevenueCentavos))</span></div>
+            <div class="stack">
+            @foreach (var sale in day) {
+                <details class="card history-sale" @key="sale.Id">
+                    <summary>
+                        <span class="list-icon"><Icon Name="cart" /></span>
+                        <span class="history-title"><strong>@Quantity(sale.TotalItems) items</strong><small>@string.Join(", ", sale.Lines.Select(x => x.ItemName))</small></span>
+                        <strong>@Money(sale.TotalRevenueCentavos)</strong>
+                        <span class="history-expand">Items <span aria-hidden="true">⌄</span></span>
+                    </summary>
+                    <div class="history-items">
+                    @foreach (var line in sale.Lines) {
+                        <div class="history-item"><div><strong>@line.ItemName</strong><small>@Quantity(line.Quantity) × @Money(line.UnitPriceCentavos) each</small></div><strong>@Money(line.LineRevenueCentavos)</strong></div>
+                    }
+                    <a class="button ghost small block" href="@($"/sales/{sale.Id}")">View sale details</a>
+                    </div>
+                </details>
+            }
+            </div>
+        </section>
+    }
+    @if (sales.Count == 0) {
+        <section class="card empty"><h2>@(Store.Sales.Any() ? "No sales in this date range" : "No sales recorded yet")</h2><p>@(Store.Sales.Any() ? "Choose different dates or show all dates." : "Your recorded sales will appear here.")</p></section>
+    }
+}
+</div>

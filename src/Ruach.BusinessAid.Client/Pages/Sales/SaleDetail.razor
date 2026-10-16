@@ -2,7 +2,7 @@
 @page "/sales/{Id:guid}"
 @inherits PageBase
 <div class="page narrow">
-<BackLink To="/sales#sales-history" Text="Back to sales" />
+<BackLink To="/sales/history" Text="Back to sales history" />
 @if (CurrentSale is {} sale) {
 <PageHeading Title="Sale details" Eyebrow="Itemized sale" Description="@HeadingDescription(sale)" />
 
@@ -42,6 +42,6 @@
 </section>
 }
 else {
-<div class="card empty"><h3>Sale not found</h3><p>This sale may no longer be available on this device.</p><a class="button primary small" href="/sales#sales-history">View sales history</a></div>
+<div class="card empty"><h3>Sale not found</h3><p>This sale may no longer be available on this device.</p><a class="button primary small" href="/sales/history">View sales history</a></div>
 }
 </div>

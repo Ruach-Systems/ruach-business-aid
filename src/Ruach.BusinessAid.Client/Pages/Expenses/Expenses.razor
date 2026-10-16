@@ -39,7 +39,7 @@
 <h2>Recent expenses</h2>
 </div>
 <div class="stack">@foreach(var expense in Store.Expenses.OrderByDescending(x=>x.ExpenseDate).ThenByDescending(x=>x.CreatedAt)){
-<article class="card list-card">
+<article class="card expense-entry">
 <span class="list-icon">
 <Icon Name="wallet" />
 </span>
@@ -47,10 +47,10 @@
 <strong>@expense.Description</strong>
 <small>@expense.Category · @expense.ExpenseDate</small>
 </div>
-<strong>@Money(expense.AmountCentavos)</strong>
+<strong class="expense-amount">@Money(expense.AmountCentavos)</strong>
 <div class="row-actions">
-<button type="button" aria-label="@($"Edit {expense.Description} expense")" @onclick="()=>Edit(expense)">Edit</button>
-<button type="button" class="delete" aria-label="@($"Delete {expense.Description} expense")" @onclick="()=>Delete(expense)">×</button>
+<button type="button" aria-label="@($"Edit {expense.Description} expense")" @onclick="()=>Edit(expense)"><Icon Name="edit" />Edit</button>
+<button type="button" class="delete" aria-label="@($"Delete {expense.Description} expense")" @onclick="()=>Delete(expense)"><Icon Name="delete" />Delete</button>
 </div>
 </article>}
 @if(!Store.Expenses.Any()){
