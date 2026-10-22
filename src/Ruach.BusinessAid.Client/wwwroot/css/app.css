@@ -1,4 +1,5 @@
 @import url('./accounts.css');
+@import url('./admin.css');
 @font-face {
   font-family: Inter;
   src: url('/brand-assets/Inter-Variable.29160a80ff49ddca.ttf') format('truetype');

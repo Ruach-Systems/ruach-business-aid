@@ -26,6 +26,7 @@ public static class ApiServices
         builder.Services.AddSingleton(new SqlConnectionFactory(connection));
         builder.Services.AddScoped<IdentityRepository>();
         builder.Services.AddScoped<AccountService>();
+        builder.Services.AddScoped<AdminQueries>();
         builder.Services.AddScoped<IBusinessService, BusinessService>();
         builder.Services.AddScoped<ReportQueries>();
         builder.Services.AddProblemDetails();

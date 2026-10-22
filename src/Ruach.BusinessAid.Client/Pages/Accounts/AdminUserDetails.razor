@@ -1,0 +1,18 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@inherits PageBase
+@inject ApiClient Api
+<section class="card admin-profile"><span class="status-badge">Read-only profile</span><h2>@User.DisplayName</h2><p>@User.Email</p><p>@(User.PhoneNumber ?? "Mobile number required") · Not SMS-verified</p><p>Joined @User.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy")</p></section>
+<AdminPerformance @key="User.Uid" OwnerId="User.Uid" OpenBusiness="OpenBusiness" />
+<ErrorBanner Message="@Error" />
+<section class="card"><h2>Owned businesses</h2>@foreach(var business in Businesses.Where(x=>x.OwnerUid==User.Uid)){<button class="top-business" @onclick="()=>OpenBusiness.InvokeAsync(business.Id)"><span>@business.Name</span><span>View →</span></button>}@if(!Businesses.Any(x=>x.OwnerUid==User.Uid)){<p>No owned businesses.</p>}</section>
+<section class="card"><h2>Memberships</h2>@foreach(var member in memberships){<button class="top-business" @onclick="()=>OpenBusiness.InvokeAsync(member.BusinessId)"><span>@member.Name</span><span>@member.Role</span></button>}@if(memberships.Count==0){<p>No memberships found.</p>}</section>
+<section class="card"><h2>Business requests</h2>@foreach(var request in Requests.Where(x=>x.OwnerUid==User.Uid)){<article class="admin-record-line"><div><strong>@request.Name</strong><small>@request.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy")</small><p>@request.Reason</p></div><span class="status-badge">@request.Status</span></article>}@if(!Requests.Any(x=>x.OwnerUid==User.Uid)){<p>No business requests.</p>}</section>
+@code{
+    [Parameter,EditorRequired] public AdminUser User {get;set;}=default!;
+    [Parameter] public List<Business> Businesses {get;set;}=[];
+    [Parameter] public List<BusinessRequest> Requests {get;set;}=[];
+    [Parameter] public EventCallback<Guid> OpenBusiness {get;set;}
+    private List<AdminMembership> memberships=[];
+    private Guid loaded;
+    protected override async Task OnParametersSetAsync(){if(loaded!=User.Uid){loaded=User.Uid;await Run(async()=>{memberships=[];if(Store.Online)memberships=await Api.Get<List<AdminMembership>>($"/api/admin/users/{User.Uid}/memberships");});}}
+}

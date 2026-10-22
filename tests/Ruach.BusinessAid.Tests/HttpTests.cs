@@ -22,6 +22,7 @@ public class HttpTests
         b.UseEnvironment("Development");
         b.UseSetting("ConnectionStrings:Mashal", Environment.GetEnvironmentVariable("ConnectionStrings__Mashal"));
         b.UseSetting("Google:ClientId", "test-only-client"); b.UseSetting("Google:ClientSecret", "test-only-secret"); b.UseSetting("App:Origin", Origin);
+        b.UseSetting("MashalAdmin:Emails:0", "admin@example.invalid");
         b.ConfigureServices(s => s.AddAuthentication(o => { o.DefaultAuthenticateScheme = "Test"; o.DefaultChallengeScheme = "Test"; })
           .AddScheme<AuthenticationSchemeOptions, TestIdentityHandler>("Test", _ => { }));
     });
@@ -35,6 +36,8 @@ public class HttpTests
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/bootstrap")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/account")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin")).StatusCode);
+        foreach(var path in new[]{"/api/admin/analytics?from=2026-01-01&to=2026-01-31",$"/api/admin/businesses/{Guid.NewGuid()}/records/sales?from=2026-01-01&to=2026-01-31",$"/api/admin/businesses/{Guid.NewGuid()}/members",$"/api/admin/users/{Guid.NewGuid()}/memberships","/api/admin/directory/users?from=2026-01-01&to=2026-01-31"})
+            Assert.Equal(HttpStatusCode.Unauthorized,(await client.GetAsync(path)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health/ready")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/reports/summary?businessId=" + Guid.NewGuid() + "&from=2026-01-01&to=2026-01-31")).StatusCode);
         client.DefaultRequestHeaders.Remove("Origin"); client.DefaultRequestHeaders.Add("Origin", "https://untrusted.example");
@@ -64,6 +67,23 @@ public class HttpTests
         Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/sync/push", body)).StatusCode);
     }
     private sealed record Csrf(string Token);
+
+    [Fact]
+    public async Task AdminReadsRequireVerifiedAdminAndNeverCacheResponses()
+    {
+        using var host=Host(); using var scope=host.Services.CreateScope();
+        var identities=scope.ServiceProvider.GetRequiredService<IdentityRepository>();
+        var owner=await identities.SignIn(Guid.NewGuid().ToString(),"Owner","owner@example.invalid",null);
+        var admin=await identities.SignIn(Guid.NewGuid().ToString(),"Admin","admin@example.invalid",null,true);
+        var business=await AccountFixture.Provision(scope.ServiceProvider.GetRequiredService<SqlConnectionFactory>(),owner.Uid);
+        using var client=host.CreateClient(new(){AllowAutoRedirect=false});
+        foreach(var path in new[]{"/api/admin/analytics?from=2026-01-01&to=2026-01-31",$"/api/admin/businesses/{business}/records/sales?from=2026-01-01&to=2026-01-31",$"/api/admin/businesses/{business}/members",$"/api/admin/users/{owner.Uid}/memberships",$"/api/admin/businesses/{business}/reports/summary?from=2026-01-01&to=2026-01-31","/api/admin/directory/users?from=2026-01-01&to=2026-01-31"}){
+            client.DefaultRequestHeaders.Remove("X-Test-User");client.DefaultRequestHeaders.Add("X-Test-User",owner.Uid.ToString());
+            Assert.Equal(HttpStatusCode.Forbidden,(await client.GetAsync(path)).StatusCode);
+            client.DefaultRequestHeaders.Remove("X-Test-User");client.DefaultRequestHeaders.Add("X-Test-User",admin.Uid.ToString());
+            var response=await client.GetAsync(path);Assert.Equal(HttpStatusCode.OK,response.StatusCode);Assert.True(response.Headers.CacheControl?.NoStore);
+        }
+    }
 
     [Fact]
     public async Task AccountEndpointsEnforceCsrfValidationAndApprovalBoundary()

@@ -1,0 +1,50 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@inherits PageBase
+@inject ApiClient Api
+<section class="card admin-profile"><span class="status-badge">Read-only</span><h2>@Business.Name</h2><p>@Business.DefaultLocation</p><p>@Owner?.DisplayName · @Owner?.Email</p><p>Created @Business.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy") · PHP · Asia/Manila</p></section>
+<AdminPerformance @key="Business.Id" BusinessId="Business.Id" Busy="Saving" RangeChanged="ChangeRange" />
+<nav class="admin-detail-tabs" aria-label="Business detail sections">@foreach(var section in new[]{"Summary","Sales","Expenses","Items","Receipts","Adjustments","Members"}){<button class="button @(tab==section?"primary":"ghost")" aria-pressed="@(tab==section ? "true" : "false")" disabled="@Saving" @onclick="()=>Select(section)">@section</button>}</nav>
+<ErrorBanner Message="@Error" />
+@if(!Store.Online){<p role="status">Connect to inspect business records.</p>}
+else if(Saving){<p role="status">Loading business records…</p>}
+else if(tab=="Summary"){
+<section class="card"><h2>Item performance</h2><div class="table-scroll" tabindex="0" role="region" aria-label="Item performance"><table><thead><tr><th>Item</th><th>Quantity</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th></tr></thead><tbody>@foreach(var item in items){<tr><td>@item.ItemName</td><td>@Quantity(item.Quantity)</td><td>@Money(item.RevenueCentavos)</td><td>@Money(item.CostCentavos)</td><td>@Money(item.ProfitCentavos)</td></tr>}</tbody></table></div>@if(items.Count==0){<p>No item sales in this period.</p>}</section>
+<section class="card"><h2>Expenses by category</h2>@foreach(var expense in categories){<div class="admin-record-line"><span>@expense.Category</span><strong>@Money(expense.AmountCentavos) · @(expense.Percentage?.ToString("0.0") ?? "0")%</strong></div>}@if(categories.Count==0){<p>No expenses in this period.</p>}</section>
+}
+else if(tab=="Members"){<section class="card"><h2>Business members</h2>@foreach(var member in members){<article class="admin-record-line"><div><strong>@member.DisplayName</strong><p>@member.Email</p></div><span>@member.Role</span></article>}@if(members.Count==0){<p>No members found.</p>}</section>}
+else if(records is {} result){
+<section class="card"><h2>@(tab=="Sales" ? "Sales by date" : tab)</h2>
+@if(tab=="Items"){<p class="admin-caption">Current inventory, independent of the selected dates.</p>}
+@foreach(var group in result.Data.Sales.GroupBy(x=>x.SaleDate)){
+<h3>@FriendlyDate(group.Key,Today())</h3>
+@foreach(var sale in group){<details class="admin-sale"><summary><span>@Quantity(sale.TotalItems) items · @sale.Location</span><strong>@Money(sale.TotalRevenueCentavos)</strong></summary><p class="admin-caption">Recorded @sale.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g") · @sale.Id</p>@foreach(var line in sale.Lines){<div class="admin-record-line"><div><strong>@line.ItemName</strong><small>@Quantity(line.Quantity) × @Money(line.UnitPriceCentavos) · Unit cost @Money(line.UnitCostCentavos)</small></div><strong>@Money(line.LineRevenueCentavos)</strong></div>}<p>Item cost @Money(sale.TotalCostCentavos) · Gross profit @Money(sale.TotalProfitCentavos)</p></details>}}
+@foreach(var expense in result.Data.Expenses){<article class="admin-record-line"><div><strong>@expense.Description</strong><small>@expense.ExpenseDate · @expense.Category</small></div><strong>@Money(expense.AmountCentavos)</strong></article>}
+@foreach(var item in result.Data.Items){<article class="admin-record-line"><div><strong>@item.Name</strong><small>Price @Money(item.SellingPriceCentavos) · Cost @Money(item.UnitCostCentavos)</small><small>Minimum @Quantity(item.MinimumQuantity) · @(item.IsActive?"Active":"Inactive")</small></div><div><strong>@Quantity(item.CurrentQuantity) in stock</strong>@if(item.IsActive && item.CurrentQuantity<=item.MinimumQuantity){<span class="status-badge pending">Low stock</span>}</div></article>}
+@foreach(var receipt in result.Data.Receipts){<article class="admin-record-line"><div><strong>@receipt.ItemName</strong><small>@receipt.ReceivedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g") · @Quantity(receipt.Quantity) × @Money(receipt.UnitCostCentavos)</small><p>@receipt.Note</p></div><strong>@Money(receipt.TotalCostCentavos)</strong></article>}
+@foreach(var movement in result.Data.Movements){<article class="admin-record-line"><div><strong>@movement.ItemName</strong><small>@movement.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g") · @movement.MovementType</small><p>@movement.Note</p></div><div><strong>@Quantity(movement.QuantityDelta)</strong><small>Balance @Quantity(movement.BalanceAfter)</small></div></article>}
+@if(result.Total==0){<p>No @tab.ToLowerInvariant() found.</p>}
+<div class="admin-paging"><button class="button ghost" disabled="@(page==1)" @onclick="()=>Page(-1)">Previous</button><span>Page @(page) · @result.Total records</span><button class="button ghost" disabled="@(page*result.PageSize>=result.Total)" @onclick="()=>Page(1)">Next</button></div>
+</section>}
+@code {
+    [Parameter,EditorRequired] public Business Business {get;set;}=default!;
+    [Parameter] public AdminUser? Owner {get;set;}
+    private string tab="Summary",from=Period("month").From,to=Period("month").To;
+    private int page=1;
+    private AdminRecords? records;
+    private List<ItemReport> items=[];
+    private List<ExpenseReport> categories=[];
+    private List<AdminMember> members=[];
+    private async Task ChangeRange((string From,string To) range){from=range.From;to=range.To;page=1;await Load();}
+    private async Task Select(string value){tab=value;page=1;await Load();}
+    private async Task Page(int delta){page+=delta;await Load();}
+    private Task Load()=>Run(async()=>{
+        records=null;items=[];categories=[];members=[];
+        if(!Store.Online || Store.User?.IsAdmin!=true)return;
+        var path=$"/api/admin/businesses/{Business.Id}";var query=$"?from={from}&to={to}";
+        if(tab=="Summary"){
+            items=await Api.Get<List<ItemReport>>(path+"/reports/items"+query);
+            categories=await Api.Get<List<ExpenseReport>>(path+"/reports/expenses-by-category"+query);
+        }else if(tab=="Members")members=await Api.Get<List<AdminMember>>(path+"/members");
+        else records=await Api.Get<AdminRecords>(path+"/records/"+tab.ToLowerInvariant()+query+$"&page={page}&pageSize=25");
+    });
+}

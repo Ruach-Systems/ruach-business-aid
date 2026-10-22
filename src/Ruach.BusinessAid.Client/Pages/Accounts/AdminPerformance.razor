@@ -1,0 +1,61 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@inherits PageBase
+@inject ApiClient Api
+<section class="admin-performance" aria-label="Financial performance">
+<form class="admin-period" @onsubmit="Load" @onsubmit:preventDefault>
+<h2>@(OwnerId.HasValue ? "Owned-business performance" : "Financial performance")</h2>
+<div class="field"><label for="admin-period">Period</label><select id="admin-period" disabled="@(Saving || Busy || !Store.Online)" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="last30">Last 30 days</option><option value="custom">Custom range</option></select></div>
+@if(period=="custom") { <div class="field"><label for="admin-from">From</label><input id="admin-from" type="date" disabled="@(Saving || Busy)" @bind="from" @bind:after="Invalidate" required /></div><div class="field"><label for="admin-to">To</label><input id="admin-to" type="date" disabled="@(Saving || Busy)" @bind="to" @bind:after="Invalidate" max="@Today().ToString("yyyy-MM-dd")" required /></div> }
+<button class="button ghost" disabled="@(Saving || Busy || !Store.Online)">Apply</button>
+</form>
+<p class="admin-caption">@from.ToString("MMM d, yyyy") – @to.ToString("MMM d, yyyy") · PHP · Asia/Manila · Synchronized records only</p>
+@if(OwnerId.HasValue){<p>Totals include businesses owned by this user. They do not measure the user's individual actions.</p>}
+<ErrorBanner Message="@Error" />
+@if(!Store.Online){<p class="account-notice" role="status">Connect to load admin financial data. It is not saved offline.</p>}
+else if(Saving){<p role="status">Loading financial performance…</p>}
+else if(analytics is {} a){
+<div class="admin-financials">@foreach(var metric in new[]{("Revenue",a.Summary.RevenueCentavos),("Item cost",a.Summary.CostCentavos),("Gross profit",a.Summary.GrossProfitCentavos),("Expenses",a.Summary.ExpenseCentavos),("Net profit",a.Summary.ProfitCentavos)}) {
+<article class="card @(metric.Item1=="Net profit" ? "net-profit" : "")"><span class="card-label">@metric.Item1</span><strong>@Money(metric.Item2)</strong></article> }</div>
+<p class="admin-caption">@Quantity(a.Summary.Transactions) transactions · @Quantity(a.Summary.ItemCount) items sold</p>
+<div class="admin-charts"><section class="card"><h2>Sales &amp; profit</h2><div class="chart-legend"><span>● Revenue</span><span>● Net profit</span></div>
+@if(a.Trend.Count==0){<p class="empty-state">No sales or expenses in this period.</p>}
+else {
+<svg class="admin-chart" viewBox="0 0 600 180" role="img" aria-label="Revenue and net profit over the selected period. Exact amounts are in the trend table below.">
+<line x1="12" x2="588" y1="@ZeroY" y2="@ZeroY" stroke="#D6CDD2" stroke-dasharray="4 4" />
+<polyline points="@Points(false)" fill="none" stroke="#B21F32" stroke-width="3" />
+<polyline points="@Points(true)" fill="none" stroke="#321C3B" stroke-width="3" />
+@if(a.Trend.Count==1){<circle cx="300" cy="@Y(a.Trend[0].RevenueCentavos)" r="4" fill="#B21F32"/><circle cx="300" cy="@Y(a.Trend[0].ProfitCentavos)" r="4" fill="#321C3B"/>}
+</svg><div class="chart-dates"><span>@a.Trend.First().Period</span><span>@a.Trend.Last().Period</span></div>
+<details class="admin-trend-table"><summary>View trend amounts</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Daily financial trends"><table><thead><tr><th>Date</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead><tbody>@foreach(var row in a.Trend){<tr><td>@row.Period</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.GrossProfitCentavos)</td><td>@Money(row.ExpenseCentavos)</td><td>@Money(row.ProfitCentavos)</td></tr>}</tbody></table></div></details>
+}</section>
+@if(!BusinessId.HasValue){<section class="card"><div class="section-heading"><h2>Top businesses</h2><span class="admin-caption">By revenue</span></div>@foreach(var business in a.TopBusinesses){<button class="top-business" @onclick="()=>OpenBusiness.InvokeAsync(business.Id)"><span>@business.Name</span><strong>@Money(business.RevenueCentavos)</strong></button>}@if(a.TopBusinesses.Count==0){<p>No businesses yet.</p>}</section>}
+</div>
+}
+</section>
+@code {
+    [Parameter] public bool Busy {get;set;}
+    private void Invalidate()=>analytics=null;
+    [Parameter] public Guid? BusinessId {get;set;}
+    [Parameter] public Guid? OwnerId {get;set;}
+    [Parameter] public EventCallback<Guid> OpenBusiness {get;set;}
+    [Parameter] public EventCallback<(string From,string To)> RangeChanged {get;set;}
+    private AdminAnalytics? analytics;
+    private string period="month";
+    private DateOnly from=new(Today().Year,Today().Month,1), to=Today();
+    private Guid? loadedBusiness,loadedOwner;
+    private bool initialized;
+    protected override async Task OnParametersSetAsync(){ if(!initialized || loadedBusiness!=BusinessId || loadedOwner!=OwnerId){ initialized=true;loadedBusiness=BusinessId;loadedOwner=OwnerId;await Load(); } }
+    private async Task SetPeriod(){ if(period!="custom"){ to=Today(); from=period=="last30" ? to.AddDays(-29) : DateOnly.Parse(Period(period).From); await Load(); } }
+    private Task Load()=>Run(async()=>{
+        analytics=null;
+        if(!Store.Online || Store.User?.IsAdmin!=true)return;
+        Rules.Require(from<=to && to<=Today(),"Choose a valid date range ending today or earlier.");
+        analytics=await Api.Get<AdminAnalytics>($"/api/admin/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"+(BusinessId.HasValue?$"&business={BusinessId}":"")+(OwnerId.HasValue?$"&owner={OwnerId}":""));
+        await RangeChanged.InvokeAsync((from.ToString("yyyy-MM-dd"),to.ToString("yyyy-MM-dd")));
+    });
+    private double Min=>Math.Min(0,analytics!.Trend.Min(x=>Math.Min(x.RevenueCentavos,x.ProfitCentavos)));
+    private double Max=>Math.Max(1,analytics!.Trend.Max(x=>Math.Max(x.RevenueCentavos,x.ProfitCentavos)));
+    private string Y(long value)=>(164-(value-Min)/(Max-Min)*148).ToString("0.##",System.Globalization.CultureInfo.InvariantCulture);
+    private string ZeroY=>Y(0);
+    private string Points(bool profit){ var rows=analytics!.Trend; var first=DateOnly.Parse(rows[0].Period).DayNumber; var days=DateOnly.Parse(rows[^1].Period).DayNumber-first; return string.Join(" ",rows.Select(r=>$"{(days==0 ? 300 : 12+576d*(DateOnly.Parse(r.Period).DayNumber-first)/days).ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)},{Y(profit?r.ProfitCentavos:r.RevenueCentavos)}")); }
+}

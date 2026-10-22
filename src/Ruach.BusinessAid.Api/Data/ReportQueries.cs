@@ -11,6 +11,10 @@ public sealed class ReportQueries(SqlConnectionFactory connections)
         Rules.Require(grouping is "day" or "week" or "month", "Invalid trend grouping.");
         await using var c = await connections.Open();
         await BusinessService.Authorize(c, null, user, business, management: true);
+        return await Read(c, business, report, from, to, grouping);
+    }
+    internal static async Task<object> Read(Microsoft.Data.SqlClient.SqlConnection c, Guid business, string report, string from, string to, string grouping = "day")
+    {
         var p = new { business, from, to };
         if (report == "summary") return await c.QuerySingleAsync<FinancialSummary>(
             """

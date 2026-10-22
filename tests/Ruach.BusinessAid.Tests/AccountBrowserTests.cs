@@ -110,6 +110,7 @@ public partial class BrowserTests
         await context.RouteAsync("**/api/admin**", async route =>
         {
             var path = new Uri(route.Request.Url).AbsolutePath;
+            if(path=="/api/admin/analytics") { await route.FulfillAsync(new(){Status=200,ContentType="application/json",Headers=ApiHeaders(route),Body=JsonSerializer.Serialize(new AdminAnalytics(new(0,0,0,0,0,0,0),[],[]),Wire.Json)}); return; }
             if (route.Request.Method == "POST" && path.EndsWith("/decision"))
             {
                 var decision = JsonSerializer.Deserialize<DecisionInput>(route.Request.PostData!, Wire.Json)!;
@@ -124,9 +125,11 @@ public partial class BrowserTests
             await route.FulfillAsync(new() { Status = 200, ContentType = "application/json", Headers = ApiHeaders(route), Body = JsonSerializer.Serialize(metadata, Wire.Json) });
         });
         var page = await context.NewPageAsync(); await page.GotoAsync(host.Url);
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "RUACH Admin", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Overview", Exact = true })).ToBeVisibleAsync();
         await CheckAccountLayout(page, host.Root, "admin-requests");
         await page.GetByRole(AriaRole.Button, new() { Name = "Review request", Exact = true }).ClickAsync();
+        await page.SetViewportSizeAsync(390,844);
+        await page.ScreenshotAsync(new(){Path=Path.Combine(host.Root,"artifacts","browser","admin-review-mobile.png"),FullPage=true});
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Reject with reason", Exact = true })).ToBeDisabledAsync();
         await page.GetByLabel("Reason for rejection", new() { Exact = true }).FillAsync("Please clarify the location.");
         await page.GetByRole(AriaRole.Button, new() { Name = "Reject with reason", Exact = true }).ClickAsync();

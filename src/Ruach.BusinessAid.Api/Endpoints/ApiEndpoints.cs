@@ -47,6 +47,12 @@ public static class ApiEndpoints
             return Results.NoContent();
         }).RequireAuthorization();
         app.MapGet("/api/admin", async (HttpContext ctx, AccountService service) => await service.Admin(UserId(ctx))).RequireAuthorization();
+        app.MapGet("/api/admin/analytics", async (HttpContext ctx, string from, string to, Guid? business, Guid? owner, AdminQueries queries) => await queries.Analytics(UserId(ctx), from, to, business, owner)).RequireAuthorization();
+        app.MapGet("/api/admin/directory/{kind}", async (HttpContext ctx, string kind, string? search, string from, string to, int? page, int? pageSize, AdminQueries queries) => await queries.Directory(UserId(ctx), kind, search ?? "", from, to, page ?? 1, pageSize ?? 25)).RequireAuthorization();
+        app.MapGet("/api/admin/businesses/{business:guid}/members", async (HttpContext ctx, Guid business, AdminQueries queries) => await queries.Members(UserId(ctx), business)).RequireAuthorization();
+        app.MapGet("/api/admin/users/{user:guid}/memberships", async (HttpContext ctx, Guid user, AdminQueries queries) => await queries.Memberships(UserId(ctx), user)).RequireAuthorization();
+        app.MapGet("/api/admin/businesses/{business:guid}/records/{kind}", async (HttpContext ctx, Guid business, string kind, string from, string to, int? page, int? pageSize, AdminQueries queries) => await queries.Records(UserId(ctx), business, kind, from, to, page ?? 1, pageSize ?? 25)).RequireAuthorization();
+        app.MapGet("/api/admin/businesses/{business:guid}/reports/{report}", async (HttpContext ctx, Guid business, string report, string from, string to, AdminQueries queries) => await queries.Report(UserId(ctx), business, report, from, to)).RequireAuthorization();
         app.MapPost("/api/admin/requests/{id:guid}/decision", async (HttpContext ctx, Guid id, DecisionInput input, AccountService service) =>
         {
             await service.Decide(UserId(ctx), id, input);
