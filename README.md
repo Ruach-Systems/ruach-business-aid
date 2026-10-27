@@ -180,6 +180,8 @@ A failed manual script must stop the release. Correct an unapplied script, or ad
 
 Automatic `push` and `pull_request` triggers are currently paused. Run validation manually with **Actions > Build and test > Run workflow** (or `gh workflow run validate.yml --ref <branch>`) before merging; `deploy.yml` still invokes it for the selected commit. Restore the triggers in `validate.yml` when continuous validation should resume.
 
+Validation is pinned to `ubuntu-24.04` because Playwright 1.58.1 does not support Ubuntu 26.04. Check browser and native dependency support before changing the runner image; `ubuntu-latest` can move to an unsupported OS.
+
 `deploy.yml` is manually dispatched for Test or Production. It first invokes the
 validation workflow for the selected commit and API origin, then runs distinct jobs:
 
