@@ -8,6 +8,47 @@ namespace Ruach.BusinessAid.Tests;
 public partial class BrowserTests
 {
     [BrowserFact]
+    public async Task DashboardRecentSalesMatchHistoryOrderForBackdatedAndTiedSales()
+    {
+        await using var host = await Preview.Start();
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 390, Height = 900 } });
+        var owner = new AppUser(Guid.NewGuid(), "History tester", "history@example.invalid", null) { PhoneNumber = "+639171234567" };
+        var business = new Business { Id = Guid.NewGuid(), OwnerUid = owner.Uid, Name = "History shop", DefaultLocation = "Main" };
+        var sales = Enumerable.Range(0, 6).Select(i => new Sale
+        {
+            Id = Guid.NewGuid(), BusinessId = business.Id, SaleDate = "2026-09-15",
+            CreatedAt = new DateTimeOffset(2026, 9, 25, 12, 0, 0, TimeSpan.Zero).AddMinutes(-i),
+            TotalItems = 2, TotalRevenueCentavos = 5000, TotalCostCentavos = 2000, TotalProfitCentavos = 3000,
+            Lines = [new() { ItemId = Guid.NewGuid(), ItemName = $"History item {i}", Quantity = 2, UnitPriceCentavos = 2500, UnitCostCentavos = 1000, LineRevenueCentavos = 5000, LineCostCentavos = 2000 }]
+        }).ToList();
+        var deleted = new Sale { Id = Guid.NewGuid(), BusinessId = business.Id, SaleDate = "2026-09-22", DeletedAt = DateTimeOffset.UtcNow };
+        var data = new AppData { Business = business, Sales = [..sales, deleted] };
+        var other = new AppData { Business = new() { Id = Guid.NewGuid(), OwnerUid = owner.Uid, Name = "Empty shop", DefaultLocation = "Other" } };
+
+        sales[0].SaleDate = "2026-09-14"; // Recently entered backdated sale must sort last.
+        sales[1].SaleDate = "2026-09-16";
+        sales[2].SaleDate = "2026-09-16";
+        sales[3].SaleDate = "2026-09-16";
+        sales[3].CreatedAt = sales[2].CreatedAt;
+        var expected = sales.OrderByDescending(x=>x.SaleDate).ThenByDescending(x=>x.CreatedAt).ThenByDescending(x=>x.Id).ToList();
+        await MockApi(context,owner,data,[other]);
+        var page=await context.NewPageAsync();
+        await page.GotoAsync(host.Url);
+        await page.GetByRole(AriaRole.Button,new() { Name="Open History shop", Exact=true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Business overview" })).ToBeVisibleAsync();
+        var recent=page.Locator(".sale-history-link");
+        await Expect(recent).ToHaveCountAsync(4);
+        for(var i=0;i<4;i++)
+            await Expect(recent.Nth(i)).ToHaveAttributeAsync("href",$"/sales/{expected[i].Id}");
+        await page.GotoAsync(host.Url+"/sales/history");
+        await page.Locator("#history-period").SelectOptionAsync("all");
+        for(var i=0;i<4;i++)
+            await Expect(page.Locator(".history-sale").Nth(i)).ToContainTextAsync(expected[i].Lines[0].ItemName);
+    }
+
+    [BrowserFact]
     public async Task SalesHistoryPaginatesWithoutChangingFullRangeTotals()
     {
         await using var host = await Preview.Start();

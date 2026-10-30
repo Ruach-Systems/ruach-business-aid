@@ -85,7 +85,7 @@
 <a href="/sales/history">View all</a>
 </div>
 @if (Store.Sales.Any()) {
-<div class="stack">@foreach (var sale in Store.Sales.OrderByDescending(x => x.CreatedAt).Take(4)) {
+<div class="stack">@foreach (var sale in Store.Sales.OrderByDescending(x => x.SaleDate).ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(4)) {
 <a class="card list-card sale-history-link" href="@($"/sales/{sale.Id}")" aria-label="@($"View sale of {Quantity(sale.TotalItems)} items for {Money(sale.TotalRevenueCentavos)}")">
 <span class="list-icon">
 <Icon Name="cart" />
