@@ -370,3 +370,44 @@ input[aria-invalid="true"] { border-color: var(--mashal-danger); }
 :root .cool-alert-toast-close:hover { color: #321C3B; background: #EFE8F1; opacity: 1; }
 
 :root .cool-alert-toast { touch-action: pan-y; }
+
+/* Touch density: compact reduces whitespace, never mobile hit areas or input text.
+   Include coarse pointers so tablets retain these targets at desktop widths. */
+@media (max-width: 979px), (pointer: coarse) {
+  html body button, html body summary,
+  html body .button, html body .sync-pill, html body .mobile-header .sync-pill, html body .page-back-link {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  html body .button.primary, html body button[type="submit"] { min-height: 48px; }
+  html body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  html body select, html body textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  html body .section-heading a, html body .workspace-context a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 8px;
+    flex-shrink: 0;
+  }
+  html body .toggle-row, html body .account-check { min-height: 44px; }
+  html.density-compact .button, html.density-compact .button.small,
+  html.density-compact .sync-pill, html.density-compact .mobile-header .sync-pill,
+  html.density-compact .page-back-link { min-height: 44px; }
+  html.density-compact .button.primary { min-height: 48px; }
+  html.density-compact .field input, html.density-compact .field select,
+  html.density-compact .field textarea, html.density-compact .search-box input,
+  html.density-compact .search { min-height: 44px; font-size: 16px; }
+  html.density-compact .sale-line .stepper { grid-template-columns: 44px 56px 44px; }
+  html.density-compact .sale-line .stepper button { width: 44px; height: 44px; }
+  html.density-compact .sale-line .stepper input { height: 44px; font-size: 16px; }
+}
+@media (max-width: 359px) {
+  html.density-compact .sale-line { grid-template-columns: minmax(0, 1fr); }
+  html.density-compact .sale-line .stepper { width: 100%; grid-template-columns: 44px minmax(56px, 1fr) 44px; }
+  html.density-compact .sale-line .stepper input { width: 100%; }
+}
