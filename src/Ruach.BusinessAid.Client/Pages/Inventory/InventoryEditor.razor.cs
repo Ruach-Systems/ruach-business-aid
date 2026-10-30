@@ -9,6 +9,9 @@ public partial class InventoryEditor
     [Parameter] public Guid? Id { get; set; }
     private Item draft = new() { Id = Guid.NewGuid(), IsActive = true };
     private decimal price, cost;
+    private bool priceValid, costValid = true, minimumValid = true;
+    private bool MoneyValid => priceValid && costValid;
+    private bool InputsValid => MoneyValid && minimumValid;
     private string? version;
     private Guid? loaded;
     private long PriceCentavos => Centavos(price);
@@ -31,6 +34,7 @@ public partial class InventoryEditor
 
     private Task Save() => Run(async () =>
     {
+        Rules.Require(InputsValid, "Correct the highlighted number fields before saving.");
         draft.SellingPriceCentavos = PriceCentavos;
         draft.UnitCostCentavos = CostCentavos;
         await Store.Execute("saveItem", draft.Id, draft, version);

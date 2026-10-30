@@ -1,0 +1,74 @@
+@using System.Globalization
+@using System.Text.RegularExpressions
+<input @attributes="Attributes" placeholder="@(Money ? "0.00" : "0")" type="text" inputmode="@(Money ? "decimal" : "numeric")" value="@text" @oninput="Input" @onblur="Blur" required="@(!EmptyAsZero)" aria-invalid="@(error.Length > 0 ? "true" : "false")" aria-describedby="@Description" />
+@if (error.Length > 0) { <small class="numeric-error" id="@errorId" role="alert">@error</small> }
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
+    [Parameter] public EventCallback<bool> ValidityChanged { get; set; }
+    [Parameter] public decimal Minimum { get; set; }
+    [Parameter] public decimal Maximum { get; set; }
+    [Parameter] public bool Money { get; set; }
+    [Parameter] public bool StartEmpty { get; set; }
+    [Parameter] public bool EmptyAsZero { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+    private readonly string errorId = $"number-error-{Guid.NewGuid():N}";
+    private string text = "", error = "";
+    private decimal published;
+    private bool initialized;
+    private bool? reportedValidity;
+    private string? Description => string.Join(" ", new[] { Attributes?.GetValueOrDefault("aria-describedby")?.ToString(), error.Length > 0 ? errorId : null }.Where(x => !string.IsNullOrEmpty(x))) is { Length: > 0 } value ? value : null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Parent resets and stepper changes replace the draft; unrelated renders preserve it.
+        if (!initialized || Value != published)
+        {
+            text = StartEmpty && (!initialized || (EmptyAsZero && Value == 0)) ? "" : Format(Value);
+            initialized = true;
+            published = Value;
+        }
+        Validate(out _);
+        await ReportValidity();
+    }
+
+    private string Format(decimal value) => value.ToString(Money ? "F2" : "0", CultureInfo.InvariantCulture);
+    private bool Validate(out decimal value)
+    {
+        value = 0;
+        var draft = text.Trim();
+        if (Money && draft.StartsWith('₱')) draft = draft[1..].Trim();
+        // Commas are only accepted as unambiguous three-digit grouping for PHP.
+        var pattern = Money ? @"^(?:[0-9]+|[0-9]{1,3}(?:,[0-9]{3})+)(?:\.[0-9]{1,2})?$" : @"^[0-9]+$";
+        if (draft.Length == 0 && EmptyAsZero && Minimum == 0) { error = ""; return true; }
+        if (draft.Length == 0) error = Money ? "Enter an amount." : "Enter a whole-number quantity.";
+        else if (!Regex.IsMatch(draft, pattern, RegexOptions.CultureInvariant))
+            error = Money ? "Use a non-negative amount with up to 2 decimal places, for example 1,250.50." : "Use whole numbers only, for example 12.";
+        else if (!decimal.TryParse(draft.Replace(",", ""), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value) || value < Minimum || value > Maximum)
+            error = Money ? $"Enter an amount from {Calculations.Money(Calculations.Centavos(Minimum))} to {Calculations.Money(Calculations.Centavos(Maximum))}." : $"Enter a quantity from {Minimum:N0} to {Maximum:N0}.";
+        else error = "";
+        return error.Length == 0;
+    }
+
+    private async Task ReportValidity()
+    {
+        var valid = error.Length == 0;
+        if (reportedValidity == valid) return;
+        reportedValidity = valid;
+        await ValidityChanged.InvokeAsync(valid);
+    }
+
+    private async Task Input(ChangeEventArgs args)
+    {
+        text = args.Value?.ToString() ?? "";
+        var valid = Validate(out var value);
+        if (valid) { published = value; await ValueChanged.InvokeAsync(value); }
+        await ReportValidity();
+    }
+
+    private async Task Blur()
+    {
+        if (Validate(out var value) && !(EmptyAsZero && text.Trim().Length == 0)) text = Format(value);
+        await ReportValidity();
+    }
+}

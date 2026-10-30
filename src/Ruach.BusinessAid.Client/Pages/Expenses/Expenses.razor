@@ -7,7 +7,7 @@
 <span class="date-chip">Today · @Money(Store.Expenses.Where(x=>x.ExpenseDate==Today().ToString("yyyy-MM-dd")).Sum(x=>x.AmountCentavos))</span>
 </PageHeading>
 <div class="split">
-<form class="card form-card expense-form" @onsubmit="Save" @onsubmit:preventDefault>
+<form class="card form-card expense-form" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
 <div class="section-heading">
 <h2>@(id is null?"Add expense":"Edit expense")</h2>
 @if(id is not null){
@@ -23,7 +23,7 @@
 </div>
 <div class="field">
 <label for="expense-amount">Amount (₱)</label>
-<MoneyInput id="expense-amount" min="0" max="100000000" @bind-Value="amount" required />
+<MoneyInput StartEmpty="@(id is null)" @key="amountRevision" id="expense-amount" ValidityChanged="@(v => amountValid = v)" @bind-Value="amount" required />
 </div>
 <div class="field">
 <label for="expense-category">Category</label>
@@ -32,7 +32,7 @@
 </select>
 </div>
 <ErrorBanner Message="@Error" />
-<button class="button primary block" disabled="@Saving">@(id is null?"Save expense":"Update expense")</button>
+<button class="button primary block" disabled="@(Saving)">@(id is null?"Save expense":"Update expense")</button>
 </form>
 <section>
 <div class="section-heading">

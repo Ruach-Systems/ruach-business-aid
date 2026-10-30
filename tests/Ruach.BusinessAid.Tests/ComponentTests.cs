@@ -8,7 +8,7 @@ using Ruach.BusinessAid.Client.Components;
 using Xunit;
 namespace Ruach.BusinessAid.Tests;
 
-public class ComponentTests
+public partial class ComponentTests
 {
     [Theory]
     [InlineData("2026-01-01", "Today")]
@@ -26,22 +26,6 @@ public class ComponentTests
         Assert.Equal(3, icon.FindAll("circle[fill='currentColor'][r='2']").Count);
     }
 
-    [Fact]
-    public void MoneyInputKeepsTypingThenFormatsAndRoundsOnBlur()
-    {
-        using var context = Context();
-        decimal saved = 0;
-        var input = context.Render<MoneyInput>(p => p.Add(x => x.Value, 35m).Add(x => x.ValueChanged, x => saved = x));
-        Assert.Equal("35.00", input.Find("input").GetAttribute("value"));
-        input.Find("input").Input("12.345");
-        Assert.Equal(12.345m, saved);
-        input.Find("input").Blur();
-        Assert.Equal(12.35m, saved);
-        Assert.Equal("12.35", input.Find("input").GetAttribute("value"));
-        input.Find("input").Input("0");
-        input.Find("input").Blur();
-        Assert.Equal("0.00", input.Find("input").GetAttribute("value"));
-    }
     private sealed class TestEnvironment : IWebAssemblyHostEnvironment
     {
         public string Environment => "Development"; public string ApplicationName => "Ruach.BusinessAid.Client"; public string BaseAddress => "http://localhost:5173/";
@@ -74,7 +58,7 @@ public class ComponentTests
         Assert.NotNull(page.Find("#item-cost"));
         Assert.Contains("Profit per item", page.Markup);
         Assert.Contains("Markup", page.Markup);
-        Assert.Equal("-", page.Find(".cost-preview div:nth-child(2) strong").TextContent);
+        Assert.Equal("—", page.Find(".cost-preview div:nth-child(2) strong").TextContent);
         Assert.DoesNotContain("Not applicable", page.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Margin", page.Markup, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("recipe", page.Markup, StringComparison.OrdinalIgnoreCase);

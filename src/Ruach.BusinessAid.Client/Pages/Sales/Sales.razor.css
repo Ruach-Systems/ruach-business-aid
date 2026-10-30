@@ -13,9 +13,9 @@
 .unit-pricing b { color: var(--mashal-ink); font-weight: 650; }
 .stepper { display: grid; grid-template-columns: 44px 72px 44px; align-items: center; gap: 6px; justify-self: end; }
 .stepper button { width: 44px; height: 44px; border: 0; border-radius: 7px; display: grid; place-items: center; background: var(--mashal-purple-soft); color: var(--mashal-purple); }
-.stepper input { width: 72px; height: 44px; padding: 0 4px; text-align: center; font-variant-numeric: tabular-nums; appearance: textfield; -moz-appearance: textfield; border: 1px solid var(--mashal-line); border-radius: 7px; background: var(--mashal-cloud); transition: border-color 120ms ease, box-shadow 120ms ease; }
-.stepper input:focus-visible { outline: none; border-color: var(--mashal-purple); box-shadow: 0 0 0 2px rgb(91 44 131 / 12%); }
-.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper ::deep input { width: 72px; height: 44px; padding: 0 4px; text-align: center; font-variant-numeric: tabular-nums; appearance: textfield; -moz-appearance: textfield; border: 1px solid var(--mashal-line); border-radius: 7px; background: var(--mashal-cloud); transition: border-color 120ms ease, box-shadow 120ms ease; }
+.stepper ::deep input:focus-visible { outline: none; border-color: var(--mashal-purple); box-shadow: 0 0 0 2px rgb(91 44 131 / 12%); }
+.stepper ::deep input::-webkit-inner-spin-button, .stepper ::deep input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .totals-card { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .totals-card > div { display: grid; gap: 6px; min-width: 0; }
 .totals-card strong { font-size: 18px; overflow-wrap: anywhere; }
@@ -43,5 +43,7 @@ html.density-compact .sale-checkout.active .totals-card { padding: 9px 12px; bor
     .sale-line { grid-template-columns: minmax(0,1fr); gap: 14px; }
     .unit-pricing { display: flex; flex-wrap: wrap; gap: 4px 16px; }
     .stepper { grid-template-columns: 44px minmax(72px,1fr) 44px; width: 100%; }
-    .stepper input { width: 100%; }
+    .stepper ::deep input { width: 100%; }
 }
+
+.sale-line > .stock-warning { grid-column: 1 / -1; margin-top: 0; }

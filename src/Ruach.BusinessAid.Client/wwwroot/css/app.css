@@ -337,3 +337,9 @@ html.density-compact .startup-error-card, html.density-compact .auth-card, html.
   html.density-compact .side-nav nav { gap: 4px; }
   html.density-compact .side-nav nav a { min-height: 38px; border-radius: 7px; }
 }
+
+/* Shared numeric-entry validation uses the existing semantic error palette. */
+.numeric-error { display: block; color: var(--mashal-danger); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+input[aria-invalid="true"] { border-color: var(--mashal-danger); }
+.stepper .numeric-error { grid-column: 1 / -1; grid-row: 2; }
+.stepper button:disabled { opacity: .45; cursor: not-allowed; }
