@@ -8,7 +8,7 @@ function modal(options) {
     const app = document.getElementById('app');
     const wasInert = app?.inert;
     const result = CoolAlert.show(options);
-    const dialog = document.querySelector('.cool-alert-modal');
+    const dialog = [...document.querySelectorAll('.cool-alert-modal')].at(-1);
     if (app) app.inert = true;
     dialog?.setAttribute('role', 'dialog');
     dialog?.setAttribute('aria-modal', 'true');
@@ -33,7 +33,7 @@ function modal(options) {
     document.addEventListener('focusin', keepFocus, true);
     document.addEventListener('keydown', keydown, true);
     try { return await result; }
-    finally { document.removeEventListener('focusin', keepFocus, true); document.removeEventListener('keydown', keydown, true); if (app) app.inert = wasInert; if (previous?.isConnected) previous.focus(); }
+    finally { dialog?.removeAttribute('role'); dialog?.removeAttribute('aria-modal'); document.removeEventListener('focusin', keepFocus, true); document.removeEventListener('keydown', keydown, true); if (app) app.inert = wasInert; if (previous?.isConnected) previous.focus(); }
   });
   modalQueue = task.catch(() => {});
   return task;
