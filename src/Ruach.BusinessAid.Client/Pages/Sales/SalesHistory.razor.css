@@ -2,13 +2,13 @@
 .history-count, .history-title small { color: var(--mashal-muted); font-size: 12px; }
 .history-day .section-heading { flex-wrap: wrap; }
 .history-day .section-heading > span { font-weight: 700; }
-.history-sale { padding: 0; }
-.history-sale summary { display: flex; align-items: center; gap: 12px; padding: 16px; cursor: pointer; list-style: none; }
+.card.history-sale { padding: 0; }
+.history-sale summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; min-height: 64px; cursor: pointer; list-style: none; }
 .history-sale summary::-webkit-details-marker { display: none; }
 .history-sale summary:focus-visible { outline: 2px solid var(--mashal-purple); outline-offset: 3px; border-radius: 8px; }
 .history-title { flex: 1; min-width: 0; }
 .history-title strong, .history-title small { display: block; }
-.history-title small { margin-top: 5px; overflow-wrap: anywhere; }
+.history-title small { margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .history-sale summary > strong { white-space: nowrap; }
 .history-expand { color: var(--mashal-purple); font-size: 12px; white-space: nowrap; }
 .history-sale[open] .history-expand > span { display: inline-block; transform: rotate(180deg); }
@@ -19,8 +19,13 @@
 .history-item > strong { white-space: nowrap; }
 @media (max-width: 600px) {
     .history-filters { grid-template-columns: minmax(0, 1fr); }
-    .history-sale summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
-    .history-expand { grid-column: 2 / -1; }
+    .history-sale summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; }
+    .history-title strong, .history-sale summary > strong { font-size: 14px; }
 }
 
 .history-period { grid-column: 1 / -1; }
+
+.history-pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; margin-top:20px; }
+.history-pagination small { margin-right:auto; }
+.history-pagination button { min-height:44px; }
+@media(max-width:360px) { .history-pagination small { flex-basis:100%; } }

@@ -415,3 +415,5 @@ input[aria-invalid="true"] { border-color: var(--mashal-danger); }
 /* Bright crimson retains icon contrast against the dark navigation surface. */
 .bottom-nav a.active { background:transparent; color:white; font-weight:700; }
 .bottom-nav a.active .icon, .side-nav nav a.active .icon { color:#EF5967; }
+
+html.density-compact .card.history-sale { padding: 0; }

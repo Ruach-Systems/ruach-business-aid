@@ -6,11 +6,14 @@ namespace Ruach.BusinessAid.Client.Pages;
 public partial class SalesHistory
 {
     private DateTime? from, to;
+    private const int PageSize = 10;
+    private int page = 1;
     private string period = "month"; private int filterRevision;
     protected override void OnInitialized() { base.OnInitialized(); SetPeriod(); }
-    private void CustomDates() => period = "custom";
+    private void CustomDates() { period = "custom"; page = 1; }
     private void SetPeriod()
     {
+        page = 1;
         filterRevision++;
         var today = Today().ToDateTime(TimeOnly.MinValue);
         if (period == "all") { ClearDates(); return; }
@@ -33,5 +36,5 @@ public partial class SalesHistory
             && (to is null || string.CompareOrdinal(x.SaleDate, to.Value.ToString("yyyy-MM-dd")) <= 0))
         .OrderByDescending(x => x.SaleDate).ThenByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id);
 
-    private void ClearDates() { filterRevision++; from = null; to = null; period = "all"; }
+    private void ClearDates() { page = 1; filterRevision++; from = null; to = null; period = "all"; }
 }

@@ -18,18 +18,21 @@ else {
     @if (!Store.Online) { <p class="notice">Showing sales saved on this device. Connect and synchronize to get the latest history.</p> }
     @if (Store.PendingCount > 0) { <p class="notice">Includes pending sales saved on this device.</p> }
     var sales = FilteredSales.ToList();
+    var pageCount = Math.Max(1, (sales.Count + PageSize - 1) / PageSize);
+    page = Math.Clamp(page, 1, pageCount);
+    var pageSales = sales.Skip((page - 1) * PageSize).Take(PageSize);
     <p class="history-count" role="status">@sales.Count sale@(sales.Count == 1 ? "" : "s") · @Money(sales.Sum(x => x.TotalRevenueCentavos))</p>
-    @foreach (var day in sales.GroupBy(x => x.SaleDate)) {
+    @foreach (var day in pageSales.GroupBy(x => x.SaleDate)) {
         <section class="section history-day" aria-label="@($"Sales on {day.Key}")" @key="day.Key">
-            <div class="section-heading"><h2>@FriendlyDate(day.Key, Today())</h2><span>@Money(day.Sum(x => x.TotalRevenueCentavos))</span></div>
+            <div class="section-heading"><h2>@FriendlyDate(day.Key, Today())</h2><span>@Money(sales.Where(x => x.SaleDate == day.Key).Sum(x => x.TotalRevenueCentavos))</span></div>
             <div class="stack">
             @foreach (var sale in day) {
                 <details class="card history-sale" @key="sale.Id">
                     <summary>
                         <span class="list-icon"><Icon Name="cart" /></span>
-                        <span class="history-title"><strong>@Quantity(sale.TotalItems) items</strong><small>@string.Join(", ", sale.Lines.Select(x => x.ItemName))</small></span>
+                        <span class="history-title"><strong>@Quantity(sale.TotalItems) @(sale.TotalItems == 1 ? "item" : "items")</strong><small>@string.Join(", ", sale.Lines.Select(x => x.ItemName))</small></span>
                         <strong>@Money(sale.TotalRevenueCentavos)</strong>
-                        <span class="history-expand">Items <span aria-hidden="true">⌄</span></span>
+                        <span class="history-expand" aria-hidden="true"><span>⌄</span></span>
                     </summary>
                     <div class="history-items">
                     @foreach (var line in sale.Lines) {
@@ -41,6 +44,13 @@ else {
             }
             </div>
         </section>
+    }
+    @if (sales.Count > 0) {
+        <nav class="history-pagination" aria-label="Sales history pages">
+            <small role="status">@((page - 1) * PageSize + 1)–@Math.Min(page * PageSize, sales.Count) of @sales.Count sales</small>
+            <button type="button" class="button ghost" disabled="@(page == 1)" @onclick="() => page--">Previous</button>
+            <button type="button" class="button primary" disabled="@(page == pageCount)" @onclick="() => page++">Next</button>
+        </nav>
     }
     @if (sales.Count == 0) {
         <section class="card empty"><h2>@(Store.Sales.Any() ? "No sales in this date range" : "No sales recorded yet")</h2><p>@(Store.Sales.Any() ? "Choose different dates or show all dates." : "Your recorded sales will appear here.")</p></section>

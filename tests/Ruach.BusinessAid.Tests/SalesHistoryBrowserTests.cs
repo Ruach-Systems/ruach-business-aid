@@ -8,6 +8,61 @@ namespace Ruach.BusinessAid.Tests;
 public partial class BrowserTests
 {
     [BrowserFact]
+    public async Task SalesHistoryPaginatesWithoutChangingFullRangeTotals()
+    {
+        await using var host = await Preview.Start();
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 390, Height = 900 } });
+        var owner = new AppUser(Guid.NewGuid(), "History tester", "history@example.invalid", null) { PhoneNumber = "+639171234567" };
+        var business = new Business { Id = Guid.NewGuid(), OwnerUid = owner.Uid, Name = "History shop", DefaultLocation = "Main" };
+        var sales = Enumerable.Range(0, 24).Select(i => new Sale
+        {
+            Id = Guid.NewGuid(), BusinessId = business.Id, SaleDate = "2026-09-15",
+            CreatedAt = new DateTimeOffset(2026, 9, 25, 12, 0, 0, TimeSpan.Zero).AddMinutes(-i),
+            TotalItems = 2, TotalRevenueCentavos = 5000, TotalCostCentavos = 2000, TotalProfitCentavos = 3000,
+            Lines = [new() { ItemId = Guid.NewGuid(), ItemName = $"History item {i}", Quantity = 2, UnitPriceCentavos = 2500, UnitCostCentavos = 1000, LineRevenueCentavos = 5000, LineCostCentavos = 2000 }]
+        }).ToList();
+        var deleted = new Sale { Id = Guid.NewGuid(), BusinessId = business.Id, SaleDate = "2026-09-22", DeletedAt = DateTimeOffset.UtcNow };
+        var data = new AppData { Business = business, Sales = [..sales, deleted] };
+        var other = new AppData { Business = new() { Id = Guid.NewGuid(), OwnerUid = owner.Uid, Name = "Empty shop", DefaultLocation = "Other" } };
+        await MockApi(context, owner, data, [other]);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(host.Url);
+        await page.GetByRole(AriaRole.Button, new() { Name = "Open History shop", Exact = true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+
+        await page.GotoAsync(host.Url + "/sales/history");
+        await page.Locator("#history-period").SelectOptionAsync("all");
+        await Expect(page.Locator(".history-sale")).ToHaveCountAsync(10);
+        await Expect(page.Locator(".history-count")).ToContainTextAsync("24 sales · ₱1,200.00");
+        await Expect(page.GetByRole(AriaRole.Button,new() { Name="Previous", Exact=true })).ToBeDisabledAsync();
+        await page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true }).ClickAsync();
+        await Expect(page.Locator(".history-pagination")).ToContainTextAsync("11–20 of 24");
+        await Expect(page.Locator(".history-sale")).ToHaveCountAsync(10);
+        await Expect(page.Locator(".history-count")).ToContainTextAsync("24 sales · ₱1,200.00");
+        await page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true }).ClickAsync();
+        await Expect(page.Locator(".history-sale")).ToHaveCountAsync(4);
+        await Expect(page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true })).ToBeDisabledAsync();
+        await page.Locator(".history-sale summary").First.ClickAsync();
+        await Expect(page.Locator(".history-sale").First.Locator(".history-items")).ToContainTextAsync("2 × ₱25.00 each");
+        await page.Locator("#history-period").SelectOptionAsync("custom");
+        await page.Locator("#history-from").FillAsync("2026-09-15");
+        await page.Locator("#history-to").FillAsync("2026-09-15");
+        await Expect(page.Locator(".history-pagination")).ToContainTextAsync("1–10 of 24");
+        foreach(var width in new[] {320,390,470}) {
+            await page.Locator(".history-sale[open] summary").EvaluateAllAsync<object>("els => els.forEach(e => e.click())");
+            await page.SetViewportSizeAsync(width,900);
+            foreach(var compact in new[] {false,true}) {
+                await page.EvaluateAsync("v => window.mashalUi.setCompact(v)",compact);
+                var bounds=await page.Locator(".history-sale").First.BoundingBoxAsync();
+                Assert.InRange(bounds!.Height,44,90);
+            }
+            Assert.True(await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= innerWidth + 1"));
+        }
+    }
+
+    [BrowserFact]
     public async Task SalesHistoryLinksFilterDatesShowItemsAndStayAvailableOffline()
     {
         await using var host = await Preview.Start();
@@ -105,3 +160,4 @@ public partial class BrowserTests
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(0);
     }
 }
+
