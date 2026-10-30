@@ -9,9 +9,40 @@ public partial class Expenses
     private sealed record FormDraft(Guid? Id, string Description, string Category, string? Version, decimal Amount, DateTime Date, string Summary);
     protected override void OnInitialized()
     {
-        base.OnInitialized();
+        base.OnInitialized(); SetPeriod();
         if (RestoreDraft<FormDraft>() is { } d) { id = d.Id; description = d.Description; category = d.Category; version = d.Version; amount = d.Amount; date = d.Date; editingSummary = d.Summary; }
     }
+
+    private string period = "month", filterCategory = "", search = "";
+    private DateTime? from, to;
+    private int page = 1;
+    private void ResetPage() => page = 1;
+    private void ResetFilters() { period = "month"; filterCategory = search = ""; SetPeriod(); }
+    private void SetPeriod() {
+        page = 1;
+        var today = Today().ToDateTime(TimeOnly.MinValue);
+        to = period == "yesterday" ? today.AddDays(-1) : today;
+        from = period switch {
+            "all" => null, "today" => today, "yesterday" => to,
+            "week" => today.AddDays(-(((int)today.DayOfWeek+6)%7)),
+            _ => new DateTime(today.Year,today.Month,1)
+        };
+        if(period == "all") to = null;
+    }
+    private bool InvalidRange => period == "custom" && (from is null || to is null || from > to || from < new DateTime(2026,1,1) || to > Today().ToDateTime(TimeOnly.MinValue));
+    private List<Expense> Filtered => InvalidRange ? [] : Store.Expenses
+        .Where(x => (from is null || string.CompareOrdinal(x.ExpenseDate,from.Value.ToString("yyyy-MM-dd"))>=0)
+            && (to is null || string.CompareOrdinal(x.ExpenseDate,to.Value.ToString("yyyy-MM-dd"))<=0)
+            && (filterCategory == "" || x.Category == filterCategory)
+            && x.Description.Contains(search.Trim(),StringComparison.OrdinalIgnoreCase))
+        .OrderByDescending(x=>x.ExpenseDate).ThenByDescending(x=>x.CreatedAt).ThenByDescending(x=>x.Id).ToList();
+    private int PageCount => Math.Max(1,(Filtered.Count+9)/10);
+    private int CurrentPage => Math.Min(page,PageCount);
+    private string RangeLabel => period == "all" ? "All dates" : $"{from:MMM d, yyyy} – {to:MMM d, yyyy}";
+    private static string ExpenseIcon(string category) => category switch {
+        "Transportation" => "fuel", "Electricity" => "bolt", "Water" => "water",
+        "Rent" => "home", "Labor" => "users", "Packaging" or "Supplies" => "cube", _ => "wallet"
+    };
 
     private Guid? id; private string description = "", category = "Transportation"; private string? version; private decimal amount; private DateTime date = Today().ToDateTime(TimeOnly.MinValue);
     private bool amountValid = true;

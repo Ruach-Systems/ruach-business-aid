@@ -8,6 +8,38 @@ namespace Ruach.BusinessAid.Tests;
 public partial class BrowserTests
 {
     [BrowserFact]
+    public async Task ExpenseHistoryFiltersAndPaginates()
+    {
+        await using var host = await Preview.Start();
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width=390, Height=844 } });
+        var owner = new AppUser(Guid.NewGuid(), "History tester", "history@example.invalid", null) { PhoneNumber = "+639171234567" };
+        var data = new AppData { Business = new() { Id=Guid.NewGuid(), OwnerUid=owner.Uid, Name="History shop", DefaultLocation="Main" },
+            Expenses = Enumerable.Range(1,24).Select(i => new Expense { Id=Guid.NewGuid(), Description=$"Expense {i}", Category="Transportation", AmountCentavos=10000, ExpenseDate="2026-09-15" }).ToList() };
+        foreach(var e in data.Expenses) e.BusinessId=data.Business.Id;
+        await MockApi(context,owner,data);
+        var page=await context.NewPageAsync();
+        await page.GotoAsync(host.Url);
+        await page.GetByRole(AriaRole.Button,new() { Name="Open History shop", Exact=true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Business overview" })).ToBeVisibleAsync();
+        await page.GotoAsync(host.Url+"/expenses");
+        await Expect(page.Locator("#expense-period")).ToHaveValueAsync("month");
+        await page.Locator("#expense-period").SelectOptionAsync("all");
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(10);
+        await Expect(page.Locator(".history-summary")).ToContainTextAsync("₱2,400.00");
+        await page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true }).ClickAsync();
+        await page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true }).ClickAsync();
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(4);
+        await Expect(page.GetByRole(AriaRole.Button,new() { Name="Next", Exact=true })).ToBeDisabledAsync();
+        await page.Locator("#expense-filter-category").SelectOptionAsync("Water");
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(0);
+        await page.Locator("#expense-filter-category").SelectOptionAsync("");
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(10);
+        Assert.True(await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= innerWidth"));
+    }
+
+    [BrowserFact]
     public async Task ExpenseActionsStayInsideCardsAndPreserveEditAndDeleteConfirmation()
     {
         await using var host = await Preview.Start();
@@ -24,6 +56,12 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Expense shop", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
+        await page.Locator("#expense-period").SelectOptionAsync("all");
+        await Expect(page.Locator(".history-summary")).ToContainTextAsync("1 expenses");
+        await page.Locator("#expense-search").FillAsync("missing");
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(0);
+        await page.Locator("#expense-search").FillAsync("");
+        await Expect(page.Locator("article.expense-entry")).ToHaveCountAsync(1);
         await Expect(page.Locator(".numeric-error")).ToHaveCountAsync(0);
         await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("12.345");
         await page.GetByLabel("Category", new() { Exact = true }).FocusAsync();
@@ -70,7 +108,11 @@ public partial class BrowserTests
         await Expect(page.GetByLabel("Description", new() { Exact = true })).ToHaveValueAsync(expense.Description);
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Update expense", Exact = true })).ToBeVisibleAsync();
         await page.SetViewportSizeAsync(390, 668);
-        await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("75.50");
+        await page.Locator("#expense-amount").FocusAsync();
+        await Expect(page.Locator("#expense-amount")).ToHaveValueAsync("50");
+        await page.Locator("#expense-amount").PressAsync("ControlOrMeta+a");
+        await page.Locator("#expense-amount").PressAsync("Backspace");
+        await page.Locator("#expense-amount").FillAsync("75.50");
         await page.GetByLabel("Category", new() { Exact = true }).SelectOptionAsync("Rent");
         await page.GetByRole(AriaRole.Button, new() { Name = "Update expense", Exact = true }).ClickAsync();
         var success = page.Locator(".cool-alert-toast");

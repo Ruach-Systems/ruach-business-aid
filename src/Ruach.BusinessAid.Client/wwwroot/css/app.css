@@ -411,3 +411,7 @@ input[aria-invalid="true"] { border-color: var(--mashal-danger); }
   html.density-compact .sale-line .stepper { width: 100%; grid-template-columns: 44px minmax(56px, 1fr) 44px; }
   html.density-compact .sale-line .stepper input { width: 100%; }
 }
+
+/* Bright crimson retains icon contrast against the dark navigation surface. */
+.bottom-nav a.active { background:transparent; color:white; font-weight:700; }
+.bottom-nav a.active .icon, .side-nav nav a.active .icon { color:#EF5967; }

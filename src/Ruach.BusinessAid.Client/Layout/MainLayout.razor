@@ -1,5 +1,7 @@
 @inherits LayoutComponentBase
 @inject BusinessState Store
+@inject NavigationManager Navigation
+@implements IDisposable
 <div class="app-shell">
     <aside class="side-nav">
         <a class="side-brand" href="/dashboard">
@@ -36,12 +38,17 @@
 <Icon Name="cube" />
 <span>Items</span>
 </NavLink>
-<NavLink href="/more">
+<NavLink href="/more" class="@(MoreActive ? "active" : null)">
 <Icon Name="more" />
 <span>More</span>
 </NavLink>
     </nav>
 </div>
 @code {
+    private bool MoreActive => new[] { "/expenses", "/reports", "/settings" }.Any(p => new Uri(Navigation.Uri).AbsolutePath.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+
     private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Overview", "home"), ("/sales", "Daily sales", "cart"), ("/items", "Items", "tag"), ("/expenses", "Expenses", "wallet"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
 }

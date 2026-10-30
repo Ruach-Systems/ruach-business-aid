@@ -19,3 +19,20 @@
 .row-actions button.delete { color: var(--mashal-danger); }
 .row-actions button.delete:hover { background: #fbe9e6; }
 .row-actions button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.expense-filters { display:grid; gap:16px; margin-bottom:8px; }
+.expense-dates { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.reset-filters { border:0; background:none; color:#B21F32; text-decoration:underline; min-height:44px; padding:0 8px; }
+.history-summary { display:flex; justify-content:space-between; gap:12px; margin:12px 0 20px; }
+.history-summary div { display:grid; gap:6px; }
+.history-summary div:last-child { text-align:right; }
+.history-summary strong { font-size:22px; font-variant-numeric:tabular-nums; }
+.history-summary small { color:var(--mashal-muted); }
+.expense-pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; margin-top:20px; }
+.expense-pagination small { margin-right:auto; }
+.expense-entry .list-icon { border-radius:50%; color:#B21F32; background:#FBE9E6; }
+.row-actions { justify-content:space-evenly; }
+.row-actions button { flex:1; }
+.row-actions button + button { border-left:1px solid var(--mashal-line); border-radius:0; }
+.filter-error { color:var(--mashal-danger); }
+@media(max-width:360px) { .expense-dates { grid-template-columns:1fr; } .history-summary strong { font-size:18px; } .expense-pagination small { flex-basis:100%; } }

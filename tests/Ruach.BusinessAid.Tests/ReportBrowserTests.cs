@@ -42,15 +42,12 @@ public partial class BrowserTests
         await Expect(table.Locator("tbody tr").First.Locator("td").Nth(4)).ToHaveTextAsync(Calculations.Money(100));
         await Expect(table.Locator("tbody tr").First.Locator("td").Nth(5)).ToHaveTextAsync(Calculations.Money(500));
         await Expect(table.Locator("tbody tr").Nth(1).Locator("td").Nth(5)).ToHaveTextAsync(Calculations.Money(-700));
-        var applied = page.Locator(".applied-range");
+        await Expect(page.Locator(".applied-range")).ToHaveCountAsync(0);
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "View reports", Exact = true })).ToHaveCountAsync(0);
         await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("today");
-        await Expect(applied).ToContainTextAsync(Calculations.Today().ToString("MMM d, yyyy"));
         await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("custom");
         await page.Locator("#report-from").FillAsync("2026-09-15");
         await page.Locator("#report-to").FillAsync("2026-09-16");
-        await Expect(applied).ToContainTextAsync("Sep 15, 2026");
-        await Expect(applied).ToContainTextAsync("Sep 16, 2026");
         await Expect(page.Locator(".range-changed")).ToHaveCountAsync(0);
         await Expect(page.GetByText("Snapshotted cost", new() { Exact = true })).ToHaveCountAsync(0);
         foreach (var compact in new[] { false, true })

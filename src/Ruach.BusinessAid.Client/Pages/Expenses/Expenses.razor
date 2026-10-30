@@ -41,16 +41,30 @@
 </form>
 <section>
 <div class="section-heading">
-<h2>Recent expenses</h2>
+<h2>Expense history</h2>
 </div>
-<div class="stack">@foreach(var expense in Store.Expenses.OrderByDescending(x=>x.ExpenseDate).ThenByDescending(x=>x.CreatedAt)){
+<div class="card expense-filters">
+<div class="field"><label for="expense-period">Period</label><select id="expense-period" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="week">This week</option><option value="month">This month</option><option value="all">All dates</option><option value="custom">Custom range</option></select></div>
+@if(period == "custom"){
+<div class="expense-dates">
+<div class="field"><label for="expense-from">From</label><input id="expense-from" type="date" min="2026-01-01" max="@Today().ToString("yyyy-MM-dd")" @bind="from" @bind:after="ResetPage" /></div>
+<div class="field"><label for="expense-to">To</label><input id="expense-to" type="date" min="2026-01-01" max="@Today().ToString("yyyy-MM-dd")" @bind="to" @bind:after="ResetPage" /></div>
+</div>}
+<div class="field"><label for="expense-filter-category">Category</label><select id="expense-filter-category" aria-label="Filter by category" @bind="filterCategory" @bind:after="ResetPage"><option value="">All categories</option>@foreach(var c in categories){<option>@c</option>}</select></div>
+<div class="field"><label for="expense-search">Search descriptions</label><input id="expense-search" type="search" placeholder="Search descriptions…" @bind="search" @bind:event="oninput" @bind:after="ResetPage" /></div>
+</div>
+<button class="reset-filters" @onclick="ResetFilters">Reset filters</button>
+@if(InvalidRange){<p role="alert" class="filter-error">Enter a valid date range.</p>}
+else {
+<div class="history-summary" role="status"><div><small>@RangeLabel</small><strong>@Filtered.Count expenses</strong></div><div><small>Total</small><strong>@Money(Filtered.Sum(x=>x.AmountCentavos))</strong></div></div>
+<div class="stack">@foreach(var expense in Filtered.Skip((CurrentPage-1)*10).Take(10)){
 <article class="card expense-entry @(id == expense.Id ? "is-editing" : "")">
 <span class="list-icon">
-<Icon Name="wallet" />
+<Icon Name="@ExpenseIcon(expense.Category)" />
 </span>
 <div class="list-main">
 <strong>@expense.Description</strong>
-<small>@expense.Category · @expense.ExpenseDate</small>
+<small>@expense.Category · @DateTime.Parse(expense.ExpenseDate).ToString("MMM d, yyyy")</small>
 @if(id == expense.Id){<small class="editing-label">Editing this expense</small>}
 </div>
 <strong class="expense-amount">@Money(expense.AmountCentavos)</strong>
@@ -59,12 +73,14 @@
 <button type="button" class="delete" aria-label="@($"Delete {expense.Description} expense")" @onclick="()=>Delete(expense)"><Icon Name="delete" />Delete</button>
 </div>
 </article>}
-@if(!Store.Expenses.Any()){
+@if(!Filtered.Any()){
 <div class="card empty">
-<h3>No expenses recorded</h3>
+<h3>@(Store.Expenses.Any() ? "No expenses match these filters" : "No expenses recorded")</h3>
 <p>Add transport, utilities, labor, and other daily costs here.</p>
 </div>}
 </div>
+@if(Filtered.Count > 0){<nav class="expense-pagination" aria-label="Expense history pages"><small>@((CurrentPage-1)*10+1)–@Math.Min(CurrentPage*10,Filtered.Count) of @Filtered.Count expenses</small><button class="button ghost" disabled="@(CurrentPage==1)" @onclick="()=>page=CurrentPage-1">Previous</button><button class="button primary" disabled="@(CurrentPage==PageCount)" @onclick="()=>page=CurrentPage+1">Next</button></nav>}
+}
 </section>
 </div>
 </div>

@@ -17,7 +17,6 @@ else{
 @if(Store.PendingCount>0 && Store.User?.IsDemo!=true){<p class="notice">@Store.PendingCount pending changes are excluded until synchronization finishes.</p>}
 <ErrorBanner Message="@Error" />
 @if(summary is {} total){
-<p class="applied-range" role="status">Showing reports for <strong>@appliedFrom.ToString("MMM d, yyyy") – @appliedTo.ToString("MMM d, yyyy")</strong></p>
 
 
 <section class="metric-grid section">@foreach(var metric in new[]{("Revenue",total.RevenueCentavos),("Item cost",total.CostCentavos),("Gross profit",total.GrossProfitCentavos),("Expenses",total.ExpenseCentavos),("Net profit",total.ProfitCentavos)}){<article class="card"><span class="card-label">@metric.Item1</span><div class="metric-value">@Money(metric.Item2)</div></article>}<article class="card"><span class="card-label">Transactions / items sold</span><div class="metric-value">@total.Transactions / @Quantity(total.ItemCount)</div></article></section>
