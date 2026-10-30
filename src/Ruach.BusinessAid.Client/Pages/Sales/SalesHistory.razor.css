@@ -22,3 +22,5 @@
     .history-sale summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
     .history-expand { grid-column: 2 / -1; }
 }
+
+.history-period { grid-column: 1 / -1; }

@@ -41,7 +41,7 @@
 </section>
 }
 @code {
-    private async Task Resolve(bool discard) { if (await JS.InvokeAsync<bool>("confirm", discard ? "Discard all pending changes on this device and use server records?" : "Retry this change using the latest server version?")) await Run(() => Store.ResolveConflict(discard)); }
+    private async Task Resolve(bool discard) { if (await JS.InvokeAsync<bool>("businessAlerts.confirm", discard ? "Discard all pending changes on this device and use server records?" : "Retry this change using the latest server version?")) await Run(() => Store.ResolveConflict(discard)); }
     private static string DisplayValue(string field, JsonElement value) => field.EndsWith("Centavos", StringComparison.Ordinal) && value.TryGetInt64(out var centavos) ? Money(centavos) : value.ToString();
     private IEnumerable<(string Label, string Local, string Server)> Comparison(PendingOperation op)
     {

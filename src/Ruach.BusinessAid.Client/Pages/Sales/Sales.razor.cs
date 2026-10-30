@@ -27,6 +27,7 @@ public partial class Sales
     private bool HasNegativeResult => InputsValid && Store.Items.Any(x => quantities.GetValueOrDefault(x.Id) > 0 && quantities.GetValueOrDefault(x.Id) > x.CurrentQuantity);
     private Task Save() => Run(async () =>
     {
+        message = "";
         Rules.Require(InputsValid, "Correct the highlighted quantities before saving.");
         var lines = Store.Items.Where(x => quantities.GetValueOrDefault(x.Id) > 0)
             .Select(x => new SaleLineInput(x.Id, quantities[x.Id])).ToList();
@@ -34,6 +35,6 @@ public partial class Sales
         quantities.Clear();
         invalidQuantities.Clear();
         search = "";
-        message = "Sale saved on this device.";
+        message = "Sale saved successfully.";
     });
 }

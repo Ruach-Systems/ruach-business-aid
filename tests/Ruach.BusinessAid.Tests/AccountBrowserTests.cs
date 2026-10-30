@@ -87,7 +87,7 @@ public partial class BrowserTests
         await CheckAccountLayout(page, host.Root, "phone-recovery");
         await page.GetByLabel("Philippine mobile number", new() { Exact = true }).FillAsync("09181234567");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save mobile number" }).ClickAsync();
-        await Expect(page.GetByText("Mobile number saved.", new() { Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByText("Mobile number saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Recovery shop" }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();

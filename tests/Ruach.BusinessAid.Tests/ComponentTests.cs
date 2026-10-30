@@ -77,7 +77,7 @@ public partial class ComponentTests
         page.Find("#report-from").Change("2026-09-30");
         page.Find("#report-to").Change("2026-09-01");
         page.Find("form").Submit();
-        Assert.Contains("Choose a valid date range", page.Markup);
+        Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.error" && call.Arguments[0]!.ToString()!.Contains("Choose a valid date range"));
     }
     [Fact]
     public void OnboardingProvidesAccountExitWithoutFakeProgress()
@@ -98,8 +98,8 @@ public partial class ComponentTests
         var page = context.Render<Settings>();
         Assert.Contains("Reset local data", page.Markup);
         page.Find("button.danger.block").Click();
-        Assert.Contains("Delete all local demo data?", page.Markup);
-        Assert.Contains("Delete and start over", page.Markup);
+        Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.confirm" && call.Arguments[0]!.ToString()!.Contains("Delete all local demo data?"));
+        Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.confirm" && Equals(call.Arguments[1], "Delete and start over"));
     }
     [Fact]
     public async Task SettingsCompactViewToggleReadsAndPersistsPreference()
@@ -119,7 +119,7 @@ public partial class ComponentTests
     public void ErrorBannerUsesAlertSemanticsAndReportsUseOnlineNotice()
     {
         using var context = Context(); var error = context.Render<ErrorBanner>(p => p.Add(x => x.Message, "Record changed"));
-        Assert.Equal("Record changed", error.Find("[role=alert]").TextContent);
+        Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.error" && Equals(call.Arguments[0], "Record changed"));
         var totals = context.Render<OnlineTotals>();
         Assert.Equal("Summary", totals.Find("h2").TextContent);
         Assert.Contains("Weekly and monthly sales, expenses, and net profit.", totals.Markup);

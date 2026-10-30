@@ -16,7 +16,7 @@
 </div>
 @if (Store.Account?.Businesses.Count == 0) { <section class="card empty-state"><h2>Your business journey starts here</h2><p>Request your first business. After approval, you can open its empty workspace.</p></section> }
 @if (showRequest) {
-<section class="card request-form"><h2>Request a business</h2><form class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
+<section class="card request-form"><h2>Request a business</h2><form novalidate class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
 <div class="field"><label for="request-name">Business name</label><input id="request-name" @bind="name" required maxlength="160" /></div>
 <div class="field"><label for="request-location">Default location</label><input id="request-location" @bind="location" required maxlength="500" /></div>
 <p>Only one request can be pending at a time. An approval is needed before the business is created.</p>
@@ -41,5 +41,5 @@
     private void NewRequest() { name=""; location=""; requestId=Guid.NewGuid(); showRequest=true; }
     private Task Open(Guid id) => Run(()=>Store.SelectBusiness(id), "/dashboard");
     private void Resubmit(BusinessRequest request) { name=request.Name; location=request.DefaultLocation; requestId=Guid.NewGuid(); showRequest=true; }
-    private Task Submit() => Run(async()=> { await Store.RequestBusiness(requestId,name,location); showRequest=false; });
+    private Task Submit() => Run(async()=> { await Store.RequestBusiness(requestId,name,location); showRequest=false; }, success: "Business request submitted successfully.");
 }

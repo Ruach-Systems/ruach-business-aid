@@ -34,6 +34,7 @@ public partial class BrowserTests
         var recent = page.Locator(".split > section").Filter(new() { Has = page.GetByRole(AriaRole.Heading, new() { Name = "Recent sales", Exact = true }) });
         await recent.GetByRole(AriaRole.Link, new() { Name = "View all", Exact = true }).ClickAsync();
         await Expect(page).ToHaveURLAsync(host.Url + "/sales/history");
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(7);
         await page.GotoAsync(host.Url + "/sales");
         var preview = page.Locator("#sales-history");
@@ -41,7 +42,24 @@ public partial class BrowserTests
         await Expect(preview.Locator("a.sale-history-link").First).ToHaveAttributeAsync("href", $"/sales/{sales[6].Id}");
         await Expect(preview.GetByRole(AriaRole.Link, new() { Name = "View all", Exact = true })).ToHaveAttributeAsync("href", "/sales/history");
         await preview.GetByRole(AriaRole.Link, new() { Name = "View all sales history by date", Exact = true }).ClickAsync();
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(7);
+        foreach (var preset in new[] { "today", "yesterday", "week", "month" })
+        {
+            await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync(preset);
+            var today = Calculations.Today();
+            var expectedTo = preset == "yesterday" ? today.AddDays(-1) : today;
+            var expectedFrom = preset switch {
+                "yesterday" => expectedTo,
+                "week" => today.AddDays(-(((int)today.DayOfWeek + 6) % 7)),
+                "month" => new DateOnly(today.Year, today.Month, 1),
+                _ => today
+            };
+            await Expect(page.GetByLabel("From", new() { Exact = true })).ToHaveCountAsync(0);
+            await Expect(page.GetByLabel("To", new() { Exact = true })).ToHaveCountAsync(0);
+        }
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("custom");
         await page.GetByLabel("From", new() { Exact = true }).FillAsync("2026-09-16");
         await page.GetByLabel("From", new() { Exact = true }).PressAsync("Tab");
         await page.GetByLabel("To", new() { Exact = true }).FillAsync("2026-09-17");
@@ -62,17 +80,20 @@ public partial class BrowserTests
         await items.GetByRole(AriaRole.Link, new() { Name = "View sale details", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Sale details", Exact = true })).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Link, new() { Name = "Back to sales history", Exact = true }).ClickAsync();
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("custom");
         await page.GetByLabel("From", new() { Exact = true }).FillAsync("2026-09-23");
         await page.GetByLabel("From", new() { Exact = true }).PressAsync("Tab");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "No sales in this date range" })).ToBeVisibleAsync();
         await page.GetByLabel("To", new() { Exact = true }).FillAsync("2026-09-15");
         await page.GetByLabel("To", new() { Exact = true }).PressAsync("Tab");
-        await Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("Choose a valid date range");
-        await page.GetByRole(AriaRole.Button, new() { Name = "All dates", Exact = true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("Enter a valid date within the allowed range.");
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(7);
         await page.WaitForFunctionAsync("() => !!navigator.serviceWorker.controller");
         await context.SetOfflineAsync(true);
         await page.ReloadAsync();
+        await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(7);
         await Expect(page.GetByText("Showing sales saved on this device.", new() { Exact = false })).ToBeVisibleAsync();
         await context.SetOfflineAsync(false);

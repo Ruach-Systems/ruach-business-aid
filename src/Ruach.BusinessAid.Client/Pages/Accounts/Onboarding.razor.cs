@@ -6,6 +6,6 @@ public partial class Onboarding
     private readonly Guid requestId = Guid.NewGuid();
     protected override void OnInitialized() { base.OnInitialized(); phone = Store.User?.PhoneNumber ?? ""; }
     private Task Submit() => Store.User?.IsDemo == true
-        ? Run(() => Store.CreateLocalBusiness(name, location), "/dashboard")
-        : Run(() => Store.RequestBusiness(requestId, name, location, phone), "/businesses");
+        ? Run(() => Store.CreateLocalBusiness(name, location), "/dashboard", "Local workspace created successfully.")
+        : Run(() => Store.RequestBusiness(requestId, name, location, phone), "/businesses", "Business request submitted successfully.");
 }

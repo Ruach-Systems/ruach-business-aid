@@ -14,7 +14,10 @@
   const loadBootResource = (type, _, uri, integrity) =>
     type === 'dotnetjs' ? uri : fetchWithRetry(uri, integrity);
 
-  try { await Blazor.start({ loadBootResource }); }
+  try {
+    await Blazor.start({ loadBootResource });
+    Blazor.registerCustomEventType("validationsubmit", { browserEventName: "validationsubmit", createEventArgs: () => ({}) });
+  }
   catch (error) {
     console.error('Business Aid startup failed after retries.', error);
     const loading = document.querySelector('#app .app-loading');

@@ -65,6 +65,7 @@ public sealed class CommandProcessor(IEntityRepository repository, bool checkCon
     private static void Date(string value)
     {
         Rules.Require(DateOnly.TryParseExact(value, "yyyy-MM-dd", out var date), "Use a valid YYYY-MM-DD business date.");
+        Rules.Require(date >= new DateOnly(2026, 1, 1), "Enter a valid date within the allowed range.");
         Rules.Require(date <= Calculations.Today(), "Sales and expenses cannot have a future date.");
     }
 

@@ -66,6 +66,7 @@ public partial class BrowserTests
         await quantity.FillAsync("1000000");
         await Expect(increase).ToBeDisabledAsync();
         await quantity.FillAsync("9223372036854775807");
+        await page.Locator(".sale-checkout button").ClickAsync();
         foreach (var compact in new[] { false, true })
         foreach (var width in new[] { 320, 390, 470, 768 })
         {
@@ -125,7 +126,7 @@ public partial class BrowserTests
         await amount.FillAsync("1e3");
         await page.GetByRole(AriaRole.Button, new() { Name = "Cancel edit", Exact = true }).ClickAsync();
         await Expect(amount).ToHaveValueAsync("");
-        await Expect(amount).ToHaveAttributeAsync("aria-invalid", "true");
+        await Expect(amount).ToHaveAttributeAsync("aria-invalid", "false");
 
         await page.GotoAsync(host.Url + "/stock/add?item=" + item.Id);
         var received = page.GetByLabel("Quantity received", new() { Exact = true });
@@ -155,6 +156,7 @@ public partial class BrowserTests
             var control = page.Locator(selector);
             var before = await control.BoundingBoxAsync();
             await control.FillAsync("-1");
+            await control.EvaluateAsync("input => input.form.requestSubmit()");
             var after = await control.BoundingBoxAsync();
             Assert.InRange(Math.Abs(before!.Height - after!.Height), 0, 1);
             var describedBy = await control.GetAttributeAsync("aria-describedby");

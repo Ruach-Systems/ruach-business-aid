@@ -4,10 +4,12 @@
 <div class="page narrow">
 <BackLink To="/sales" Text="Back to sales" />
 <PageHeading Title="Sales history" Eyebrow="Sales by date" Description="Browse your sales and expand each sale to see the items sold." />
-<section class="card history-filters" aria-label="Filter sales by date">
-    <div class="field"><label for="history-from">From</label><input id="history-from" type="date" max="@ToLimit" @bind="from" /></div>
-    <div class="field"><label for="history-to">To</label><input id="history-to" type="date" min="@FromLimit" max="@Today().ToString("yyyy-MM-dd")" @bind="to" /></div>
-    <button type="button" class="button ghost" @onclick="ClearDates">All dates</button>
+<section @key="filterRevision" class="card history-filters" aria-label="Filter sales by date">
+    <div class="field history-period"><label for="history-period">Period</label><select id="history-period" @bind="period" @bind:after="SetPeriod"><option value="all">All dates</option><option value="today">Today</option><option value="yesterday">Yesterday</option><option value="week">This week</option><option value="month">This month</option><option value="custom">Custom range</option></select></div>
+    @if (period == "custom") {
+    <div class="field"><label for="history-from">From</label><input id="history-from" type="date" min="2026-01-01" max="@ToLimit" @bind="from" @bind:after="CustomDates" /></div>
+    <div class="field"><label for="history-to">To</label><input id="history-to" type="date" min="@FromLimit" max="@Today().ToString("yyyy-MM-dd")" @bind="to" @bind:after="CustomDates" /></div>
+    }
 </section>
 @if (InvalidRange) {
     <p class="notice warning" role="alert">Choose a valid date range ending today or earlier.</p>

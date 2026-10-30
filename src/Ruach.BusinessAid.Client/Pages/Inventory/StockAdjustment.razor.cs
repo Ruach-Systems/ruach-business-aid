@@ -18,5 +18,5 @@ public partial class StockAdjustment
         count = Math.Max(0, item?.CurrentQuantity ?? 0);
         version = item?.Version is { } value ? Convert.ToBase64String(value) : null;
     }
-    private Task Save() => Run(async () => { Rules.Require(countValid, "Correct the counted quantity before saving."); await Store.Execute("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, count, reason, note), version); }, "/items");
+    private Task Save() => Run(async () => { Rules.Require(countValid, "Correct the counted quantity before saving."); await Store.Execute("adjustStock", Guid.NewGuid(), new AdjustmentInput(itemId, count, reason, note), version); }, "/items", "Stock corrected successfully.");
 }

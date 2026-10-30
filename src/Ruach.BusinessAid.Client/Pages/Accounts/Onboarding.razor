@@ -13,7 +13,7 @@
 <span>Signed in as</span>
 <strong>@Store.User?.Email</strong>
 </div>
-<form class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
+<form novalidate class="form-card" @onsubmit="Submit" @onsubmit:preventDefault>
 @if (Store.User?.IsDemo != true) {
 <div class="field"><label for="owner-phone">Philippine mobile number</label><input id="owner-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="phone-help" /><small id="phone-help">09XXXXXXXXX or +639XXXXXXXXX. One account per number. Format-checked, not SMS-verified.</small></div>
 }

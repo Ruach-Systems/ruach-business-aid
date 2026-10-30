@@ -1,3 +1,2 @@
-@if (!string.IsNullOrEmpty(Message)) {
-<div class="error-banner" role="alert">@Message</div> }
+<AppNotification Message="@Message" Kind="error" />
 @code { [Parameter] public string Message { get; set; } = ""; }

@@ -5,14 +5,14 @@
 <div class="page narrow">
 <BackLink To="@(Id is null?"/items":$"/items/{Id}")" Text="Back to items" />
 <PageHeading Title="@(Id is null?"New item":"Edit item")" Eyebrow="Price & cost" Description="Enter what one item sells for and what one item costs you." />
-<form class="stack" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
+<form novalidate class="stack" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
 <section class="card form-card">
 <div class="field"><label for="item-name">Item name</label><input id="item-name" @bind="draft.Name" required placeholder="e.g. Buko Juice" /></div>
 <div class="field-row">
 <div class="field"><label for="item-price">Selling price (₱)</label><MoneyInput @key="Id" StartEmpty="@(Id is null)" id="item-price" Minimum="0.01m" ValidityChanged="@(v => priceValid = v)" @bind-Value="price" required /></div>
 <div class="field"><label for="item-cost">Unit cost (₱)</label><MoneyInput @key="Id" StartEmpty="@(Id is null)" id="item-cost" ValidityChanged="@(v => costValid = v)" @bind-Value="cost" required /></div>
 </div>
-<div class="field"><label for="item-minimum">Low-stock warning at</label><QuantityInput @key="Id" StartEmpty="@(Id is null)" id="item-minimum" @bind-Value="draft.MinimumQuantity" ValidityChanged="@(v => minimumValid = v)" /></div>
+<div class="field"><label for="item-minimum">Low-stock warning at</label><QuantityInput EmptyAsZero="true" @key="Id" StartEmpty="@(Id is null)" id="item-minimum" @bind-Value="draft.MinimumQuantity" ValidityChanged="@(v => minimumValid = v)" /></div>
 </section>
 <section class="card dark cost-preview">
 <div><span class="card-label">Profit per item</span><strong>@(MoneyValid ? Money(UnitProfit(PriceCentavos,CostCentavos)) : "—")</strong></div>

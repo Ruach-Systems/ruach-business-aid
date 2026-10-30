@@ -1,0 +1,11 @@
+@inject IJSRuntime JS
+@code {
+    [Parameter] public string Message { get; set; } = "";
+    [Parameter] public string Kind { get; set; } = "success";
+    private string shown = "";
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (Message == shown) return;
+        shown = Message;
+        if (!string.IsNullOrWhiteSpace(Message)) await JS.InvokeVoidAsync($"businessAlerts.{Kind}", Message);
+    }
+}

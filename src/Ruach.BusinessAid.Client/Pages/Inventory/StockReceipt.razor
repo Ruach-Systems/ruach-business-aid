@@ -4,7 +4,7 @@
 <div class="page narrow">
 <BackLink To="/items" Text="Back to items" />
 <PageHeading Title="Add stock" Eyebrow="Stock received" Description="Add a whole-number quantity using the item's fixed cost." />
-<form class="card form-card" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
+<form novalidate class="card form-card" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
 <div class="field"><label for="receipt-item">Item</label><select id="receipt-item" @bind="itemId" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
 <div class="field"><label for="receipt-quantity">Quantity received</label><QuantityInput StartEmpty="true" id="receipt-quantity" Minimum="1" @bind-Value="quantity" ValidityChanged="@(v => quantityValid = v)" /></div>
 <div class="field"><label for="receipt-note">Note</label><textarea id="receipt-note" @bind="note" maxlength="400" placeholder="Optional supplier or delivery note"></textarea></div>

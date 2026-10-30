@@ -17,5 +17,5 @@ public partial class StockReceipt
         Rules.Require(quantityValid, "Correct the quantity before saving.");
         var item = Item ?? throw new InvalidOperationException("Select an item.");
         await Store.Execute("receiveStock", Guid.NewGuid(), new ReceiptInput(item.Id, quantity, note));
-    }, "/items");
+    }, "/items", "Stock received successfully.");
 }

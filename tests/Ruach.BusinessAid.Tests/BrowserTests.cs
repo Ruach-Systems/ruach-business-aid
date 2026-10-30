@@ -78,7 +78,7 @@ public partial class BrowserTests
         Assert.Contains("2px", saleQuantityFocusRing);
         Assert.DoesNotContain("6px", saleQuantityFocusRing);
         await page.GetByRole(AriaRole.Button, new() { Name = "Save 2 items", Exact = true }).ClickAsync();
-        await Expect(page.GetByText("Sale saved on this device.", new() { Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByText("Sale saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         await page.ReloadAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "What sold today?" })).ToBeVisibleAsync();
         var after = await ReadState(page, account.Uid);
@@ -153,7 +153,7 @@ public partial class BrowserTests
         await page.GetByLabel("Bread quantity sold", new() { Exact = true }).FillAsync("3");
         await Expect(page.GetByText("One or more items will have negative stock.",new(){Exact=false})).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Save 3 items", Exact = true }).ClickAsync();
-        await Expect(page.GetByText("Sale saved on this device.", new() { Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByText("Sale saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         state = await ReadState(page, account.Uid);
         var saleId = state.GetProperty("data").GetProperty("sales").EnumerateArray().Single().GetProperty("id").GetString()!;
         await page.GotoAsync(host.Url + "/dashboard");

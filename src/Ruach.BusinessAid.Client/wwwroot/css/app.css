@@ -343,3 +343,30 @@ html.density-compact .startup-error-card, html.density-compact .auth-card, html.
 input[aria-invalid="true"] { border-color: var(--mashal-danger); }
 .stepper .numeric-error { grid-column: 1 / -1; grid-row: 2; }
 .stepper button:disabled { opacity: .45; cursor: not-allowed; }
+
+.custom-field-error[hidden] { display: none; }
+.cool-alert-toast-container { max-width: calc(100vw - 24px); }
+.cool-alert-toast { max-width: 100%; box-sizing: border-box; }
+.cool-alert-modal { max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.cool-alert-modal-btn { min-height: 44px; }
+/* RUACH CoolAlert theme: opaque surfaces and WCAG AA text contrast. */
+:root .cool-alert-js { font-family: var(--font-product, Inter, sans-serif); }
+:root .cool-alert-modal, :root .cool-alert-toast { background: #FFFFFF; color: #292530; border: 1px solid #696270; }
+:root .cool-alert-modal-title, :root .cool-alert-toast-title { color: #141821; opacity: 1; }
+:root .cool-alert-modal-message, :root .cool-alert-toast-message { color: #292530; opacity: 1; overflow-wrap: anywhere; }
+:root .cool-alert-modal-btn { min-height: 44px; border-radius: 8px; text-transform: none; letter-spacing: normal; filter: none; }
+:root .cool-alert-modal-btn.cool-alert-primary, :root .cool-alert-modal-btn.cool-alert-danger { background: #B21F32; color: #FFFFFF; }
+:root .cool-alert-modal-btn.cool-alert-secondary { background: #EFE8F1; color: #321C3B; border: 1px solid #696270; }
+:root .cool-alert-modal-btn:hover { filter: none; text-decoration: underline; }
+:root .cool-alert-modal-btn:focus-visible, :root .cool-alert-toast-close:focus-visible { outline: 3px solid #321C3B; outline-offset: 3px; }
+:root .cool-alert-modal-icon { color: #FFFFFF; box-shadow: none; }
+:root .cool-alert-toast-close { color: #696270; opacity: 1; min-width: 44px; min-height: 44px; }
+:root .cool-alert-toast-container { max-width: calc(100vw - 24px); }
+:root .cool-alert-toast { max-width: 100%; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { :root .cool-alert-js, :root .cool-alert-js * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+:root .cool-alert-modal-icon::before { display: none; }
+:root .cool-alert-modal .cool-alert-modal-icon { box-shadow: none; }
+:root .cool-alert-modal-icon svg { position: relative; color: #FFFFFF; }
+:root .cool-alert-toast-close:hover { color: #321C3B; background: #EFE8F1; opacity: 1; }
+
+:root .cool-alert-toast { touch-action: pan-y; }

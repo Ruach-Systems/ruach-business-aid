@@ -2,10 +2,10 @@
 @inherits PageBase
 @inject ApiClient Api
 <section class="admin-performance" aria-label="Financial performance">
-<form class="admin-period" @onsubmit="Load" @onsubmit:preventDefault>
+<form novalidate class="admin-period" @onsubmit="Load" @onsubmit:preventDefault>
 <h2>@(OwnerId.HasValue ? "Owned-business performance" : "Financial performance")</h2>
 <div class="field"><label for="admin-period">Period</label><select id="admin-period" disabled="@(Saving || Busy || !Store.Online)" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="last30">Last 30 days</option><option value="custom">Custom range</option></select></div>
-@if(period=="custom") { <div class="field"><label for="admin-from">From</label><input id="admin-from" type="date" disabled="@(Saving || Busy)" @bind="from" @bind:after="Invalidate" required /></div><div class="field"><label for="admin-to">To</label><input id="admin-to" type="date" disabled="@(Saving || Busy)" @bind="to" @bind:after="Invalidate" max="@Today().ToString("yyyy-MM-dd")" required /></div> }
+@if(period=="custom") { <div class="field"><label for="admin-from">From</label><input id="admin-from" type="date" min="2026-01-01" disabled="@(Saving || Busy)" @bind="from" @bind:after="Invalidate" required /></div><div class="field"><label for="admin-to">To</label><input id="admin-to" type="date" min="2026-01-01" disabled="@(Saving || Busy)" @bind="to" @bind:after="Invalidate" max="@Today().ToString("yyyy-MM-dd")" required /></div> }
 <button class="button ghost" disabled="@(Saving || Busy || !Store.Online)">Apply</button>
 </form>
 <p class="admin-caption">@from.ToString("MMM d, yyyy") – @to.ToString("MMM d, yyyy") · PHP · Asia/Manila · Synchronized records only</p>

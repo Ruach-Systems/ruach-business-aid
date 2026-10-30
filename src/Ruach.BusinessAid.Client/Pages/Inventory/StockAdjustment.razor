@@ -4,7 +4,7 @@
 <div class="page narrow">
 <BackLink To="/items" Text="Back to items" />
 <PageHeading Title="Correct stock" Eyebrow="Physical count" Description="Replace the saved balance with the quantity you actually have." />
-<form class="card form-card" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
+<form novalidate class="card form-card" data-numeric-validation="true" @onsubmit="Save" @onsubmit:preventDefault>
 <div class="field"><label for="adjust-item">Item</label><select id="adjust-item" @bind="itemId" @bind:after="Choose" required><option value="@Guid.Empty">Select item</option>@foreach(var item in Store.AllItems){<option value="@item.Id">@item.Name@(!item.IsActive ? " (inactive)" : "")</option>}</select></div>
 <div class="field"><label for="adjust-count">Counted quantity</label><QuantityInput StartEmpty="@(itemId == Guid.Empty)" @key="itemId" id="adjust-count" @bind-Value="count" ValidityChanged="@(v => countValid = v)" /></div>
 <div class="field"><label for="adjust-reason">Reason</label><select id="adjust-reason" @bind="reason"><option>Stock count correction</option><option>Waste / spoilage</option><option>Return</option><option>Other</option></select></div>

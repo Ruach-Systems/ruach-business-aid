@@ -18,7 +18,8 @@ public partial class ComponentTests
         var received = context.Render<QuantityInput>(p => p.Add(x => x.Value, 1L).Add(x => x.Minimum, 1L).Add(x => x.StartEmpty, true));
         Assert.Equal("", received.Find("input").GetAttribute("value"));
         Assert.Equal("0", received.Find("input").GetAttribute("placeholder"));
-        Assert.Equal("true", received.Find("input").GetAttribute("aria-invalid"));
+        Assert.Equal("false", received.Find("input").GetAttribute("aria-invalid"));
+        Assert.Empty(received.FindAll("[role=alert]"));
         long saved = 2;
         var sales = context.Render<QuantityInput>(p => p.Add(x => x.Value, 2L).Add(x => x.EmptyAsZero, true).Add(x => x.ValueChanged, v => saved = v));
         sales.Find("input").Input("");
@@ -64,6 +65,9 @@ public partial class ComponentTests
         Assert.False(valid);
         Assert.Equal(35m, saved);
         Assert.Equal(text, field.Find("input").GetAttribute("value"));
+        Assert.Equal("false", field.Find("input").GetAttribute("aria-invalid"));
+        Assert.Empty(field.FindAll("[role=alert]"));
+        field.Find("input").TriggerEvent("onvalidationsubmit", EventArgs.Empty);
         Assert.Equal("true", field.Find("input").GetAttribute("aria-invalid"));
         Assert.Equal(field.Find("[role=alert]").Id, field.Find("input").GetAttribute("aria-describedby"));
     }

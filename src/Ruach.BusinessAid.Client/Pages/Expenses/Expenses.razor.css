@@ -1,4 +1,10 @@
 .expense-form { align-self: start; }
+.expense-success { font-weight: 600; overflow-wrap: anywhere; }
+.expense-form { scroll-margin-top: 88px; }
+.is-editing { outline: 2px solid var(--mashal-purple); outline-offset: -2px; }
+.edit-notice { display: grid; gap: 6px; padding: 12px; border-radius: 8px; background: var(--mashal-purple-soft); color: var(--mashal-purple); overflow-wrap: anywhere; }
+.edit-notice small { line-height: 1.5; }
+.expense-entry .list-main .editing-label { color: var(--mashal-purple); font-weight: 700; }
 .money-input { position: relative; }
 .money-input span { position: absolute; left: 14px; top: 14px; color: var(--mashal-purple); font-weight: 800; }
 .money-input input { padding-left: 34px; }

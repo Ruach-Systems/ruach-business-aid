@@ -38,5 +38,5 @@ public partial class InventoryEditor
         draft.SellingPriceCentavos = PriceCentavos;
         draft.UnitCostCentavos = CostCentavos;
         await Store.Execute("saveItem", draft.Id, draft, version);
-    }, "/items");
+    }, "/items", "Item saved successfully.");
 }

@@ -6,10 +6,10 @@
 <PageHeading Title="Reports" Eyebrow="Business performance" Description="See revenue, item cost, gross profit, expenses, and net profit." />
 @if(!Store.Online||Store.User?.IsDemo==true){<section class="card empty"><h2>Reports require an online account</h2><p>Connect and synchronize your records to view financial reports.</p></section>}
 else{
-<form class="card report-filters @(CustomRange?"custom":"")" @onsubmit="Load" @onsubmit:preventDefault>
+<form novalidate class="card report-filters @(CustomRange?"custom":"")" @onsubmit="Load" @onsubmit:preventDefault>
 <div class="field"><label for="report-period">Period</label><select id="report-period" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="custom">Custom range</option></select></div>
 @if(CustomRange){
-<div class="field"><label for="report-from">From</label><input id="report-from" type="date" max="@to.ToString("yyyy-MM-dd")" @bind="from" required /></div>
+<div class="field"><label for="report-from">From</label><input id="report-from" type="date" min="2026-01-01" max="@to.ToString("yyyy-MM-dd")" @bind="from" required /></div>
 <div class="field"><label for="report-to">To</label><input id="report-to" type="date" min="@from.ToString("yyyy-MM-dd")" max="@TodayText" @bind="to" required /></div>}
 <button class="button primary" disabled="@Saving">View reports</button>
 </form>

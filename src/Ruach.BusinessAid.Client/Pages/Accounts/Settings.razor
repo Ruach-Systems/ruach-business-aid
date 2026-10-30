@@ -16,7 +16,7 @@
 @if (Store.User?.IsDemo != true) {
 <article class="card"><h2>Owner mobile number</h2>
 @if(Store.PhoneRequired) { <p role="status">A unique Philippine mobile number is required to enter your businesses.</p> }
-<form class="form-card" @onsubmit="SavePhone" @onsubmit:preventDefault><div class="field"><label for="settings-phone">Philippine mobile number</label><input id="settings-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="settings-phone-help" /><small id="settings-phone-help">Use 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX. One account per number; not SMS-verified.</small></div><p>Already linked elsewhere? Contact RUACH Admin for an offline identity review.</p><button class="button primary" disabled="@(Saving || Store.Busy || !Store.Online)">Save mobile number</button></form><p role="status">@saved</p>
+<form novalidate class="form-card" @onsubmit="SavePhone" @onsubmit:preventDefault><div class="field"><label for="settings-phone">Philippine mobile number</label><input id="settings-phone" type="tel" inputmode="tel" autocomplete="tel" @bind="phone" required maxlength="32" aria-describedby="settings-phone-help" /><small id="settings-phone-help">Use 09XXXXXXXXX, 639XXXXXXXXX, or +639XXXXXXXXX. One account per number; not SMS-verified.</small></div><p>Already linked elsewhere? Contact RUACH Admin for an offline identity review.</p><button class="button primary" disabled="@(Saving || Store.Busy || !Store.Online)">Save mobile number</button></form><AppNotification Message="@saved" />
 </article> }
 @if (Store.Data.Business is not null) {
 <article class="card">
@@ -67,17 +67,7 @@
 <h2>Fresh start</h2>
 </div>
 <p>Clear this local demo workspace and return to business setup. This does not affect server accounts or SQL data.</p>
-@if(confirmingReset){
-<div class="reset-confirmation" role="alert" aria-live="assertive">
-<strong>Delete all local demo data?</strong>
-<span>Items, stock, sales, expenses, and pending changes on this device will be permanently removed.</span>
-<div>
-<button type="button" class="button ghost" disabled="@Saving" @onclick="()=>confirmingReset=false">Keep my data</button>
-<button type="button" class="button primary" disabled="@Saving" @onclick="ResetLocalData">Delete and start over</button>
-</div>
-</div>}
-else{
-<button type="button" class="button danger block" disabled="@Saving" @onclick="()=>confirmingReset=true">Reset local data</button>}
+<button type="button" class="button danger block" disabled="@Saving" @onclick="ConfirmReset">Reset local data</button>
 </article>}
 <ErrorBanner Message="@Error" />
 <button class="button danger block" @onclick="()=>Run(Store.Logout)">Sign out</button>
@@ -85,10 +75,10 @@ else{
 </div>
 
 @code {
-    private bool confirmingReset, compact;
+    private bool compact;
     private string phone="", saved="";
     protected override void OnInitialized() { base.OnInitialized(); phone=Store.User?.PhoneNumber ?? ""; }
-    private Task SavePhone() => Run(async()=> { saved=""; await Store.SavePhone(phone); phone=Store.User?.PhoneNumber ?? ""; saved="Mobile number saved."; });
+    private Task SavePhone() => Run(async()=> { saved=""; await Store.SavePhone(phone); phone=Store.User?.PhoneNumber ?? ""; saved="Mobile number saved successfully."; });
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -100,5 +90,6 @@ else{
         compact = e.Value is true;
         compact = await JS.InvokeAsync<bool>("mashalUi.setCompact", compact);
     }
+    private async Task ConfirmReset() { if (await JS.InvokeAsync<bool>("businessAlerts.confirm", "Delete all local demo data? Items, stock, sales, expenses, and pending changes on this device will be permanently removed.", "Delete and start over", "Keep my data")) await ResetLocalData(); }
     private Task ResetLocalData() => Run(Store.ResetLocalData, "/onboarding");
 }

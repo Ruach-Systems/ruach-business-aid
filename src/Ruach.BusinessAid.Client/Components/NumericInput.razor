@@ -1,7 +1,7 @@
 @using System.Globalization
 @using System.Text.RegularExpressions
-<input @attributes="Attributes" placeholder="@(Money ? "0.00" : "0")" type="text" inputmode="@(Money ? "decimal" : "numeric")" value="@text" @oninput="Input" @onblur="Blur" required="@(!EmptyAsZero)" aria-invalid="@(error.Length > 0 ? "true" : "false")" aria-describedby="@Description" />
-@if (error.Length > 0) { <small class="numeric-error" id="@errorId" role="alert">@error</small> }
+<input @attributes="Attributes" placeholder="@(Money ? "0.00" : "0")" type="text" inputmode="@(Money ? "decimal" : "numeric")" value="@text" @oninput="Input" @onblur="Blur" required="@(!EmptyAsZero)" data-numeric-invalid="@(error.Length > 0 ? "true" : "false")" @onvalidationsubmit="RevealErrors" aria-invalid="@(showErrors && error.Length > 0 ? "true" : "false")" aria-describedby="@Description" />
+@if (showErrors && error.Length > 0) { <small class="numeric-error" id="@errorId" role="alert">@error</small> }
 @code {
     [Parameter] public decimal Value { get; set; }
     [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
@@ -16,8 +16,10 @@
     private string text = "", error = "";
     private decimal published;
     private bool initialized;
+    private bool showErrors;
+    private void RevealErrors(EventArgs _) => showErrors = true;
     private bool? reportedValidity;
-    private string? Description => string.Join(" ", new[] { Attributes?.GetValueOrDefault("aria-describedby")?.ToString(), error.Length > 0 ? errorId : null }.Where(x => !string.IsNullOrEmpty(x))) is { Length: > 0 } value ? value : null;
+    private string? Description => string.Join(" ", new[] { Attributes?.GetValueOrDefault("aria-describedby")?.ToString(), showErrors && error.Length > 0 ? errorId : null }.Where(x => !string.IsNullOrEmpty(x))) is { Length: > 0 } value ? value : null;
 
     protected override async Task OnParametersSetAsync()
     {
