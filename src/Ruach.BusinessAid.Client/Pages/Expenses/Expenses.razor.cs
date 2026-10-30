@@ -6,6 +6,13 @@ namespace Ruach.BusinessAid.Client.Pages;
 
 public partial class Expenses
 {
+    private sealed record FormDraft(Guid? Id, string Description, string Category, string? Version, decimal Amount, DateTime Date, string Summary);
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (RestoreDraft<FormDraft>() is { } d) { id = d.Id; description = d.Description; category = d.Category; version = d.Version; amount = d.Amount; date = d.Date; editingSummary = d.Summary; }
+    }
+
     private Guid? id; private string description = "", category = "Transportation"; private string? version; private decimal amount; private DateTime date = Today().ToDateTime(TimeOnly.MinValue);
     private bool amountValid = true;
     private int amountRevision;
@@ -30,8 +37,8 @@ public partial class Expenses
         await JS.InvokeVoidAsync("mashalUi.revealExpenseEditor", expenseForm);
     }
     private readonly string[] categories = ["Transportation", "Electricity", "Water", "Rent", "Packaging", "Supplies", "Labor", "Other"];
-    private void Reset() { clearFieldErrors = true; ClearSuccess(); Error = ""; date = Today().ToDateTime(TimeOnly.MinValue); category = categories[0]; editingSummary = ""; amountRevision++; amountValid = true; id = null; description = ""; amount = 0; version = null; }
-    private void Edit(Expense value) { clearFieldErrors = true; ClearSuccess(); Error = ""; amountRevision++; amountValid = true; id = value.Id; description = value.Description; category = value.Category; amount = value.AmountCentavos / 100m; date = DateTime.Parse(value.ExpenseDate); version = value.Version is { } v ? Convert.ToBase64String(v) : null; editingSummary = $"{value.Description} · {Money(value.AmountCentavos)} · {value.ExpenseDate}"; revealEditor = true; }
+    private void Reset() { ClearDraft(); clearFieldErrors = true; ClearSuccess(); Error = ""; date = Today().ToDateTime(TimeOnly.MinValue); category = categories[0]; editingSummary = ""; amountRevision++; amountValid = true; id = null; description = ""; amount = 0; version = null; }
+    private void Edit(Expense value) { ClearDraft(); clearFieldErrors = true; ClearSuccess(); Error = ""; amountRevision++; amountValid = true; id = value.Id; description = value.Description; category = value.Category; amount = value.AmountCentavos / 100m; date = DateTime.Parse(value.ExpenseDate); version = value.Version is { } v ? Convert.ToBase64String(v) : null; editingSummary = $"{value.Description} · {Money(value.AmountCentavos)} · {value.ExpenseDate}"; revealEditor = true; }
     private Task Save() => Run(async () => { ClearSuccess(); var updating = id is not null; Rules.Require(amountValid, "Correct the expense amount before saving."); var value = new Expense { Id = id ?? Guid.NewGuid(), Description = description, Category = category, AmountCentavos = Centavos(amount), ExpenseDate = date.ToString("yyyy-MM-dd") }; await Store.Execute("saveExpense", value.Id, value, version); Reset(); successMessage = $"Expense {(updating ? "updated" : "saved")} successfully."; revealSuccess = true; successDismissal = new CancellationTokenSource(); _ = DismissSuccessAsync(successDismissal.Token); });
     private async Task Delete(Expense value) { if (await JS.InvokeAsync<bool>("businessAlerts.confirm",  $"Delete {value.Description} ({Money(value.AmountCentavos)})?", "Delete expense")) await Run(() => Store.Execute("deleteExpense", value.Id, new { }, value.Version is { } v ? Convert.ToBase64String(v) : null), success: "Expense deleted successfully."); }
 
@@ -61,6 +68,7 @@ public partial class Expenses
 
     public override void Dispose()
     {
+        KeepDraft(new FormDraft(id, description, category, version, amount, date, editingSummary));
         ClearSuccess();
         base.Dispose();
     }

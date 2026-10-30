@@ -47,3 +47,13 @@ html.density-compact .sale-checkout.active .totals-card { padding: 9px 12px; bor
 }
 
 .sale-line > .stock-warning { grid-column: 1 / -1; margin-top: 0; }
+
+.checkout-details { display: none; }
+@media(max-width: 979px) {
+ .sale-checkout.active { grid-template-columns: minmax(0,1fr) auto; gap: 6px; }
+ .sale-checkout.active .checkout-details { display: inline-flex; grid-column: 2; grid-row: 1; background: var(--mashal-paper); }
+ .sale-checkout.active .totals-card { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1fr); padding: 8px 12px; }
+ .sale-checkout.active .totals-card:not(.expanded) > div:not(:nth-child(2)) { display: none; }
+ .sale-checkout.active .totals-card.expanded { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .sale-checkout.active > .primary { grid-column: 1 / -1; }
+}

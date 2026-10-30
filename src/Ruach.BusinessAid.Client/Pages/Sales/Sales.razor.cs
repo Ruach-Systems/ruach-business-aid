@@ -5,6 +5,13 @@ namespace Ruach.BusinessAid.Client.Pages;
 
 public partial class Sales
 {
+    private sealed record FormDraft(Dictionary<Guid,long> Quantities, DateTime Date, string Search);
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (RestoreDraft<FormDraft>() is { } d) { quantities = d.Quantities; date = d.Date; search = d.Search; }
+    }
+
     private Dictionary<Guid,long> quantities = [];
     private readonly HashSet<Guid> invalidQuantities = [];
     private bool QuantityValid(Guid id) => !invalidQuantities.Contains(id);
@@ -12,6 +19,7 @@ public partial class Sales
     private bool TooManyLines => Store.Items.Count(x => quantities.GetValueOrDefault(x.Id) > 0) > Rules.MaxSaleLines;
     private bool InputsValid => invalidQuantities.Count == 0 && !TooManyLines;
     private DateTime date = Today().ToDateTime(TimeOnly.MinValue);
+    private bool showTotals;
     private string message = "";
     private string search = "";
     private bool Matches(Item item) => item.Name.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase);
@@ -32,9 +40,11 @@ public partial class Sales
         var lines = Store.Items.Where(x => quantities.GetValueOrDefault(x.Id) > 0)
             .Select(x => new SaleLineInput(x.Id, quantities[x.Id])).ToList();
         await Store.Execute("recordSale", Guid.NewGuid(), new SaleInput(lines, date.ToString("yyyy-MM-dd")));
+        ClearDraft();
         quantities.Clear();
         invalidQuantities.Clear();
         search = "";
         message = "Sale saved successfully.";
     });
+    public override void Dispose() { KeepDraft(new FormDraft(quantities, date, search)); base.Dispose(); }
 }

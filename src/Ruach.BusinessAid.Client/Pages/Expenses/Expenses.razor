@@ -2,6 +2,7 @@
 @page "/expenses"
 @inherits PageBase
 @inject IJSRuntime JS
+<CascadingValue Value="NumberDrafts">
 <div class="page">
 <PageHeading Title="Expenses" Eyebrow="Optional operating costs" Description="Record costs such as rent, transport, utilities, and labor.">
 <span class="date-chip">Today · @Money(Store.Expenses.Where(x=>x.ExpenseDate==Today().ToString("yyyy-MM-dd")).Sum(x=>x.AmountCentavos))</span>
@@ -67,3 +68,5 @@
 </section>
 </div>
 </div>
+
+</CascadingValue>

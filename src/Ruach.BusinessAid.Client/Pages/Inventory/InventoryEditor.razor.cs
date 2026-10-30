@@ -6,6 +6,14 @@ namespace Ruach.BusinessAid.Client.Pages;
 
 public partial class InventoryEditor
 {
+    private sealed record FormDraft(Item Item, decimal Price, decimal Cost, string? Version);
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (RestoreDraft<FormDraft>() is { } d) { draft = d.Item; price = d.Price; cost = d.Cost; version = d.Version; loaded = Id; restored = true; }
+    }
+    private bool restored;
+
     [Parameter] public Guid? Id { get; set; }
     private Item draft = new() { Id = Guid.NewGuid(), IsActive = true };
     private decimal price, cost;
@@ -24,7 +32,7 @@ public partial class InventoryEditor
 
     protected override void OnParametersSet()
     {
-        if (loaded == Id) return;
+        if (restored || loaded == Id) return;
         loaded = Id;
         draft = LocalData.Clone(Store.Data.Items.Find(x => x.Id == Id) ?? new Item { Id = Guid.NewGuid(), IsActive = true });
         version = draft.Version is { } value ? Convert.ToBase64String(value) : null;
@@ -38,5 +46,7 @@ public partial class InventoryEditor
         draft.SellingPriceCentavos = PriceCentavos;
         draft.UnitCostCentavos = CostCentavos;
         await Store.Execute("saveItem", draft.Id, draft, version);
+        ClearDraft();
     }, "/items", "Item saved successfully.");
+    public override void Dispose() { KeepDraft(new FormDraft(draft, price, cost, version)); base.Dispose(); }
 }

@@ -2,6 +2,7 @@
 @page "/items/new"
 @page "/items/{Id:guid}/edit"
 @inherits PageBase
+<CascadingValue Value="NumberDrafts">
 <div class="page narrow">
 <BackLink To="@(Id is null?"/items":$"/items/{Id}")" Text="Back to items" />
 <PageHeading Title="@(Id is null?"New item":"Edit item")" Eyebrow="Price & cost" Description="Enter what one item sells for and what one item costs you." />
@@ -20,6 +21,8 @@
 </section>
 <label class="toggle-row"><span><strong>Item is active</strong><small>Inactive items no longer appear in sales.</small></span><input type="checkbox" class="toggle" @bind="draft.IsActive" /></label>
 <ErrorBanner Message="@Error" />
-<div class="form-actions"><a class="button ghost" href="@(Id is null?"/items":$"/items/{Id}")">Cancel</a><button class="button primary" disabled="@(Saving)">Save item</button></div>
+<div class="form-actions"><a class="button ghost" href="@(Id is null?"/items":$"/items/{Id}")" @onclick="CancelDraft">Cancel</a><button class="button primary" disabled="@(Saving)">Save item</button></div>
 </form>
 </div>
+
+</CascadingValue>

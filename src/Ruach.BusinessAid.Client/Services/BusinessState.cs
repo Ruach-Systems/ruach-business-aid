@@ -7,6 +7,7 @@ namespace Ruach.BusinessAid.Client.Services;
 public sealed partial class BusinessState(OfflineStorage storage, ApiClient api, SyncService sync, IJSRuntime js, IWebAssemblyHostEnvironment environment, IConfiguration configuration)
 {
     public event Action? Changed;
+    public Dictionary<string, object> FormDrafts { get; } = [];
     public OfflineState? State { get; private set; }
     public AppData Data => PhoneRequired ? new() : State?.Data ?? new();
     public ClientUser? User { get; private set; }

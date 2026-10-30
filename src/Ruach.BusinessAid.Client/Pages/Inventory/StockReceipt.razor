@@ -1,6 +1,7 @@
 @namespace Ruach.BusinessAid.Client.Pages
 @page "/stock/add"
 @inherits PageBase
+<CascadingValue Value="NumberDrafts">
 <div class="page narrow">
 <BackLink To="/items" Text="Back to items" />
 <PageHeading Title="Add stock" Eyebrow="Stock received" Description="Add a whole-number quantity using the item's fixed cost." />
@@ -15,6 +16,8 @@
 <div class="stock-cost-total"><span>Total stock value added</span><strong>@(quantityValid ? Money(selected.UnitCostCentavos*quantity) : "—")</strong></div>
 </div>}
 <ErrorBanner Message="@Error" />
-<div class="form-actions"><a class="button ghost" href="/items">Cancel</a><button class="button primary" disabled="@(Saving)">Save stock</button></div>
+<div class="form-actions"><a class="button ghost" href="/items" @onclick="CancelDraft">Cancel</a><button class="button primary" disabled="@(Saving)">Save stock</button></div>
 </form>
 </div>
+
+</CascadingValue>

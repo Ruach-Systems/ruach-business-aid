@@ -25,7 +25,7 @@ public partial class BrowserTests
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
         await Expect(page.Locator(".numeric-error")).ToHaveCountAsync(0);
-        await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("1e3");
+        await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("12.345");
         await page.GetByLabel("Category", new() { Exact = true }).FocusAsync();
         await Expect(page.Locator(".numeric-error")).ToHaveCountAsync(0);
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();

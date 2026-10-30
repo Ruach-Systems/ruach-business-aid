@@ -66,7 +66,7 @@ public partial class BrowserTests
         await quantity.FillAsync("1000000");
         await Expect(increase).ToBeDisabledAsync();
         await quantity.FillAsync("9223372036854775807");
-        await page.Locator(".sale-checkout button").ClickAsync();
+        await page.Locator(".sale-checkout button.primary").ClickAsync();
         foreach (var compact in new[] { false, true })
         foreach (var width in new[] { 320, 390, 470, 768 })
         {
@@ -84,7 +84,7 @@ public partial class BrowserTests
         }
         await page.EvaluateAsync("() => mashalUi.setCompact(false)");
         await page.SetViewportSizeAsync(390, 844);
-        await page.Locator(".sale-checkout button").ClickAsync();
+        await page.Locator(".sale-checkout button.primary").ClickAsync();
         await Expect(quantity).ToBeFocusedAsync();
         await Expect(page.Locator(".totals-card strong").Nth(1)).ToHaveTextAsync("—");
         await page.GetByLabel("Search items to sell", new() { Exact = true }).FillAsync("unmatched");
@@ -109,13 +109,13 @@ public partial class BrowserTests
         await page.GotoAsync(host.Url + "/expenses");
         await page.GetByLabel("Description", new() { Exact = true }).FillAsync("Audit fare");
         var amount = page.GetByLabel("Amount (₱)", new() { Exact = true });
-        await amount.FillAsync("₱1,250.50");
+        await amount.FillAsync("1,250.50");
         await amount.PressAsync("Tab");
         await Expect(amount).ToHaveValueAsync("1250.50");
         await amount.FillAsync("");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
         await Expect(amount).ToBeFocusedAsync();
-        await amount.FillAsync("₱1,250.50");
+        await amount.FillAsync("1,250.50");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Edit Audit fare expense", Exact = true })).ToBeVisibleAsync();
         await Expect(amount).ToHaveValueAsync("");
@@ -123,7 +123,7 @@ public partial class BrowserTests
         Assert.Equal(125050, state.GetProperty("data").GetProperty("expenses")[0].GetProperty("amountCentavos").GetInt64());
         await page.GetByRole(AriaRole.Button, new() { Name = "Edit Audit fare expense", Exact = true }).ClickAsync();
         await Expect(amount).ToHaveValueAsync("1250.50");
-        await amount.FillAsync("1e3");
+        await amount.FillAsync("12.345");
         await page.GetByRole(AriaRole.Button, new() { Name = "Cancel edit", Exact = true }).ClickAsync();
         await Expect(amount).ToHaveValueAsync("");
         await Expect(amount).ToHaveAttributeAsync("aria-invalid", "false");
@@ -155,7 +155,7 @@ public partial class BrowserTests
             var selector = route.StartsWith("/expenses") ? "#expense-amount" : route.StartsWith("/stock/add") ? "#receipt-quantity" : route.StartsWith("/stock/adjust") ? "#adjust-count" : "#item-minimum";
             var control = page.Locator(selector);
             var before = await control.BoundingBoxAsync();
-            await control.FillAsync("-1");
+            await control.FillAsync("999999999999999");
             await control.EvaluateAsync("input => input.form.requestSubmit()");
             var after = await control.BoundingBoxAsync();
             Assert.InRange(Math.Abs(before!.Height - after!.Height), 0, 1);

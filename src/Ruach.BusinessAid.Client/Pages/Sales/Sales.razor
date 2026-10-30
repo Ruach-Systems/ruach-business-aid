@@ -1,6 +1,7 @@
 @namespace Ruach.BusinessAid.Client.Pages
 @page "/sales"
 @inherits PageBase
+<CascadingValue Value="NumberDrafts">
 <div class="page narrow">
 <PageHeading Title="What sold today?" Eyebrow="Fast daily entry" Description="Enter whole-item quantities. Stock is deducted automatically." />
 <form novalidate id="sale-item-search" @onsubmit:preventDefault></form>
@@ -11,7 +12,7 @@
 <section class="stack sale-lines">@foreach(var item in VisibleItems){Ensure(item.Id);<article class="card sale-line" @key="item.Id">
 <div class="list-main"><strong>@item.Name</strong><div class="unit-pricing"><span>Price <b>@Money(item.SellingPriceCentavos)</b></span><span>Cost <b>@Money(item.UnitCostCentavos)</b></span><span>Stock <b class="@(item.CurrentQuantity<0?"negative-stock":"")">@Quantity(item.CurrentQuantity)</b></span></div>
 </div>
-<div class="stepper"><button type="button" aria-label="@($"Decrease {item.Name} quantity")" disabled="@(!QuantityValid(item.Id) || quantities[item.Id] == 0)" @onclick="()=>Change(item.Id,-1)">−</button><QuantityInput StartEmpty="true" EmptyAsZero="true" aria-label="@($"{item.Name} quantity sold")" @bind-Value="quantities[item.Id]" ValidityChanged="@(v => SetQuantityValidity(item.Id, v))" /><button type="button" aria-label="@($"Increase {item.Name} quantity")" disabled="@(!QuantityValid(item.Id) || quantities[item.Id] >= Rules.MaxQuantity)" @onclick="()=>Change(item.Id,1)">+</button></div>
+<div class="stepper"><button type="button" aria-label="@($"Decrease {item.Name} quantity")" disabled="@(!QuantityValid(item.Id) || quantities[item.Id] == 0)" @onclick="()=>Change(item.Id,-1)">−</button><QuantityInput id="@($"sale-quantity-{item.Id}")" StartEmpty="@(quantities[item.Id] == 0)" EmptyAsZero="true" aria-label="@($"{item.Name} quantity sold")" @bind-Value="quantities[item.Id]" ValidityChanged="@(v => SetQuantityValidity(item.Id, v))" /><button type="button" aria-label="@($"Increase {item.Name} quantity")" disabled="@(!QuantityValid(item.Id) || quantities[item.Id] >= Rules.MaxQuantity)" @onclick="()=>Change(item.Id,1)">+</button></div>
 @if(QuantityValid(item.Id) && quantities[item.Id]>0 && quantities[item.Id]>item.CurrentQuantity){<small class="stock-warning" role="alert">This sale will leave @Quantity(item.CurrentQuantity-quantities[item.Id]) in stock.</small>}
 </article>}</section>
 @if(Store.Items.Any() && !VisibleItems.Any()){<div class="card empty"><h3>No matching items</h3><p>Try another name.</p><button type="button" class="button ghost small" @onclick="ClearSearch">Clear search</button></div>}
@@ -19,7 +20,8 @@
 @if(TooManyLines){<p class="error-banner" role="alert">A sale can contain at most @Rules.MaxSaleLines different items. Save separate sales.</p>}
 @if(HasNegativeResult){<div class="notice warning sale-warning" role="alert">One or more items will have negative stock. You can still save and correct or add stock later.</div>}
 @if(Store.Items.Any()){<div class="sale-checkout @(TotalItems>0?"active":"")">
-<section class="card dark totals-card" aria-label="Sale totals" aria-live="polite"><div><span class="card-label">Items</span><strong>@(InputsValid ? Quantity(TotalItems) : "—")</strong></div><div><span class="card-label">Sales</span><strong>@(InputsValid ? Money(Revenue) : "—")</strong></div><div><span class="card-label">Item cost</span><strong>@(InputsValid ? Money(Cost) : "—")</strong></div><div><span class="card-label">Gross profit</span><strong>@(InputsValid ? Money(Revenue-Cost) : "—")</strong></div></section>
+<button type="button" class="checkout-details button ghost small" aria-expanded="@showTotals" @onclick="()=>showTotals=!showTotals">@(showTotals ? "Hide breakdown" : "Show breakdown")</button>
+<section class="card dark totals-card @(showTotals ? "expanded" : "")" aria-label="Sale totals" aria-live="polite"><div><span class="card-label">Items</span><strong>@(InputsValid ? Quantity(TotalItems) : "—")</strong></div><div><span class="card-label">Sales</span><strong>@(InputsValid ? Money(Revenue) : "—")</strong></div><div><span class="card-label">Item cost</span><strong>@(InputsValid ? Money(Cost) : "—")</strong></div><div><span class="card-label">Gross profit</span><strong>@(InputsValid ? Money(Revenue-Cost) : "—")</strong></div></section>
 <AppNotification Message="@message" /><ErrorBanner Message="@Error" />
 <button class="button primary block" disabled="@(Saving||(InputsValid && TotalItems==0))">@(InputsValid ? $"Save {Quantity(TotalItems)} items" : "Correct quantities to save")</button>
 </div>}
@@ -30,3 +32,5 @@ else{<div class="card empty"><p>No sales recorded yet.</p></div>}
 <a class="button ghost block section" href="/sales/history">View all sales history by date</a>
 </section>
 </div>
+
+</CascadingValue>

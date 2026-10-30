@@ -1,8 +1,10 @@
 @using System.Globalization
 @using System.Text.RegularExpressions
-<input @attributes="Attributes" placeholder="@(Money ? "0.00" : "0")" type="text" inputmode="@(Money ? "decimal" : "numeric")" value="@text" @oninput="Input" @onblur="Blur" required="@(!EmptyAsZero)" data-numeric-invalid="@(error.Length > 0 ? "true" : "false")" @onvalidationsubmit="RevealErrors" aria-invalid="@(showErrors && error.Length > 0 ? "true" : "false")" aria-describedby="@Description" />
+<input @attributes="Attributes" placeholder="@(Money ? "0.00" : "0")" type="text" data-numeric-kind="@(Money ? "money" : "quantity")" inputmode="@(Money ? "decimal" : "numeric")" value="@text" @oninput="Input" @onblur="Blur" @onfocus="Focus" required="@(!EmptyAsZero)" data-numeric-invalid="@(error.Length > 0 ? "true" : "false")" @onvalidationsubmit="RevealErrors" aria-invalid="@(showErrors && error.Length > 0 ? "true" : "false")" aria-describedby="@Description" />
 @if (showErrors && error.Length > 0) { <small class="numeric-error" id="@errorId" role="alert">@error</small> }
 @code {
+    [CascadingParameter] public Dictionary<string, string>? NumberDrafts { get; set; }
+    private string? DraftField => Attributes?.GetValueOrDefault("id")?.ToString() ?? Attributes?.GetValueOrDefault("aria-label")?.ToString();
     [Parameter] public decimal Value { get; set; }
     [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
     [Parameter] public EventCallback<bool> ValidityChanged { get; set; }
@@ -14,7 +16,7 @@
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
     private readonly string errorId = $"number-error-{Guid.NewGuid():N}";
     private string text = "", error = "";
-    private decimal published;
+    private decimal published, received;
     private bool initialized;
     private bool showErrors;
     private void RevealErrors(EventArgs _) => showErrors = true;
@@ -24,11 +26,19 @@
     protected override async Task OnParametersSetAsync()
     {
         // Parent resets and stepper changes replace the draft; unrelated renders preserve it.
-        if (!initialized || Value != published)
+        if (!initialized || Value != received)
         {
+            // A parent echo of our own edit must not format the active draft.
+            var replaceDraft = !initialized || Value != published;
+            received = Value;
+            if (replaceDraft)
+            {
             text = StartEmpty && (!initialized || (EmptyAsZero && Value == 0)) ? "" : Format(Value);
+            if (!initialized && DraftField is { } key && NumberDrafts?.TryGetValue(key, out var saved) == true) text = saved;
             initialized = true;
             published = Value;
+            if (DraftField is { } field && NumberDrafts is not null) NumberDrafts[field] = text;
+            }
         }
         Validate(out _);
         await ReportValidity();
@@ -45,7 +55,7 @@
         if (draft.Length == 0 && EmptyAsZero && Minimum == 0) { error = ""; return true; }
         if (draft.Length == 0) error = Money ? "Enter an amount." : "Enter a whole-number quantity.";
         else if (!Regex.IsMatch(draft, pattern, RegexOptions.CultureInvariant))
-            error = Money ? "Use a non-negative amount with up to 2 decimal places, for example 1,250.50." : "Use whole numbers only, for example 12.";
+            error = Money ? "Use a non-negative amount with up to 2 decimal places, for example 1250.50." : "Use whole numbers only, for example 12.";
         else if (!decimal.TryParse(draft.Replace(",", ""), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out value) || value < Minimum || value > Maximum)
             error = Money ? $"Enter an amount from {Calculations.Money(Calculations.Centavos(Minimum))} to {Calculations.Money(Calculations.Centavos(Maximum))}." : $"Enter a quantity from {Minimum:N0} to {Maximum:N0}.";
         else error = "";
@@ -63,9 +73,19 @@
     private async Task Input(ChangeEventArgs args)
     {
         text = args.Value?.ToString() ?? "";
+        if (DraftField is { } key && NumberDrafts is not null) NumberDrafts[key] = text;
         var valid = Validate(out var value);
         if (valid) { published = value; await ValueChanged.InvokeAsync(value); }
         await ReportValidity();
+    }
+
+    private void Focus()
+    {
+        if (Money && Regex.IsMatch(text, @"^[0-9]+\.00$"))
+        {
+            text = text[..^3];
+            if (DraftField is { } key && NumberDrafts is not null) NumberDrafts[key] = text;
+        }
     }
 
     private async Task Blur()
