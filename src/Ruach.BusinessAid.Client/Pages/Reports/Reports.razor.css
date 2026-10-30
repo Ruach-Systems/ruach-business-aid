@@ -9,13 +9,13 @@
 
 .report-filters {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     align-items: end;
     gap: 12px;
 }
 
 .report-filters.custom {
-    grid-template-columns: minmax(150px, 1.1fr) repeat(2, minmax(145px, 1fr)) auto;
+    grid-template-columns: minmax(150px, 1.1fr) repeat(2, minmax(145px, 1fr));
 }
 
 .metric-grid .card {
@@ -29,7 +29,8 @@
     margin-top: auto;
     font-size: clamp(16px, 14cqi, 36px);
     line-height: 1.15;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow-x: auto;
 }
 
 .report-filters + .notice {
@@ -47,4 +48,15 @@
     .report-filters > .button {
         width: 100%;
     }
+}
+
+.applied-range { margin: 18px 0 0; color: var(--mashal-muted); line-height: 1.6; }
+.applied-range strong { color: var(--mashal-ink); }
+.range-changed { width: auto; margin: 8px 0; }
+th:not(:first-child), td:not(:first-child) { text-align: right; }
+.report-number { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.report-name { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+ .metric-grid { grid-template-columns: 1fr; }
+ .metric-grid .metric-value { font-size: clamp(18px, 6vw, 28px); }
 }
