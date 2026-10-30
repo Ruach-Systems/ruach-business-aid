@@ -53,13 +53,15 @@ public partial class BrowserTests
             Assert.True(await page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= innerWidth+1"));
             Assert.True(await page.Locator(".pending-panel").EvaluateAsync<bool>("e => e.getBoundingClientRect().top < document.querySelector('.admin-performance').getBoundingClientRect().top"));
             await page.ScreenshotAsync(new(){Path=Path.Combine(host.Root,"artifacts","browser",$"admin-overview-{width}.png"),FullPage=true});
+            await page.Locator(".admin-charts > .card").First.ScreenshotAsync(new(){Path=Path.Combine(host.Root,"artifacts","browser",$"admin-chart-{width}.png")});
         }
         await page.SetViewportSizeAsync(390,844);
         await page.GetByLabel("Period",new(){Exact=true}).SelectOptionAsync("custom");
         await page.GetByLabel("From",new(){Exact=true}).FillAsync("2026-10-22");
         await page.GetByLabel("To",new(){Exact=true}).FillAsync("2026-10-01");
         await page.GetByRole(AriaRole.Button,new(){Name="Apply",Exact=true}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("valid date range");
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToContainTextAsync("valid date range");
+        await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         await page.GetByLabel("Period",new(){Exact=true}).SelectOptionAsync("month");
         await page.GetByRole(AriaRole.Button,new(){Name="Cebu Kitchen",Exact=false}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Cebu Kitchen",Exact=true}).First).ToBeVisibleAsync();

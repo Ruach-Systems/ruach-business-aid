@@ -88,3 +88,11 @@ html.density-compact .admin-shell .button,html.density-compact .admin-shell inpu
 
 .admin-detail-tabs .button[aria-pressed="true"]{background:#EFE8F1;color:#321C3B;border-color:#D6CDD2;box-shadow:none}
 @media(max-width:767px){.admin-shell .decision-actions{display:grid;grid-template-columns:1fr 1fr}.decision-actions .primary{order:0;grid-column:1/-1}.decision-actions .danger{order:1}.decision-actions .ghost{order:2}}
+
+.chart-with-axis { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:8px; align-items:stretch; }
+.chart-axis { display:flex; flex-direction:column; justify-content:space-between; padding:9px 0; text-align:right; color:#696270; font-size:12px; font-variant-numeric:tabular-nums; }
+.chart-with-axis .admin-chart { height:180px; }
+.admin-trend-table summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
+.admin-trend-table td:not(:first-child), .admin-trend-table th:not(:first-child) { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.chart-legend { flex-wrap:wrap; }
+@media(max-width:600px) { .chart-with-axis .admin-chart { height:180px; } .chart-dates { gap:8px; font-size:12px; } }

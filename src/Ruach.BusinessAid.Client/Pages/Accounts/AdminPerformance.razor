@@ -17,15 +17,19 @@ else if(analytics is {} a){
 <div class="admin-financials">@foreach(var metric in new[]{("Revenue",a.Summary.RevenueCentavos),("Item cost",a.Summary.CostCentavos),("Gross profit",a.Summary.GrossProfitCentavos),("Expenses",a.Summary.ExpenseCentavos),("Net profit",a.Summary.ProfitCentavos)}) {
 <article class="card @(metric.Item1=="Net profit" ? "net-profit" : "")"><span class="card-label">@metric.Item1</span><strong>@Money(metric.Item2)</strong></article> }</div>
 <p class="admin-caption">@Quantity(a.Summary.Transactions) transactions · @Quantity(a.Summary.ItemCount) items sold</p>
-<div class="admin-charts"><section class="card"><h2>Sales &amp; profit</h2><div class="chart-legend"><span>● Revenue</span><span>● Net profit</span></div>
+<div class="admin-charts"><section class="card"><h2>Sales &amp; profit</h2><div class="chart-legend"><span>━ Revenue</span><span>┄ Net profit</span></div>
 @if(a.Trend.Count==0){<p class="empty-state">No sales or expenses in this period.</p>}
 else {
-<svg class="admin-chart" viewBox="0 0 600 180" role="img" aria-label="Revenue and net profit over the selected period. Exact amounts are in the trend table below.">
+<p class="admin-caption">Amount (PHP)</p>
+<div class="chart-with-axis"><div class="chart-axis" aria-hidden="true"><span>@AxisMoney(Max)</span><span>@AxisMoney((Max+Min)/2)</span><span>@AxisMoney(Min)</span></div>
+<svg class="admin-chart" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="Revenue and net profit over the selected period. Exact amounts are in the trend table below.">
+<line x1="12" x2="588" y1="16" y2="16" stroke="#D6CDD2" /><line x1="12" x2="588" y1="90" y2="90" stroke="#D6CDD2" /><line x1="12" x2="588" y1="164" y2="164" stroke="#D6CDD2" />
 <line x1="12" x2="588" y1="@ZeroY" y2="@ZeroY" stroke="#D6CDD2" stroke-dasharray="4 4" />
 <polyline points="@Points(false)" fill="none" stroke="#B21F32" stroke-width="3" />
-<polyline points="@Points(true)" fill="none" stroke="#321C3B" stroke-width="3" />
+<polyline points="@Points(true)" fill="none" stroke="#321C3B" stroke-width="3" stroke-dasharray="7 4" />
 @if(a.Trend.Count==1){<circle cx="300" cy="@Y(a.Trend[0].RevenueCentavos)" r="4" fill="#B21F32"/><circle cx="300" cy="@Y(a.Trend[0].ProfitCentavos)" r="4" fill="#321C3B"/>}
-</svg><div class="chart-dates"><span>@a.Trend.First().Period</span><span>@a.Trend.Last().Period</span></div>
+</svg></div><div class="chart-dates"><span>@ChartDate(a.Trend.First().Period)</span><span>@ChartDate(a.Trend.Last().Period)</span></div>
+<p class="admin-caption">Dates run left to right. Open trend amounts for exact daily values.</p>
 <details class="admin-trend-table"><summary>View trend amounts</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Daily financial trends"><table><thead><tr><th>Date</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead><tbody>@foreach(var row in a.Trend){<tr><td>@row.Period</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.GrossProfitCentavos)</td><td>@Money(row.ExpenseCentavos)</td><td>@Money(row.ProfitCentavos)</td></tr>}</tbody></table></div></details>
 }</section>
 @if(!BusinessId.HasValue){<section class="card"><div class="section-heading"><h2>Top businesses</h2><span class="admin-caption">By revenue</span></div>@foreach(var business in a.TopBusinesses){<button class="top-business" @onclick="()=>OpenBusiness.InvokeAsync(business.Id)"><span>@business.Name</span><strong>@Money(business.RevenueCentavos)</strong></button>}@if(a.TopBusinesses.Count==0){<p>No businesses yet.</p>}</section>}
@@ -53,6 +57,8 @@ else {
         analytics=await Api.Get<AdminAnalytics>($"/api/admin/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"+(BusinessId.HasValue?$"&business={BusinessId}":"")+(OwnerId.HasValue?$"&owner={OwnerId}":""));
         await RangeChanged.InvokeAsync((from.ToString("yyyy-MM-dd"),to.ToString("yyyy-MM-dd")));
     });
+    private static string ChartDate(string value)=>DateOnly.Parse(value).ToString("MMM d, yyyy");
+    private static string AxisMoney(double value)=>(value/100).ToString("N2",System.Globalization.CultureInfo.GetCultureInfo("en-PH"));
     private double Min=>Math.Min(0,analytics!.Trend.Min(x=>Math.Min(x.RevenueCentavos,x.ProfitCentavos)));
     private double Max=>Math.Max(1,analytics!.Trend.Max(x=>Math.Max(x.RevenueCentavos,x.ProfitCentavos)));
     private string Y(long value)=>(164-(value-Min)/(Max-Min)*148).ToString("0.##",System.Globalization.CultureInfo.InvariantCulture);
