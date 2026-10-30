@@ -76,8 +76,9 @@ public partial class ComponentTests
         Assert.Equal("date", page.Find("#report-to").GetAttribute("type"));
         page.Find("#report-from").Change("2026-09-30");
         page.Find("#report-to").Change("2026-09-01");
-        page.Find("form").Submit();
-        Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.error" && call.Arguments[0]!.ToString()!.Contains("Choose a valid date range"));
+        Assert.Empty(page.FindAll("form"));
+        Assert.DoesNotContain("View reports", page.Markup);
+        page.WaitForAssertion(() => Assert.Contains(context.JSInterop.Invocations, call => call.Identifier == "businessAlerts.error" && call.Arguments[0]!.ToString()!.Contains("Choose a valid date range")));
     }
     [Fact]
     public void OnboardingProvidesAccountExitWithoutFakeProgress()
