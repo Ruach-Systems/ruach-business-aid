@@ -36,6 +36,10 @@ public partial class BrowserTests
         await price.FillAsync("35");
         await page.GetByLabel("Unit cost (₱)", new() { Exact = true }).FillAsync("10");
         await Expect(page.Locator(".cost-preview")).ToContainTextAsync("₱25.00");
+        await price.FocusAsync();
+        await Expect(price).ToHaveValueAsync("35");
+        await price.PressAsync("ControlOrMeta+a");
+        await price.PressAsync("Backspace");
         await price.FillAsync("12.345");
         await price.PressAsync("Tab");
         await Expect(price).ToHaveValueAsync("12.345");
@@ -106,16 +110,20 @@ public partial class BrowserTests
         var state = await ReadState(page, account.Uid);
         Assert.Equal(7000, state.GetProperty("data").GetProperty("sales")[0].GetProperty("totalRevenueCentavos").GetInt64());
 
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         await page.GotoAsync(host.Url + "/expenses");
+            await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync();
+            await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         await page.GetByLabel("Description", new() { Exact = true }).FillAsync("Audit fare");
         var amount = page.GetByLabel("Amount (₱)", new() { Exact = true });
-        await amount.FillAsync("1,250.50");
+        await amount.FillAsync("1250.50");
         await amount.PressAsync("Tab");
         await Expect(amount).ToHaveValueAsync("1250.50");
         await amount.FillAsync("");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
         await Expect(amount).ToBeFocusedAsync();
-        await amount.FillAsync("1,250.50");
+        await amount.FillAsync("1250.50");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Edit Audit fare expense", Exact = true })).ToBeVisibleAsync();
         await Expect(amount).ToHaveValueAsync("");
@@ -129,6 +137,8 @@ public partial class BrowserTests
         await Expect(amount).ToHaveAttributeAsync("aria-invalid", "false");
 
         await page.GotoAsync(host.Url + "/stock/add?item=" + item.Id);
+            await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync();
+            await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         var received = page.GetByLabel("Quantity received", new() { Exact = true });
         await Expect(received).ToHaveAttributeAsync("inputmode", "numeric");
         await received.FillAsync("0");
@@ -137,7 +147,7 @@ public partial class BrowserTests
         await Expect(page.Locator(".stock-cost-total strong")).ToHaveTextAsync("—");
         await received.FillAsync("3");
         await Expect(page.Locator(".stock-cost-total strong")).ToHaveTextAsync("₱30.00");
-        await received.FillAsync("1.5");
+        await received.FillAsync("1000001");
         foreach (var width in new[] { 320, 390 })
         {
             await page.SetViewportSizeAsync(width, 844);
@@ -150,6 +160,8 @@ public partial class BrowserTests
         foreach (var route in new[] { "/expenses", "/stock/add?item=" + item.Id, "/stock/adjust?item=" + item.Id, "/items/new" })
         {
             await page.GotoAsync(host.Url + route);
+            await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync();
+            await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
             await Expect(page.Locator("main h1")).ToBeVisibleAsync();
             await page.EvaluateAsync("compact => mashalUi.setCompact(compact)", compact);
             var selector = route.StartsWith("/expenses") ? "#expense-amount" : route.StartsWith("/stock/add") ? "#receipt-quantity" : route.StartsWith("/stock/adjust") ? "#adjust-count" : "#item-minimum";

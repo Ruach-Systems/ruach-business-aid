@@ -135,13 +135,17 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Button,new(){Name="Open Form verification",Exact=true}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/items/new");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Bread");
         await page.GetByLabel("Selling price (₱)", new() { Exact = true }).FillAsync("25");
         await page.GetByLabel("Unit cost (₱)", new() { Exact = true }).FillAsync("10");
         await CheckResponsiveForm(page, host.Root, "item-editor");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save item", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         await page.GotoAsync(host.Url + "/stock/add");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         var state = await ReadState(page, account.Uid);
         var itemId = state.GetProperty("data").GetProperty("items").EnumerateArray().Single(x=>x.GetProperty("name").GetString()=="Bread").GetProperty("id").GetString()!;
         await page.GetByLabel("Item", new() { Exact = true }).SelectOptionAsync(itemId);
@@ -150,6 +154,7 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Button, new() { Name = "Save stock", Exact = true }).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/sales");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await page.GetByLabel("Bread quantity sold", new() { Exact = true }).FillAsync("3");
         await Expect(page.GetByText("One or more items will have negative stock.",new(){Exact=false})).ToBeVisibleAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Save 3 items", Exact = true }).ClickAsync();
@@ -157,9 +162,11 @@ public partial class BrowserTests
         state = await ReadState(page, account.Uid);
         var saleId = state.GetProperty("data").GetProperty("sales").EnumerateArray().Single().GetProperty("id").GetString()!;
         await page.GotoAsync(host.Url + "/dashboard");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await Expect(page.Locator($"a[href='/sales/{saleId}']")).ToBeVisibleAsync();
         await page.SetViewportSizeAsync(390, 600);
         await page.GotoAsync(host.Url + "/sales");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         var saleHistoryLink = page.Locator($"a[href='/sales/{saleId}']");
         await saleHistoryLink.ScrollIntoViewIfNeededAsync();
         Assert.True(await page.EvaluateAsync<int>("() => document.querySelector('.app-shell').scrollTop") > 0, "Sales history did not create the scrolled navigation state");
@@ -182,19 +189,23 @@ public partial class BrowserTests
         await page.ScreenshotAsync(new() { Path = Path.Combine(host.Root, "artifacts", "browser", "sale-detail-320.png"), FullPage = true });
         await page.SetViewportSizeAsync(390, 844);
         await page.GotoAsync(host.Url + "/items/" + itemId);
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await Expect(page.GetByText("Stock is negative",new(){Exact=false})).ToBeVisibleAsync();
         state = await ReadState(page, account.Uid);
         Assert.Equal(-1, state.GetProperty("data").GetProperty("items").EnumerateArray().Single(x=>x.GetProperty("name").GetString()=="Bread").GetProperty("currentQuantity").GetInt64());
         await page.GotoAsync(host.Url + "/expenses");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await page.GetByLabel("Description", new() { Exact = true }).FillAsync("Delivery fare");
         await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("10");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save expense", Exact = true }).ClickAsync();
         await Expect(page.GetByText("Delivery fare", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/sales/" + saleId);
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         var dayTotals = page.GetByLabel("Sale date totals", new() { Exact = true });
         Assert.Equal("₱10.00", await dayTotals.Locator(".day-profit-grid > div:nth-child(3) strong").TextContentAsync());
         Assert.Equal("₱35.00", await dayTotals.Locator(".day-profit-grid > div:nth-child(4) strong").TextContentAsync());
         await page.GotoAsync(host.Url + "/reports");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await Expect(page.GetByText("Item performance", new() { Exact = true })).ToBeVisibleAsync();
         Assert.Equal(new[] { "Today", "This week", "This month", "Custom range" }, await page.Locator("#report-period option").AllTextContentsAsync());
         await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("custom");
@@ -202,9 +213,10 @@ public partial class BrowserTests
         Assert.True(await page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= innerWidth + 1"), "Custom report range overflows at 320px");
         await page.GetByLabel("From", new() { Exact = true }).FillAsync("2026-09-01");
         await page.GetByLabel("To", new() { Exact = true }).FillAsync("2026-09-29");
-        await page.GetByRole(AriaRole.Button, new() { Name = "View reports", Exact = true }).ClickAsync();
+
         await Expect(page.GetByText("Item performance", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/products");
+        if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
     }
 

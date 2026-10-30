@@ -82,7 +82,8 @@ public partial class BrowserTests
         await page.GetByRole(AriaRole.Link, new() { Name = "Update mobile number" }).ClickAsync();
         await page.GetByLabel("Philippine mobile number", new() { Exact = true }).FillAsync("09171234567");
         await page.GetByRole(AriaRole.Button, new() { Name = "Save mobile number" }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("already linked");
+        await Expect(page.GetByRole(AriaRole.Dialog)).ToContainTextAsync("already linked");
+        await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
         await Expect(page.GetByLabel("Philippine mobile number", new() { Exact = true })).ToHaveValueAsync("09171234567");
         await CheckAccountLayout(page, host.Root, "phone-recovery");
         await page.GetByLabel("Philippine mobile number", new() { Exact = true }).FillAsync("09181234567");
