@@ -82,7 +82,7 @@ public sealed partial class BusinessState
         }
     }
 
-    public async Task ResolveConflict(bool discard)
+    public async Task ResolveConflict(bool discard, int? expectedCount = null)
     {
         await gate.WaitAsync();
         try
@@ -93,7 +93,11 @@ public sealed partial class BusinessState
             State = await storage.Mutate(State, latest =>
             {
                 if (discard)
+                {
+                    if (expectedCount.HasValue && latest.Outbox.Count != expectedCount.Value)
+                        throw new InvalidOperationException("The pending changes have changed. Review the updated count and confirm again.");
                     latest.Outbox.Clear();
+                }
                 else if (latest.Outbox.FirstOrDefault()is { } head)
                 {
                     head.Id = Guid.NewGuid();

@@ -41,7 +41,14 @@
 </section>
 }
 @code {
-    private async Task Resolve(bool discard) { if (await JS.InvokeAsync<bool>("businessAlerts.confirm", discard ? "Discard all pending changes on this device and use server records?" : "Retry this change using the latest server version?")) await Run(() => Store.ResolveConflict(discard)); }
+    private async Task Resolve(bool discard)
+    {
+        var count = Store.PendingCount;
+        if (await JS.InvokeAsync<bool>("businessAlerts.confirm",
+            discard ? $"Discard all {count} pending change{(count == 1 ? "" : "s")} for this business on this device? These changes have not synchronized and will be lost. Server records will be used instead." : "Retry this change using the latest server version?",
+            discard ? "Discard pending changes" : "Retry saved change"))
+            await Run(() => Store.ResolveConflict(discard, discard ? count : null));
+    }
     private static string DisplayValue(string field, JsonElement value) => field.EndsWith("Centavos", StringComparison.Ordinal) && value.TryGetInt64(out var centavos) ? Money(centavos) : value.ToString();
     private IEnumerable<(string Label, string Local, string Server)> Comparison(PendingOperation op)
     {

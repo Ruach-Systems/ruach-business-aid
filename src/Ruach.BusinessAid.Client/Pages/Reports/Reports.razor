@@ -16,6 +16,7 @@ else{
 @if(Saving){<p role="status">Updating reports…</p>}
 @if(Store.PendingCount>0 && Store.User?.IsDemo!=true){<p class="notice">@Store.PendingCount pending changes are excluded until synchronization finishes.</p>}
 <ErrorBanner Message="@Error" />
+@if(!string.IsNullOrEmpty(Error)){<button type="button" class="button ghost" disabled="@Saving" @onclick="Load">Retry loading reports</button>}
 @if(summary is {} total){
 
 
