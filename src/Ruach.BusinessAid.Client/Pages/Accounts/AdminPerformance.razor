@@ -11,7 +11,7 @@
 <p class="admin-caption">@from.ToString("MMM d, yyyy") – @to.ToString("MMM d, yyyy") · PHP · Asia/Manila · Synchronized records only</p>
 @if(OwnerId.HasValue){<p>Totals include businesses owned by this user. They do not measure the user's individual actions.</p>}
 <ErrorBanner Message="@Error" />
-@if(!Store.Online){<p class="account-notice" role="status">Connect to load admin financial data. It is not saved offline.</p>}
+@if(!Store.Online){<p class="account-notice" role="status">@(Workspace ? "Connect to load business financial data. It is not saved offline." : "Connect to load admin financial data. It is not saved offline.")</p>}
 else if(Saving){<p role="status">Loading financial performance…</p>}
 else if(analytics is {} a){
 <div class="admin-financials">@foreach(var metric in new[]{("Revenue",a.Summary.RevenueCentavos),("Item cost",a.Summary.CostCentavos),("Gross profit",a.Summary.GrossProfitCentavos),("Expenses",a.Summary.ExpenseCentavos),("Net profit",a.Summary.ProfitCentavos)}) {
@@ -37,6 +37,7 @@ else {
 }
 </section>
 @code {
+    [Parameter] public bool Workspace { get; set; }
     [Parameter] public bool Busy {get;set;}
     private void Invalidate()=>analytics=null;
     [Parameter] public Guid? BusinessId {get;set;}
@@ -52,9 +53,12 @@ else {
     private async Task SetPeriod(){ if(period!="custom"){ to=Today(); from=period=="last30" ? to.AddDays(-29) : DateOnly.Parse(Period(period).From); await Load(); } }
     private Task Load()=>Run(async()=>{
         analytics=null;
-        if(!Store.Online || Store.User?.IsAdmin!=true)return;
+        if(!Store.Online || (!Workspace && Store.User?.IsAdmin!=true))return;
         Rules.Require(from<=to && to<=Today(),"Choose a valid date range ending today or earlier.");
-        analytics=await Api.Get<AdminAnalytics>($"/api/admin/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"+(BusinessId.HasValue?$"&business={BusinessId}":"")+(OwnerId.HasValue?$"&owner={OwnerId}":""));
+        var path = Workspace
+            ? $"/api/businesses/{BusinessId}/overview/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"
+            : $"/api/admin/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"+(BusinessId.HasValue?$"&business={BusinessId}":"")+(OwnerId.HasValue?$"&owner={OwnerId}":"");
+        analytics=await Api.Get<AdminAnalytics>(path);
         await RangeChanged.InvokeAsync((from.ToString("yyyy-MM-dd"),to.ToString("yyyy-MM-dd")));
     });
     private static string ChartDate(string value)=>DateOnly.Parse(value).ToString("MMM d, yyyy");

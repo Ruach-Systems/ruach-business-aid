@@ -2,7 +2,7 @@
 @inherits PageBase
 @inject ApiClient Api
 <section class="card admin-profile"><span class="status-badge">Read-only</span><h2>@Business.Name</h2><p>@Business.DefaultLocation</p><p>@Owner?.DisplayName · @Owner?.Email</p><p>Created @Business.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy") · PHP · Asia/Manila</p></section>
-<AdminPerformance @key="Business.Id" BusinessId="Business.Id" Busy="Saving" RangeChanged="ChangeRange" />
+<AdminPerformance @key="Business.Id" BusinessId="Business.Id" Workspace="Workspace" Busy="Saving" RangeChanged="ChangeRange" />
 <nav class="admin-detail-tabs" aria-label="Business detail sections">@foreach(var section in new[]{"Summary","Sales","Expenses","Items","Receipts","Adjustments","Members"}){<button class="button @(tab==section?"primary":"ghost")" aria-pressed="@(tab==section ? "true" : "false")" disabled="@Saving" @onclick="()=>Select(section)">@section</button>}</nav>
 <ErrorBanner Message="@Error" />
 @if(!Store.Online){<p role="status">Connect to inspect business records.</p>}
@@ -26,6 +26,7 @@ else if(records is {} result){
 <div class="admin-paging"><button class="button ghost" disabled="@(page==1)" @onclick="()=>Page(-1)">Previous</button><span>Page @(page) · @result.Total records</span><button class="button ghost" disabled="@(page*result.PageSize>=result.Total)" @onclick="()=>Page(1)">Next</button></div>
 </section>}
 @code {
+    [Parameter] public bool Workspace { get; set; }
     [Parameter,EditorRequired] public Business Business {get;set;}=default!;
     [Parameter] public AdminUser? Owner {get;set;}
     private string tab="Summary",from=Period("month").From,to=Period("month").To;
@@ -39,8 +40,8 @@ else if(records is {} result){
     private async Task Page(int delta){page+=delta;await Load();}
     private Task Load()=>Run(async()=>{
         records=null;items=[];categories=[];members=[];
-        if(!Store.Online || Store.User?.IsAdmin!=true)return;
-        var path=$"/api/admin/businesses/{Business.Id}";var query=$"?from={from}&to={to}";
+        if(!Store.Online || (!Workspace && Store.User?.IsAdmin!=true))return;
+        var path=Workspace ? $"/api/businesses/{Business.Id}/overview" : $"/api/admin/businesses/{Business.Id}";var query=$"?from={from}&to={to}";
         if(tab=="Summary"){
             items=await Api.Get<List<ItemReport>>(path+"/reports/items"+query);
             categories=await Api.Get<List<ExpenseReport>>(path+"/reports/expenses-by-category"+query);

@@ -48,7 +48,8 @@ public static class ApiMiddleware
         app.UseAuthorization();
         app.Use(async (ctx, next) =>
         {
-            if (HttpMethods.IsPost(ctx.Request.Method))
+            // The opt-in local sign-in validates its own anonymous form token and origin.
+            if (HttpMethods.IsPost(ctx.Request.Method) && ctx.GetEndpoint()?.Metadata.GetMetadata<Ruach.BusinessAid.Api.Endpoints.LocalTestSignIn>() is null)
             {
                 if (ctx.Request.Headers.Origin.ToString() != origins.RequirePwaOrigin(ctx.Request))
                     throw new DomainException("forbidden", "Origin is not allowed.", 403);

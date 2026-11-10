@@ -52,6 +52,19 @@ public class AdminAnalyticsSqlTests
         Assert.Equal(2,(await queries.Records(admin.Uid,a,"expenses","2026-09-15","2026-09-16")).Total);
         Assert.Single(await queries.Members(admin.Uid,a)); Assert.Equal(2,(await queries.Memberships(admin.Uid,owner.Uid)).Count);
         Assert.Equal(result.Summary,(FinancialSummary)await queries.Report(admin.Uid,a,"summary","2026-09-15","2026-09-16"));
+        // The owner's overview reuses the same calculations without granting platform-admin access.
+        Assert.Equal(result.Summary,(await queries.Analytics(owner.Uid,"2026-09-15","2026-09-16",a,workspace:true)).Summary);
+        Assert.Equal(result.Summary,(FinancialSummary)await queries.Report(owner.Uid,a,"summary","2026-09-15","2026-09-16",workspace:true));
+        Assert.Equal(first.Total,(await queries.Records(owner.Uid,a,"sales","2026-09-15","2026-09-16",workspace:true)).Total);
+        Assert.Single(await queries.Members(owner.Uid,a,workspace:true));
+        foreach(var denied in new[]{other.Uid,admin.Uid}) {
+            Assert.Equal(403,(await Assert.ThrowsAsync<DomainException>(()=>queries.Analytics(denied,"2026-09-15","2026-09-16",a,workspace:true))).Status);
+            await Assert.ThrowsAsync<DomainException>(()=>queries.Report(denied,a,"summary","2026-09-15","2026-09-16",workspace:true));
+            await Assert.ThrowsAsync<DomainException>(()=>queries.Records(denied,a,"sales","2026-09-15","2026-09-16",workspace:true));
+            await Assert.ThrowsAsync<DomainException>(()=>queries.Members(denied,a,workspace:true));
+        }
+        await Assert.ThrowsAsync<DomainException>(()=>queries.Analytics(owner.Uid,"2026-09-15","2026-09-16",workspace:true));
+        await Assert.ThrowsAsync<DomainException>(()=>queries.Analytics(owner.Uid,"2026-09-15","2026-09-16",a,owner.Uid,workspace:true));
         var directory=await queries.Directory(admin.Uid,"businesses","","2026-09-15","2026-09-16",1,100);
         Assert.Equal(-600,directory.Totals.Single(x=>x.Id==a).ProfitCentavos);
         Assert.Single((await queries.Directory(admin.Uid,"users","","2026-09-15","2026-09-16",1,1)).Users);

@@ -12,6 +12,7 @@ public static class ApiEndpoints
 {
     public static void MapApiEndpoints(this WebApplication app, AppOrigins origins)
     {
+        LocalTestSignIn.Map(app, origins);
         Guid UserId(HttpContext ctx) => Guid.Parse(ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }));
         app.MapGet("/health/ready", async (SqlConnectionFactory f) =>
@@ -46,6 +47,10 @@ public static class ApiEndpoints
             await service.Request(UserId(ctx), input);
             return Results.NoContent();
         }).RequireAuthorization();
+        app.MapGet("/api/businesses/{business:guid}/overview/analytics", async (HttpContext ctx, Guid business, string from, string to, AdminQueries queries) => await queries.Analytics(UserId(ctx), from, to, business, workspace: true)).RequireAuthorization();
+        app.MapGet("/api/businesses/{business:guid}/overview/members", async (HttpContext ctx, Guid business, AdminQueries queries) => await queries.Members(UserId(ctx), business, workspace: true)).RequireAuthorization();
+        app.MapGet("/api/businesses/{business:guid}/overview/records/{kind}", async (HttpContext ctx, Guid business, string kind, string from, string to, int? page, int? pageSize, AdminQueries queries) => await queries.Records(UserId(ctx), business, kind, from, to, page ?? 1, pageSize ?? 25, workspace: true)).RequireAuthorization();
+        app.MapGet("/api/businesses/{business:guid}/overview/reports/{report}", async (HttpContext ctx, Guid business, string report, string from, string to, AdminQueries queries) => await queries.Report(UserId(ctx), business, report, from, to, workspace: true)).RequireAuthorization();
         app.MapGet("/api/admin", async (HttpContext ctx, AccountService service) => await service.Admin(UserId(ctx))).RequireAuthorization();
         app.MapGet("/api/admin/analytics", async (HttpContext ctx, string from, string to, Guid? business, Guid? owner, AdminQueries queries) => await queries.Analytics(UserId(ctx), from, to, business, owner)).RequireAuthorization();
         app.MapGet("/api/admin/directory/{kind}", async (HttpContext ctx, string kind, string? search, string from, string to, int? page, int? pageSize, AdminQueries queries) => await queries.Directory(UserId(ctx), kind, search ?? "", from, to, page ?? 1, pageSize ?? 25)).RequireAuthorization();

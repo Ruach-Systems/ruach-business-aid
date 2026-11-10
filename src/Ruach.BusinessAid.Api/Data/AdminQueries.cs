@@ -41,9 +41,10 @@ public sealed class AdminQueries(SqlConnectionFactory connections, AccountServic
         return result;
     }
 
-    public async Task<AdminAnalytics> Analytics(Guid actor, string from, string to, Guid? business = null, Guid? owner = null)
+    public async Task<AdminAnalytics> Analytics(Guid actor, string from, string to, Guid? business = null, Guid? owner = null, bool workspace = false)
     {
-        await accounts.RequireAdmin(actor); Range(from, to);
+        await RequireAccess(actor, workspace, business); Range(from, to);
+        Rules.Require(!workspace || owner is null, "Owner filtering is unavailable for a business overview.");
         await using var c = await connections.Open();
         if (business.HasValue && !await c.ExecuteScalarAsync<bool>("SELECT COUNT(*) FROM dbo.Businesses WHERE Id=@business", new { business }))
             throw new DomainException("not_found", "Business not found.", 404);
@@ -79,9 +80,9 @@ public sealed class AdminQueries(SqlConnectionFactory connections, AccountServic
         return new(summary, trend, top);
     }
 
-    public async Task<List<AdminMember>> Members(Guid actor, Guid business)
+    public async Task<List<AdminMember>> Members(Guid actor, Guid business, bool workspace = false)
     {
-        await accounts.RequireAdmin(actor); await using var c = await connections.Open();
+        await RequireAccess(actor, workspace, business); await using var c = await connections.Open();
         return (await c.QueryAsync<AdminMember>("SELECT u.Id Uid,u.DisplayName,u.Email,m.Role FROM dbo.BusinessMembers m JOIN dbo.Users u ON u.Id=m.UserId WHERE m.BusinessId=@business ORDER BY u.DisplayName,u.Id", new { business })).ToList();
     }
 
@@ -91,9 +92,9 @@ public sealed class AdminQueries(SqlConnectionFactory connections, AccountServic
         return (await c.QueryAsync<AdminMembership>("SELECT b.Id BusinessId,b.Name,m.Role FROM dbo.BusinessMembers m JOIN dbo.Businesses b ON b.Id=m.BusinessId WHERE m.UserId=@user ORDER BY b.Name,b.Id", new { user })).ToList();
     }
 
-    public async Task<AdminRecords> Records(Guid actor, Guid business, string kind, string from, string to, int page = 1, int pageSize = 25)
+    public async Task<AdminRecords> Records(Guid actor, Guid business, string kind, string from, string to, int page = 1, int pageSize = 25, bool workspace = false)
     {
-        await accounts.RequireAdmin(actor); Range(from, to);
+        await RequireAccess(actor, workspace, business); Range(from, to);
         Rules.Require(page is >= 1 and <= 1000000 && pageSize is >= 1 and <= 100, "Choose a valid page and page size (1–100).");
         var (table, date, columns) = kind switch
         {
@@ -128,13 +129,23 @@ public sealed class AdminQueries(SqlConnectionFactory connections, AccountServic
         }
         return new(data, total, page, pageSize);
     }
-    public async Task<object> Report(Guid actor, Guid business, string report, string from, string to)
+    public async Task<object> Report(Guid actor, Guid business, string report, string from, string to, bool workspace = false)
     {
-        await accounts.RequireAdmin(actor); Range(from, to);
+        await RequireAccess(actor, workspace, business); Range(from, to);
         await using var c = await connections.Open();
         if (await c.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM dbo.Businesses WHERE Id=@business", new { business }) == 0)
             throw new DomainException("not_found", "Business not found.", 404);
         return await ReportQueries.Read(c, business, report, from, to);
+    }
+    // Workspace routes never accept this access mode from request parameters.
+    private async Task RequireAccess(Guid actor, bool workspace, Guid? business)
+    {
+        if (!workspace) { await accounts.RequireAdmin(actor); return; }
+        if (!business.HasValue) throw new DomainException("forbidden", "Select a business.", 403);
+        await using var c = await connections.Open();
+        await BusinessService.Authorize(c, null, actor, business.Value, management: true);
+        if (!await c.ExecuteScalarAsync<bool>("SELECT COUNT(*) FROM dbo.Businesses WHERE Id=@business AND OwnerUid=@actor", new { business, actor }))
+            throw new DomainException("forbidden", "Only the business owner can view this overview.", 403);
     }
     private sealed class Line : SaleLine { public Guid SaleId { get; set; } }
 }
