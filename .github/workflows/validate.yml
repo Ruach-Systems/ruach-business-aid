@@ -6,7 +6,7 @@ on:
     inputs:
       api_origin:
         type: string
-        default: https://api-businessaid.mashalsystems.com
+        default: https://v2-api-businessaid.mashalsystems.com
 permissions:
   contents: read
 jobs:
@@ -14,7 +14,7 @@ jobs:
     # Playwright 1.58.1 supports Ubuntu 24.04, not the newer ubuntu-latest image.
     runs-on: ubuntu-24.04
     env:
-      API_ORIGIN: ${{ inputs.api_origin || 'https://api-businessaid.mashalsystems.com' }}
+      API_ORIGIN: ${{ inputs.api_origin || 'https://v2-api-businessaid.mashalsystems.com' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -54,7 +54,19 @@ jobs:
           ./scripts/verify-release.ps1
       - name: Install browser test runtime
         shell: pwsh
-        run: ./tests/Ruach.BusinessAid.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+        run: |
+          # Package mirrors can temporarily fail DNS resolution on hosted runners.
+          # Retry installation, but keep browser validation mandatory.
+          $PSNativeCommandUseErrorActionPreference = $false
+          foreach ($attempt in 1..3) {
+            ./tests/Ruach.BusinessAid.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            if ($attempt -lt 3) {
+              Write-Warning "Browser runtime installation failed (attempt $attempt/3); retrying in 15 seconds."
+              Start-Sleep -Seconds 15
+            }
+          }
+          throw 'Browser runtime installation failed after 3 attempts.'
       - name: Published PWA, responsive, offline and upgrade tests
         env:
           MASHAL_BROWSER_TESTS: 'true'

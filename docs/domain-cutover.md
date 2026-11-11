@@ -14,14 +14,13 @@ under the coordinator's revised non-deploying direction, not owner-approved.
 | Destination local checkout | `D:\WORK\MY APPS\My Business\ruach-business-aid` |
 | Existing Firebase project | `mashal-business-aid` (real resource ID; retain) |
 | Existing live PWA | `https://businessaid.mashalsystems.com` |
-| Existing live API | `https://api-businessaid.mashalsystems.com` |
+| Migration target API | `https://v2-api-businessaid.mashalsystems.com` |
 | Planned PWA | `https://businessaid.ruachsystems.dev` |
 | Planned API | `https://api.businessaid.ruachsystems.dev` |
 
-The coordinator verified the legacy PWA and API liveness/readiness return HTTP
-200 with valid TLS. The **hyphenated** legacy API is authoritative. The obsolete
-`api.businessaid.mashalsystems.com` hostname is NXDOMAIN. Both planned RUACH
-hostnames were also NXDOMAIN at the 8 October 2026 inventory.
+The API migration target is `https://v2-api-businessaid.mashalsystems.com`.
+The hostname replacement does not verify DNS, TLS, database restoration, or live cutover.
+Before deployment, set the GitHub Environment `API_ORIGIN` to this exact HTTPS origin and register its Google OAuth callback.
 
 The destination Production environment contains `PWA_ORIGIN`, `API_ORIGIN` and
 `FIREBASE_PROJECT_ID` with the planned values above. The coordinator also copied
@@ -58,7 +57,7 @@ Set the nonsecret `APP_ORIGIN_PAIRS` GitHub Environment variable to this JSON
 ```json
 [
   {
-    "ApiOrigin": "https://api-businessaid.mashalsystems.com",
+    "ApiOrigin": "https://v2-api-businessaid.mashalsystems.com",
     "PwaOrigin": "https://businessaid.mashalsystems.com"
   },
   {

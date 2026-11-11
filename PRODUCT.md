@@ -28,9 +28,9 @@ version and wire/outbox formats compatible.
 ## Deployment boundaries
 
 Prepare `https://businessaid.ruachsystems.dev` and
-`https://api.businessaid.ruachsystems.dev` without disrupting the existing
+`https://api.businessaid.ruachsystems.dev` alongside the migration target
 `https://businessaid.mashalsystems.com` and
-`https://api-businessaid.mashalsystems.com` pair.
+`https://v2-api-businessaid.mashalsystems.com` pair.
 
 No deployment workflow may be triggered. No direct deployment, production
 DNS/hosting/database change or cutover is authorized. Provider readiness,

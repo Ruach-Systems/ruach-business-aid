@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\scripts\origin-settings.ps1')
-$pairs = '[{"ApiOrigin":"https://api-businessaid.mashalsystems.com","PwaOrigin":"https://businessaid.mashalsystems.com"},{"ApiOrigin":"https://api.businessaid.ruachsystems.dev","PwaOrigin":"https://businessaid.ruachsystems.dev"}]'
+$pairs = '[{"ApiOrigin":"https://v2-api-businessaid.mashalsystems.com","PwaOrigin":"https://businessaid.mashalsystems.com"},{"ApiOrigin":"https://api.businessaid.ruachsystems.dev","PwaOrigin":"https://businessaid.ruachsystems.dev"}]'
 $settings = Get-OriginSettings $pairs
 if ($settings.Count -ne 4 -or $settings['App__OriginPairs__1__ApiOrigin'] -ne 'https://api.businessaid.ruachsystems.dev' -or
     $settings['App__OriginPairs__0__PwaOrigin'] -ne 'https://businessaid.mashalsystems.com') {

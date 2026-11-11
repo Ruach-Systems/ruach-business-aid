@@ -11,9 +11,8 @@ A simple .NET 10 Blazor WebAssembly sales aid with offline operations and a sepa
 **Not deployed.** The RUACH domains and secure provider configuration remain
 pending. Balanced Record is the agent-selected product identity, with owner
 artwork review pending. See [identity source and rebuild](branding/README.md)
-and [cutover/recovery instructions](docs/domain-cutover.md). The existing live
-pair remains `https://businessaid.mashalsystems.com` and
-`https://api-businessaid.mashalsystems.com`.
+and [cutover/recovery instructions](docs/domain-cutover.md). The migration target pair is `https://businessaid.mashalsystems.com` and
+`https://v2-api-businessaid.mashalsystems.com`.
 
 ## Simple solution structure
 
@@ -86,7 +85,7 @@ Register this Google OAuth development redirect URI:
 http://localhost:5080/api/auth/google/callback
 ```
 
-Replace the two Google environment variables with actual credentials and restart the API to test real sign-in. The legacy production callback is `https://api-businessaid.mashalsystems.com/api/auth/google/callback`. Preserve it and the existing Google client; the future RUACH callback is `https://api.businessaid.ruachsystems.dev/api/auth/google/callback`.
+Replace the two Google environment variables with actual credentials and restart the API to test real sign-in. Register the migration API callback `https://v2-api-businessaid.mashalsystems.com/api/auth/google/callback`. Retain the existing Google client and previous callback during migration; the future RUACH callback is `https://api.businessaid.ruachsystems.dev/api/auth/google/callback`.
 
 The development API URL and optional reset control are in Client/wwwroot/appsettings.Development.json. Reset is disabled by default. Local/demo mode and reset are unavailable in Release builds. No SQL connection string, OAuth secret, or certificate belongs in Client configuration.
 

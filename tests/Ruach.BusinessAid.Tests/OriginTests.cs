@@ -17,7 +17,7 @@ namespace Ruach.Tests;
 
 public class OriginTests
 {
-    private const string OldApi = "https://api-businessaid.mashalsystems.com";
+    private const string OldApi = "https://v2-api-businessaid.mashalsystems.com";
     private const string OldPwa = "https://businessaid.mashalsystems.com";
     private const string NewApi = "https://api.businessaid.ruachsystems.dev";
     private const string NewPwa = "https://businessaid.ruachsystems.dev";

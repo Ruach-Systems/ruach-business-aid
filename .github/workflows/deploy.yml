@@ -9,7 +9,7 @@ on:
       api_origin:
         description: HTTPS API origin compiled into the PWA
         type: string
-        default: https://api-businessaid.mashalsystems.com
+        default: https://v2-api-businessaid.mashalsystems.com
         required: true
       database_ready_confirmed:
         description: I reviewed database/migrations and manually applied any required scripts to this environment
