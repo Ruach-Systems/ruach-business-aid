@@ -25,3 +25,19 @@ Reference successful run 42782645018: validation 9m46s, browser installation 1m4
 browser tests 5m18s, API deployment 1m09s, PWA deployment 43s. These are elapsed
 runner timings, not a billing calculation. Cache benefits require a warm run;
 new timings and billed-minute savings have not yet been measured.
+
+## Manual direct deployments
+
+Use **Deploy API directly** (`deploy-api-direct.yml`) or **Deploy PWA directly**
+(`deploy-pwa-direct.yml`) from Actions > Run workflow. Select the branch/ref and
+Test or Production. These workflows only run on `workflow_dispatch` and publish
+only the selected project and its dependencies. They do not run tests, migration
+checks, schema/readiness checks, release validation, or post-deployment smoke tests.
+They do not apply database migrations.
+
+Both use the selected GitHub Environment's existing variables and secrets. The
+PWA compiles `API_ORIGIN` from that environment. API deployment retains the shared
+script's required configuration/certificate handling and exclusion of `App_Data`.
+Build or deployment errors still fail the workflow. Environment protection rules
+still apply. All deployment workflows share the same per-environment concurrency
+group to prevent overlapping releases. The full validated workflow remains available.

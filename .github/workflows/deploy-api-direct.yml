@@ -1,0 +1,56 @@
+name: Deploy API directly
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target GitHub Environment
+        type: choice
+        options: [Test, Production]
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+jobs:
+  deploy-api:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.environment }}
+    env:
+      ConnectionStrings__Mashal: ${{ secrets.SQL_APP_CONNECTION_STRING }}
+      Google__ClientId: ${{ secrets.GOOGLE_CLIENT_ID }}
+      Google__ClientSecret: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      DataProtection__CertificateBase64: ${{ secrets.DATA_PROTECTION_CERTIFICATE_BASE64 }}
+      DataProtection__CertificatePassword: ${{ secrets.DATA_PROTECTION_CERTIFICATE_PASSWORD }}
+      App__Origin: ${{ vars.PWA_ORIGIN }}
+      MASHAL_ADMIN_EMAILS: ${{ vars.MASHAL_ADMIN_EMAILS }}
+      WEBDEPLOY_ENDPOINT: ${{ secrets.WEBDEPLOY_ENDPOINT }}
+      WEBDEPLOY_SITE: ${{ secrets.WEBDEPLOY_SITE }}
+      WEBDEPLOY_USERNAME: ${{ secrets.WEBDEPLOY_USERNAME }}
+      WEBDEPLOY_PASSWORD: ${{ secrets.WEBDEPLOY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Build.props', 'NuGet.config', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Publish API
+        shell: pwsh
+        run: |
+          dotnet publish src/Ruach.BusinessAid.Api -c Release -o artifacts/api -p:UseAppHost=false
+          if ($LASTEXITCODE -ne 0) { throw 'API publish failed.' }
+      - name: Install Web Deploy if needed
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe')) {
+            choco install webdeploy --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Web Deploy installation failed.' }
+          }
+      - name: Deploy API
+        shell: pwsh
+        run: ./scripts/deploy-api.ps1
