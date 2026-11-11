@@ -21,13 +21,9 @@ concurrency:
   group: deploy-${{ inputs.environment }}
   cancel-in-progress: false
 jobs:
-  build-test:
-    uses: ./.github/workflows/validate.yml
-    with:
-      api_origin: ${{ inputs.api_origin }}
   verify-deployment:
     name: Verify deployment inputs
-    needs: build-test
+    timeout-minutes: 2
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
@@ -46,9 +42,15 @@ jobs:
             exit 1
           fi
           echo 'Database readiness was manually confirmed. This workflow did not access or modify the database.'
+  build-test:
+    needs: verify-deployment
+    uses: ./.github/workflows/validate.yml
+    with:
+      api_origin: ${{ inputs.api_origin }}
   deploy-api:
     name: Deploy ASP.NET Core to MyASP.NET
-    needs: verify-deployment
+    needs: build-test
+    timeout-minutes: 15
     runs-on: windows-latest
     environment: ${{ inputs.environment }}
     env:
@@ -116,7 +118,11 @@ jobs:
           }
       - name: Install Web Deploy
         shell: pwsh
-        run: choco install webdeploy --yes --no-progress
+        run: |
+          if (!(Test-Path 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe')) {
+            choco install webdeploy --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Web Deploy installation failed.' }
+          }
       - name: Configure and deploy API
         shell: pwsh
         run: ./scripts/deploy-api.ps1
@@ -148,6 +154,7 @@ jobs:
   deploy-pwa:
     name: Deploy PWA to Firebase Hosting
     needs: deploy-api
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     env:
@@ -166,6 +173,11 @@ jobs:
       - uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Cache Firebase CLI downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: firebase-cli-${{ runner.os }}-node22-14.12.1
       - name: Deploy validated PWA artifact
         run: |
           npx firebase-tools@14.12.1 deploy --only hosting --project "$FIREBASE_PROJECT_ID" --config firebase.json --non-interactive
