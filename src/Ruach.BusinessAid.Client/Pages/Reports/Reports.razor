@@ -3,7 +3,7 @@
 @inherits PageBase
 @inject ApiClient Api
 <div class="page reports-page">
-<PageHeading Title="Reports" Eyebrow="Business performance" Description="See revenue, item cost, gross profit, expenses, and net profit." />
+<PageHeading Title="Reports" Description="Choose a date range to see financial totals, sales by item, and expenses by category." />
 @if(!Store.Online && Store.User?.IsDemo!=true){<section class="card empty"><h2>Reports require an online account</h2><p>Connect and synchronize your records to view financial reports.</p></section>}
 else{
 @if(Store.User?.IsDemo==true){<p class="notice">Local preview · Calculated from sales and expenses saved on this device.</p>}

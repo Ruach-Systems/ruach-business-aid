@@ -30,8 +30,8 @@ public partial class BrowserTests
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button,new(){Name="Open Owner shop",Exact=true}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Level = 1, Exact = true })).ToBeVisibleAsync();
-        await page.GetByRole(AriaRole.Link, new() { Name = "Business records", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Business records",Exact=true})).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "Analytics", Exact = true }).ClickAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Analytics",Exact=true})).ToBeVisibleAsync();
         await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Sales & profit",Exact=true})).ToBeVisibleAsync();
         await Expect(page.Locator(".bottom-nav a[href='/business-overview'] svg")).ToBeVisibleAsync();
         foreach(var tab in new[]{"Sales","Expenses","Items","Receipts","Adjustments","Members","Summary"}) {
@@ -43,7 +43,7 @@ public partial class BrowserTests
             await page.SetViewportSizeAsync(width,900);
             var nav = page.GetByRole(AriaRole.Navigation, new() { Name = width >= 980 ? "Main navigation" : "Mobile navigation" });
             await Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Today", Exact = true })).ToHaveAttributeAsync("href", "/dashboard");
-            await Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Business records", Exact = true })).ToHaveAttributeAsync("aria-current", "page");
+            await Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Analytics", Exact = true })).ToHaveAttributeAsync("aria-current", "page");
             Assert.True(await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth + 1"));
             Assert.True(await page.EvaluateAsync<bool>("document.querySelector('.admin-profile').getBoundingClientRect().top >= document.querySelector('.page-heading').getBoundingClientRect().bottom"));
         }
