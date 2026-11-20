@@ -153,18 +153,50 @@ public partial class ComponentTests
         var store = await LocalStore(context);
         store.Data.Items.Add(new() { Id = Guid.NewGuid(), Name = "Juice", IsActive = true, SellingPriceCentavos = 3500, UnitCostCentavos = 1000 });
         var page = context.Render<Sales>();
-        Assert.True(page.Find(".stepper button").HasAttribute("disabled"));
+        Assert.Empty(page.FindAll(".sale-line"));
+        page.Find(".product").Click();
+        Assert.Equal("1", page.Find(".stepper input").GetAttribute("value"));
         page.Find(".stepper input").Input("1000000");
         Assert.True(page.FindAll(".stepper button")[1].HasAttribute("disabled"));
         page.Find(".stepper input").Input("9223372036854775807");
         Assert.All(page.FindAll(".totals-card strong"), x => Assert.Equal("—", x.TextContent));
         page.Find("#sale-search").Input("not a match");
+        Assert.Empty(page.FindAll(".product"));
         Assert.Single(page.FindAll(".stepper input"));
         page.FindAll("form")[1].Submit();
         Assert.Empty(store.State!.Outbox);
         page.Find(".stepper input").Input("2");
         Assert.Equal("₱70.00", page.FindAll(".totals-card strong")[1].TextContent);
-        Assert.False(page.Find(".sale-checkout button").HasAttribute("disabled"));
+        Assert.False(page.Find(".sale-checkout button.primary").HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task RegisterCanRemoveInvalidLinesAndRequiresReviewWhenAProductBecomesUnavailable()
+    {
+        using var context = Context();
+        var store = await LocalStore(context);
+        var juice = new Item { Id = Guid.NewGuid(), Name = "Juice", IsActive = true, SellingPriceCentavos = 3500 };
+        var bread = new Item { Id = Guid.NewGuid(), Name = "Bread", IsActive = true, SellingPriceCentavos = 800 };
+        store.Data.Items.AddRange([juice, bread]);
+        var page = context.Render<Sales>();
+        page.Find("[aria-label='Add Juice to sale']").Click();
+        page.Find("[aria-label='Add Bread to sale']").Click();
+        page.Find("[aria-label='Juice quantity sold']").Input("1000001");
+        page.Find("[aria-label='Remove Juice from sale']").Click();
+        page.Find("[aria-label='Add Juice to sale']").Click();
+        Assert.Equal("1", page.Find("[aria-label='Juice quantity sold']").GetAttribute("value"));
+        Assert.Equal("₱43.00", page.Find(".amount-due strong").TextContent);
+
+        juice.IsActive = false;
+        page.Find("#sale-search").Input("bread");
+        page.Find("#record-sale").Submit();
+        Assert.Empty(store.State!.Outbox);
+        Assert.Equal("—", page.Find(".amount-due strong").TextContent);
+        page.Find(".unavailable button").Click();
+        Assert.Equal("₱8.00", page.Find(".amount-due strong").TextContent);
+        page.Find("[aria-label='Decrease Bread quantity']").Click();
+        Assert.Empty(page.FindAll(".sale-line"));
+        Assert.True(page.Find(".sale-checkout button.primary").HasAttribute("disabled"));
     }
 
     [Fact]
@@ -175,10 +207,14 @@ public partial class ComponentTests
         for (var i = 0; i < Rules.MaxSaleLines + 1; i++)
             store.Data.Items.Add(new() { Id = Guid.NewGuid(), Name = $"Item {i}", IsActive = true, SellingPriceCentavos = Rules.MaxCentavos, UnitCostCentavos = Rules.MaxCentavos });
         var page = context.Render<Sales>();
-        foreach (var input in page.FindAll(".stepper input")) input.Input("1000000");
+        foreach (var item in store.Items)
+        {
+            page.Find($"[aria-label='Add {item.Name} to sale']").Click();
+            page.Find($"#sale-quantity-{item.Id}").Input("1000000");
+        }
         Assert.Contains("at most 500", page.Markup);
         Assert.All(page.FindAll(".totals-card strong"), x => Assert.Equal("—", x.TextContent));
-        Assert.False(page.Find(".sale-checkout button").HasAttribute("disabled"));
+        Assert.False(page.Find(".sale-checkout button.primary").HasAttribute("disabled"));
     }
 
     [Fact]

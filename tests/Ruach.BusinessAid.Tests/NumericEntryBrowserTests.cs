@@ -64,9 +64,10 @@ public partial class BrowserTests
         await Expect(page.Locator(".cost-preview")).ToContainTextAsync("₱30.00");
 
         await page.GotoAsync(host.Url + "/sales");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Add Juice to sale", Exact = true }).ClickAsync();
         var quantity = page.GetByLabel("Juice quantity sold", new() { Exact = true });
         var increase = page.GetByRole(AriaRole.Button, new() { Name = "Increase Juice quantity", Exact = true });
-        await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Decrease Juice quantity", Exact = true })).ToBeDisabledAsync();
+        await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Decrease Juice quantity", Exact = true })).ToBeEnabledAsync();
         await quantity.FillAsync("1000000");
         await Expect(increase).ToBeDisabledAsync();
         await quantity.FillAsync("9223372036854775807");
@@ -105,8 +106,8 @@ public partial class BrowserTests
         }
         await page.SetViewportSizeAsync(390, 844);
         await Expect(page.Locator(".totals-card strong").Nth(1)).ToHaveTextAsync("₱70.00");
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save 2 items", Exact = true }).ClickAsync();
-        await Expect(quantity).ToHaveValueAsync("");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Record sale", Exact = true }).ClickAsync();
+        await Expect(quantity).ToHaveCountAsync(0);
         var state = await ReadState(page, account.Uid);
         Assert.Equal(7000, state.GetProperty("data").GetProperty("sales")[0].GetProperty("totalRevenueCentavos").GetInt64());
 

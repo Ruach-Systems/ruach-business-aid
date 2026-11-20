@@ -137,7 +137,7 @@ public partial class BrowserTests
         await Expect(preview.Locator("a.sale-history-link")).ToHaveCountAsync(5);
         await Expect(preview.Locator("a.sale-history-link").First).ToHaveAttributeAsync("href", $"/sales/{sales[6].Id}");
         await Expect(preview.GetByRole(AriaRole.Link, new() { Name = "View all", Exact = true })).ToHaveAttributeAsync("href", "/sales/history");
-        await preview.GetByRole(AriaRole.Link, new() { Name = "View all sales history by date", Exact = true }).ClickAsync();
+        await preview.GetByRole(AriaRole.Link, new() { Name = "View all", Exact = true }).ClickAsync();
         await page.GetByLabel("Period", new() { Exact = true }).SelectOptionAsync("all");
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(7);
         foreach (var preset in new[] { "today", "yesterday", "week", "month" })
