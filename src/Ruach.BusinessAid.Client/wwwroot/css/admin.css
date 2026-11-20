@@ -32,20 +32,13 @@
 .admin-counts article:last-child { border:0; }
 .admin-counts strong { display:block; font-size:26px; margin-bottom:6px; }
 .admin-counts span { font-size:12px; color:#696270; }
-.admin-period { display:flex; align-items:end; gap:12px; flex-wrap:wrap; margin:24px 0 12px; }
-.admin-period h2 { flex:1; margin:auto 0; }
-.admin-period .field { margin:0; min-width:140px; }
-.admin-period input,.admin-period select { min-height:44px; }
 .admin-financials { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin-top:20px; }
 .admin-financials .card { padding:20px 16px; }
 .admin-financials strong { display:block; font-size:clamp(18px,1.8vw,28px); letter-spacing:-.04em; margin-top:12px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
 .admin-financials .net-profit { background:#EFE8F1; border-color:#D6CDD2; color:#321C3B; }
 .admin-charts { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:20px; margin:24px 0; }
 .admin-charts>.card:only-child { grid-column:1/-1; }
-.chart-legend,.chart-dates { display:flex; gap:20px; font-size:12px; margin:16px 0; }
-.chart-legend span:first-child { color:#B21F32; }.chart-legend span:last-child { color:#321C3B; }
-.chart-dates { justify-content:space-between; color:#696270; }
-.admin-chart { display:block; width:100%; height:auto; }
+.chart-dates { display:flex; font-size:12px; gap:12px; justify-content:space-between; color:#696270; }
 .admin-trend-table summary { min-height:44px; padding:12px 0; cursor:pointer; font-size:13px; }
 :is(.admin-shell, .business-overview) .table-scroll { overflow:auto; max-width:100%; }
 :is(.admin-shell, .business-overview) table { width:100%; white-space:nowrap; font-size:13px; }
@@ -73,7 +66,6 @@
  :is(.admin-shell, .business-overview) .card{padding:18px}:is(.admin-shell, .business-overview) h2{font-size:17px}.pending-panel .section-heading{align-items:flex-start}.pending-panel .section-heading>.button{padding:6px;white-space:nowrap}
  .pending-row{gap:8px}.pending-row strong{font-size:14px}.pending-row .button{font-size:12px;padding:8px}
  .admin-counts{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 0;padding:20px 0}.admin-counts article:nth-child(2){border:0}.admin-counts strong{font-size:24px}
- .admin-period h2{flex-basis:100%;margin-bottom:8px}.admin-period .field{flex:1;min-width:110px}.admin-period .button{flex-shrink:0}
  .admin-financials{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.admin-financials .card{padding:18px 12px}.admin-financials strong{font-size:22px}.admin-financials .net-profit{grid-column:1/-1}.admin-financials .net-profit strong{font-size:28px}
  .admin-record-line{font-size:13px;gap:8px}.admin-record-line>strong{flex-shrink:0}.admin-sale summary strong{float:none;display:block;margin:8px 0 0}:is(.admin-shell, .business-overview) .account-actions-row{flex-wrap:wrap}
 }
@@ -91,8 +83,39 @@ html.density-compact :is(.admin-shell, .business-overview) .button,html.density-
 
 .chart-with-axis { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:8px; align-items:stretch; }
 .chart-axis { display:flex; flex-direction:column; justify-content:space-between; padding:9px 0; text-align:right; color:#696270; font-size:12px; font-variant-numeric:tabular-nums; }
-.chart-with-axis .admin-chart { height:180px; }
 .admin-trend-table summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
 .admin-trend-table td:not(:first-child), .admin-trend-table th:not(:first-child) { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
-.chart-legend { flex-wrap:wrap; }
-@media(max-width:600px) { .chart-with-axis .admin-chart { height:180px; } .chart-dates { gap:8px; font-size:12px; } }
+
+/* Financial performance and the owner analytics workspace */
+.performance-filter-panel { margin-top:20px; }
+.performance-filter-panel h2 { margin:0 0 14px; }
+.performance-filters { display:grid; gap:12px; align-items:start; }
+.performance-filters .field { min-width:0; margin:0; }
+.performance-filters :is(input, select) { width:100%; min-width:0; min-height:44px; }
+.performance-dates { display:grid; gap:10px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.performance-filters input[type="date"] { padding-inline:8px; }
+.performance-filters input::-webkit-date-and-time-value { text-align:left; }
+.performance-filters .date-error { color:var(--mashal-danger); font-size:12px; line-height:1.4; }
+.performance-range { margin:12px 0 0; }
+.business-overview .performance-filter-panel { margin-top:0; }
+.business-detail .admin-charts { gap:12px; margin-block:16px 24px; }
+.business-detail .analytics-records-heading { margin:20px 0 0; }
+.business-detail .admin-detail-tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; margin:12px 0; overflow:visible; border:1px solid var(--mashal-line); border-radius:12px; background:var(--mashal-paper); }
+.business-detail .admin-detail-tabs .button { padding:6px 2px; font-size:12px; min-width:0; border-color:transparent; }
+.business-detail .admin-record-line:last-child { border-bottom:0; }
+@media (min-width:768px) {
+  .performance-filters { grid-template-columns:minmax(135px,1fr) minmax(0,2fr) auto; }
+  .business-detail .performance-filters { grid-template-columns:minmax(135px,1fr) minmax(0,2fr); }
+  .performance-filters > .button { margin-top:20px; min-height:44px; }
+}
+@media (max-width:430px) {
+  .performance-dates { grid-template-columns:1fr; }
+}
+
+.business-detail .business-metadata,
+.business-detail .extra-business-records { padding-block:0; }
+.business-metadata > summary,
+.extra-business-records > summary { min-height:44px; padding-block:12px; cursor:pointer; font-size:13px; font-weight:700; }
+.business-metadata { margin-top:14px; }
+.extra-business-records { margin-bottom:12px; }
+.extra-record-actions { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:12px; }

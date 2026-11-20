@@ -1,9 +1,39 @@
 @namespace Ruach.BusinessAid.Client.Pages
 @inherits PageBase
 @inject ApiClient Api
-<section class="card admin-profile"><span class="status-badge">Read-only</span><h2>@Business.Name</h2><p>@Business.DefaultLocation</p><p>@Owner?.DisplayName · @Owner?.Email</p><p>Created @Business.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy") · PHP · Asia/Manila</p></section>
-<AdminPerformance @key="Business.Id" BusinessId="Business.Id" Workspace="Workspace" Busy="Saving" RangeChanged="ChangeRange" />
-<nav class="admin-detail-tabs" aria-label="Business detail sections">@foreach(var section in new[]{"Summary","Sales","Expenses","Items","Receipts","Adjustments","Members"}){<button class="button @(tab==section?"primary":"ghost")" aria-pressed="@(tab==section ? "true" : "false")" disabled="@Saving" @onclick="()=>Select(section)">@section</button>}</nav>
+<div class="business-detail">
+    @if (!Workspace)
+    {
+        <details class="card business-metadata">
+            <summary>Business details</summary>
+            <dl class="account-details">
+                <div><dt>Location</dt><dd>@Business.DefaultLocation</dd></div>
+                <div><dt>Owner</dt><dd>@Owner?.DisplayName · @Owner?.Email</dd></div>
+                <div><dt>Created</dt><dd>@Business.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("MMM d, yyyy")</dd></div>
+            </dl>
+        </details>
+    }
+
+    <AdminPerformance @key="Business.Id" BusinessId="Business.Id" Workspace="Workspace" Busy="Saving" RangeChanged="ChangeRange" />
+    <h2 class="analytics-records-heading">Business records</h2>
+    <nav class="admin-detail-tabs" aria-label="Business detail sections">
+        @foreach (var section in AnalyticsSections)
+        {
+            <button class="button @(tab == section ? "primary" : "ghost")" aria-pressed="@(tab == section ? "true" : "false")" disabled="@Saving" @onclick="() => Select(section)">@section</button>
+        }
+    </nav>
+    @if (!Workspace)
+    {
+        <details class="card extra-business-records">
+            <summary>More records</summary>
+            <div class="extra-record-actions" role="group" aria-label="Additional business records">
+                @foreach (var section in AdditionalSections)
+                {
+                    <button class="button @(tab == section ? "primary" : "ghost")" aria-pressed="@(tab == section ? "true" : "false")" disabled="@Saving" @onclick="() => Select(section)">@section</button>
+                }
+            </div>
+        </details>
+    }
 <ErrorBanner Message="@Error" />
 @if(!Store.Online){<p role="status">Connect to inspect business records.</p>}
 else if(Saving){<p role="status">Loading business records…</p>}
@@ -17,7 +47,7 @@ else if(records is {} result){
 @if(tab=="Items"){<p class="admin-caption">Current inventory, independent of the selected dates.</p>}
 @foreach(var group in result.Data.Sales.GroupBy(x=>x.SaleDate)){
 <h3>@FriendlyDate(group.Key,Today())</h3>
-@foreach(var sale in group){<details class="admin-sale"><summary><span>@Quantity(sale.TotalItems) items · @sale.Location</span><strong>@Money(sale.TotalRevenueCentavos)</strong></summary><p class="admin-caption">Recorded @sale.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g") · @sale.Id</p>@foreach(var line in sale.Lines){<div class="admin-record-line"><div><strong>@line.ItemName</strong><small>@Quantity(line.Quantity) × @Money(line.UnitPriceCentavos) · Unit cost @Money(line.UnitCostCentavos)</small></div><strong>@Money(line.LineRevenueCentavos)</strong></div>}<p>Item cost @Money(sale.TotalCostCentavos) · Gross profit @Money(sale.TotalProfitCentavos)</p></details>}}
+@foreach(var sale in group){<details class="admin-sale"><summary><span>@Quantity(sale.TotalItems) items · @sale.Location</span><strong>@Money(sale.TotalRevenueCentavos)</strong></summary><p class="admin-caption">Recorded @sale.CreatedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g")@if (!Workspace) { <text> · @sale.Id</text> }</p>@foreach(var line in sale.Lines){<div class="admin-record-line"><div><strong>@line.ItemName</strong><small>@Quantity(line.Quantity) × @Money(line.UnitPriceCentavos) · Unit cost @Money(line.UnitCostCentavos)</small></div><strong>@Money(line.LineRevenueCentavos)</strong></div>}<p>Item cost @Money(sale.TotalCostCentavos) · Gross profit @Money(sale.TotalProfitCentavos)</p></details>}}
 @foreach(var expense in result.Data.Expenses){<article class="admin-record-line"><div><strong>@expense.Description</strong><small>@expense.ExpenseDate · @expense.Category</small></div><strong>@Money(expense.AmountCentavos)</strong></article>}
 @foreach(var item in result.Data.Items){<article class="admin-record-line"><div><strong>@item.Name</strong><small>Price @Money(item.SellingPriceCentavos) · Cost @Money(item.UnitCostCentavos)</small><small>Minimum @Quantity(item.MinimumQuantity) · @(item.IsActive?"Active":"Inactive")</small></div><div><strong>@Quantity(item.CurrentQuantity) in stock</strong>@if(item.IsActive && item.CurrentQuantity<=item.MinimumQuantity){<span class="status-badge pending">Low stock</span>}</div></article>}
 @foreach(var receipt in result.Data.Receipts){<article class="admin-record-line"><div><strong>@receipt.ItemName</strong><small>@receipt.ReceivedAt.ToOffset(TimeSpan.FromHours(8)).ToString("g") · @Quantity(receipt.Quantity) × @Money(receipt.UnitCostCentavos)</small><p>@receipt.Note</p></div><strong>@Money(receipt.TotalCostCentavos)</strong></article>}
@@ -25,10 +55,13 @@ else if(records is {} result){
 @if(result.Total==0){<p>No @tab.ToLowerInvariant() found.</p>}
 <div class="admin-paging"><button class="button ghost" disabled="@(page==1)" @onclick="()=>Page(-1)">Previous</button><span>Page @(page) · @result.Total records</span><button class="button ghost" disabled="@(page*result.PageSize>=result.Total)" @onclick="()=>Page(1)">Next</button></div>
 </section>}
+</div>
 @code {
     [Parameter] public bool Workspace { get; set; }
     [Parameter,EditorRequired] public Business Business {get;set;}=default!;
     [Parameter] public AdminUser? Owner {get;set;}
+    private static readonly string[] AnalyticsSections = ["Summary", "Sales", "Expenses", "Items"];
+    private static readonly string[] AdditionalSections = ["Receipts", "Adjustments", "Members"];
     private string tab="Summary",from=Period("month").From,to=Period("month").To;
     private int page=1;
     private AdminRecords? records;

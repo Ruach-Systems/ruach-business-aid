@@ -1,9 +1,9 @@
 @namespace Ruach.BusinessAid.Client.Pages
-@page "/business-overview"
+@page "/analytics"
 @inherits PageBase
 
 <div class="page business-overview">
-    <PageHeading Title="Analytics" Description="Explore sales and profit trends, then review the transactions behind them." />
+    <PageHeading Title="Analytics" Description="Explore sales and profit trends and review individual transactions." />
     @if (Store.User?.IsDemo == true)
     {
         <section class="card"><h2>Connect a business account</h2><p>Sign in with your business account to view synchronized records.</p></section>
@@ -14,7 +14,7 @@
         {
             <p class="notice">@Store.PendingCount device changes will appear here after synchronization.</p>
         }
-        <AdminBusinessDetails @key="business.Id" Business="business" Workspace="true" Owner="@(new AdminUser(business.OwnerUid, user.DisplayName, user.Email, user.PhoneNumber, default, 1))" />
+        <AdminBusinessDetails @key="business.Id" Business="business" Workspace="true" />
     }
     else
     {

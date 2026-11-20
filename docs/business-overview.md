@@ -1,6 +1,6 @@
 # Analytics
 
-`/business-overview` exposes the existing RUACH Admin business inspection view to the selected business's owner. Desktop and mobile navigation label this view **Analytics**. **Today** opens the daily dashboard.
+`/analytics` exposes the existing RUACH Admin business inspection view to the selected business's owner. Desktop and mobile navigation label this view **Analytics**. **Today** opens the daily dashboard.
 
 The page reuses `AdminBusinessDetails` and `AdminPerformance` with an explicit workspace mode. Their default remains platform-admin mode. Both views share the profile, five financial figures, trend chart and exact-value table, period controls, and Summary/Sales/Expenses/Items/Receipts/Adjustments/Members sections. The existing read-only records and pagination are retained.
 
