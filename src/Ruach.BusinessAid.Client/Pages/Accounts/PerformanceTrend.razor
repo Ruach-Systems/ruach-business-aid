@@ -1,0 +1,116 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@using System.Globalization
+@using static Ruach.BusinessAid.Shared.Calculations
+
+<section class="card trend-card" aria-label="Sales and profit trend">
+    <h2>Sales &amp; profit</h2>
+    @if (RangeLabel is not null)
+    {
+        <p class="admin-caption trend-range">Chart period · @RangeLabel</p>
+    }
+    @if (Rows.Count == 0)
+    {
+        <p class="empty-state">No sales or expenses in this period.</p>
+    }
+    else
+    {
+        var row = Rows[selected];
+        var x = X(selected);
+        <div class="trend-selection" aria-live="polite">
+            <time datetime="@row.Period">@DisplayDate(row.Period)</time>
+            <div><span class="trend-key revenue-key">Revenue</span><strong>@Money(row.RevenueCentavos)</strong></div>
+            <div><span class="trend-key profit-key">Net profit</span><strong>@Money(row.ProfitCentavos)</strong></div>
+        </div>
+        <div class="chart-with-axis">
+            <div class="chart-axis" aria-hidden="true">
+                <span>@AxisAmount(Max)</span><span>@AxisAmount((Max + Min) / 2)</span><span>@AxisAmount(Min)</span>
+            </div>
+            <svg class="trend-plot" viewBox="0 0 600 180" preserveAspectRatio="none" aria-hidden="true">
+                <line class="trend-gridline" x1="12" x2="588" y1="16" y2="16" />
+                <line class="trend-gridline" x1="12" x2="588" y1="90" y2="90" />
+                <line class="trend-gridline" x1="12" x2="588" y1="164" y2="164" />
+                <line class="trend-zero" x1="12" x2="588" y1="@PointY(0)" y2="@PointY(0)" />
+                <g class="trend-series">
+                    @if (Rows.Count > 1)
+                    {
+                        <polyline class="trend-revenue" points="@Points(false)" />
+                        <polyline class="trend-profit" points="@Points(true)" />
+                    }
+                </g>
+                <line class="trend-cursor" x1="@Number(x)" x2="@Number(x)" y1="16" y2="164" />
+                <circle class="trend-marker trend-revenue" cx="@Number(x)" cy="@PointY(row.RevenueCentavos)" r="4" />
+                <circle class="trend-marker trend-profit" cx="@Number(x)" cy="@PointY(row.ProfitCentavos)" r="4" />
+                @if (Rows.Count > 1)
+                {
+                    @for (var i = 0; i < Rows.Count; i++)
+                    {
+                        var index = i;
+                        var left = index == 0 ? 0 : (X(index - 1) + X(index)) / 2;
+                        var right = index == Rows.Count - 1 ? 600 : (X(index + 1) + X(index)) / 2;
+                        <rect class="trend-hit" x="@Number(left)" width="@Number(right - left)" y="0" height="180" @onclick="() => selected = index" />
+                    }
+                }
+            </svg>
+        </div>
+        @if (Rows.Count > 1)
+        {
+            <p class="admin-caption">Tap the chart or move the slider to select a date.</p>
+            <div class="trend-control">
+                <input type="range" min="0" max="@(Rows.Count - 1)" @bind="selected" @bind:event="oninput" aria-label="Select trend date" aria-valuetext="@DisplayDate(row.Period)" />
+                <div class="chart-dates"><span>@DisplayDate(Rows[0].Period)</span><span>@DisplayDate(Rows[^1].Period)</span></div>
+            </div>
+        }
+        <details class="admin-trend-table">
+            <summary>View daily amounts</summary>
+            <div class="table-scroll" tabindex="0" role="region" aria-label="Daily financial trends">
+                <table>
+                    <thead><tr><th>Date</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead>
+                    <tbody>
+                        @foreach (var day in Rows)
+                        {
+                            <tr><td>@day.Period</td><td>@Money(day.RevenueCentavos)</td><td>@Money(day.CostCentavos)</td><td>@Money(day.GrossProfitCentavos)</td><td>@Money(day.ExpenseCentavos)</td><td>@Money(day.ProfitCentavos)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<SalesTrend> Rows { get; set; } = [];
+    [Parameter] public string? RangeLabel { get; set; }
+    private int selected;
+    private double Min, Max;
+    private double[] positions = [];
+
+    protected override void OnInitialized()
+    {
+        if (Rows.Count == 0) return;
+        selected = Rows.Count - 1;
+        Min = Math.Min(0, Rows.Min(row => Math.Min(row.RevenueCentavos, row.ProfitCentavos)));
+        Max = Math.Max(0, Rows.Max(row => Math.Max(row.RevenueCentavos, row.ProfitCentavos)));
+        if (Max == Min) Max = 100;
+        var first = DateOnly.Parse(Rows[0].Period).DayNumber;
+        var span = DateOnly.Parse(Rows[^1].Period).DayNumber - first;
+        positions = Rows.Select(row => span == 0 ? 300 : 12 + 576d * (DateOnly.Parse(row.Period).DayNumber - first) / span).ToArray();
+    }
+
+    private double X(int index) => positions[index];
+    private string PointY(long value) => Number(164 - (value - Min) / (Max - Min) * 148);
+    private string Points(bool profit) => string.Join(" ", Rows.Select((row, i) =>
+        $"{Number(X(i))},{PointY(profit ? row.ProfitCentavos : row.RevenueCentavos)}"));
+    private static string Number(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    private static string DisplayDate(string value) => DateOnly.Parse(value).ToString("MMM d, yyyy");
+    private static string AxisAmount(double centavos)
+    {
+        var pesos = centavos / 100;
+        return Math.Abs(pesos) switch
+        {
+            >= 1_000_000_000 => $"₱{pesos / 1_000_000_000:0.#}B",
+            >= 1_000_000 => $"₱{pesos / 1_000_000:0.#}M",
+            >= 1_000 => $"₱{pesos / 1_000:0.#}K",
+            _ => $"₱{pesos:0.##}"
+        };
+    }
+}

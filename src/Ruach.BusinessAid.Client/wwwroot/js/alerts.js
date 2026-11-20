@@ -15,12 +15,18 @@ function modal(options) {
     dialog?.setAttribute('aria-label', options.title);
     const buttons = () => [...dialog.querySelectorAll('button:not([disabled])')];
     const cancel = dialog?.querySelector('[data-action="cancel"]');
-    const focusWhenVisible = () => {
-      if (!dialog?.isConnected) return;
-      if (!dialog.closest('.cool-alert-modal-overlay').classList.contains('active') || !dialog.getBoundingClientRect().width || getComputedStyle(dialog.closest('.cool-alert-modal-overlay')).visibility === 'hidden') { setTimeout(focusWhenVisible, 50); return; }
-      (cancel || buttons()[0])?.focus();
-    };
-    setTimeout(focusWhenVisible, 50);
+    // Focus can fall back to body without a focusin event on another element.
+    // Check after the browser completes the transition, including Tab navigation.
+    let focusFrame;
+    function scheduleFocusCheck() {
+      cancelAnimationFrame(focusFrame);
+      focusFrame = requestAnimationFrame(() => {
+        if (!dialog.isConnected || dialog.contains(document.activeElement)) return;
+        (cancel || buttons()[0])?.focus({ preventScroll: true });
+        if (!dialog.contains(document.activeElement)) scheduleFocusCheck();
+      });
+    }
+    scheduleFocusCheck();
     const keydown = event => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); (cancel || dialog?.querySelector('[data-action="confirm"]'))?.click(); }
       if (event.key === 'Tab') {
@@ -29,11 +35,21 @@ function modal(options) {
         else if (!event.shiftKey && index === list.length - 1) { event.preventDefault(); list[0]?.focus(); }
       }
     };
-    const keepFocus = event => { if (dialog?.isConnected && !dialog.contains(event.target)) (cancel || buttons()[0])?.focus(); };
+    const keepFocus = event => { if (!dialog.contains(event.target)) scheduleFocusCheck(); };
+    dialog.addEventListener('focusout', scheduleFocusCheck);
     document.addEventListener('focusin', keepFocus, true);
     document.addEventListener('keydown', keydown, true);
     try { return await result; }
-    finally { dialog?.removeAttribute('role'); dialog?.removeAttribute('aria-modal'); document.removeEventListener('focusin', keepFocus, true); document.removeEventListener('keydown', keydown, true); if (app) app.inert = wasInert; if (previous?.isConnected) previous.focus(); }
+    finally {
+      cancelAnimationFrame(focusFrame);
+      dialog.removeEventListener('focusout', scheduleFocusCheck);
+      document.removeEventListener('focusin', keepFocus, true);
+      document.removeEventListener('keydown', keydown, true);
+      dialog.removeAttribute('role');
+      dialog.removeAttribute('aria-modal');
+      if (app) app.inert = wasInert;
+      if (previous?.isConnected) previous.focus();
+    }
   });
   modalQueue = task.catch(() => {});
   return task;

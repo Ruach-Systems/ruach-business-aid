@@ -10,7 +10,7 @@ public partial class BrowserTests
         await using var host = await Preview.Start();
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var context = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 390, Height = 668 }, ReducedMotion = ReducedMotion.Reduce });
+        await using var context = await browser.NewContextAsync(new() { HasTouch = true, IsMobile = true, ViewportSize = new() { Width = 390, Height = 668 }, ReducedMotion = ReducedMotion.Reduce });
         var page = await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.WaitForFunctionAsync("() => !!window.businessAlerts && !document.querySelector('.app-loading')");
@@ -19,6 +19,9 @@ public partial class BrowserTests
         await Expect(dialog).ToBeVisibleAsync();
         await Expect(dialog.Locator("img")).ToHaveCountAsync(0);
         await Expect(dialog.GetByRole(AriaRole.Button, new() { Name = "Cancel", Exact = true })).ToBeFocusedAsync();
+        var cancel = dialog.GetByRole(AriaRole.Button, new() { Name = "Cancel", Exact = true });
+        await cancel.EvaluateAsync("button => button.blur()");
+        await Expect(cancel).ToBeFocusedAsync();
         await page.Keyboard.PressAsync("Shift+Tab");
         await Expect(dialog.GetByRole(AriaRole.Button, new() { Name = "Confirm", Exact = true })).ToBeFocusedAsync();
         var ratios = await page.EvaluateAsync<double[]>("""
@@ -35,6 +38,10 @@ public partial class BrowserTests
         await page.Keyboard.PressAsync("Escape");
         await page.WaitForFunctionAsync("() => window.alertResult === false");
         Assert.False(await page.Locator("#app").EvaluateAsync<bool>("el => el.inert"));
+        await page.EvaluateAsync("() => { window.alertResult = null; businessAlerts.confirm('Cancel this action?').then(result => window.alertResult = result); }");
+        await Expect(cancel).ToBeFocusedAsync();
+        await cancel.TapAsync();
+        await page.WaitForFunctionAsync("() => window.alertResult === false");
         await page.EvaluateAsync("() => businessAlerts.success('Saved successfully.')");
         await Expect(page.Locator(".cool-alert-toast-title")).ToHaveTextAsync("Saved successfully.");
         await Expect(page.Locator(".cool-alert-toast")).ToHaveClassAsync(new System.Text.RegularExpressions.Regex("show"));

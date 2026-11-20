@@ -7,6 +7,10 @@ window.mashalUi = {
       input.removeAttribute('aria-invalid'); error.remove(); errors.delete(input);
     }
   },
+  revealCart(cart) {
+    cart.focus({ preventScroll: true });
+    cart.scrollIntoView({ block: 'start', behavior: 'instant' });
+  },
   revealExpenseSuccess(notice) {
     notice.focus({ preventScroll: true });
     notice.scrollIntoView({ block: 'center', behavior: 'instant' });

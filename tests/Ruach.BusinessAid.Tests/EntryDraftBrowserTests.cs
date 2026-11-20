@@ -19,13 +19,20 @@ public partial class BrowserTests
   var page = await context.NewPageAsync();
   await page.GotoAsync(host.Url);
   await page.GetByRole(AriaRole.Button, new() { Name = "Open Draft shop", Exact = true }).ClickAsync();
-  await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+  await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
   await Nav("/sales");
+  await page.GetByRole(AriaRole.Button, new() { Name = "Add Juice to sale", Exact = true }).ClickAsync();
   await page.GetByLabel("Juice quantity sold", new() { Exact = true }).FillAsync("2");
   await Expect(page.Locator(".sale-checkout .totals-card > div").Nth(2)).ToBeHiddenAsync();
   await page.GetByRole(AriaRole.Button, new() { Name = "Show breakdown", Exact = true }).ClickAsync();
   await Expect(page.Locator(".sale-checkout .totals-card > div").Nth(2)).ToBeVisibleAsync();
   await page.GetByRole(AriaRole.Button, new() { Name = "Hide breakdown", Exact = true }).ClickAsync();
+  // A short landscape viewport leaves room for the cart controls.
+  await page.SetViewportSizeAsync(740, 360);
+  await Expect(page.Locator(".sale-checkout.active")).ToHaveCSSAsync("position", "static");
+  await page.GetByRole(AriaRole.Button, new() { Name = "Increase Juice quantity", Exact = true }).ClickAsync();
+  await Expect(page.GetByLabel("Juice quantity sold", new() { Exact = true })).ToHaveValueAsync("3");
+  await page.GetByRole(AriaRole.Button, new() { Name = "Decrease Juice quantity", Exact = true }).ClickAsync();
   foreach (var compact in new[] { false, true }) {
    await page.EvaluateAsync("v => window.mashalUi.setCompact(v)", compact);
    foreach (var width in new[] { 320, 390, 470 }) {

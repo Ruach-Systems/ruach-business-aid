@@ -22,7 +22,7 @@ public partial class BrowserTests
         var page=await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button,new() { Name="Open History shop", Exact=true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url+"/expenses");
         await Expect(page.Locator("#expense-period")).ToHaveValueAsync("month");
         await page.Locator("#expense-period").SelectOptionAsync("all");
@@ -54,7 +54,7 @@ public partial class BrowserTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Expense shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
         await page.Locator("#expense-period").SelectOptionAsync("all");
         await Expect(page.Locator(".history-summary")).ToContainTextAsync("1 expenses");

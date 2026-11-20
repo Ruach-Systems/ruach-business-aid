@@ -34,7 +34,7 @@ public partial class BrowserTests
         var consoleErrors = new List<string>(); page.PageError += (_, error) => consoleErrors.Add(error);
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name="Open Browser test shop", Exact=true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.WaitForFunctionAsync("() => navigator.serviceWorker.controller !== null");
         // Seed a legacy model without modelVersion. The simplified release must discard it.
         var expenseId = Guid.NewGuid();
@@ -42,7 +42,7 @@ public partial class BrowserTests
         var oldState = JsonSerializer.Serialize(new { user = account, workspaceId=business.Id, data, serverData = data, cursor = 0, outbox = new[] { operation } }, Wire.Json);
         await page.EvaluateAsync("async args => { await mashalStorage.write('accounts',args.uid,args.state); }", new { uid = $"{account.Uid}:{business.Id}", state = oldState });
         await page.ReloadAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         var preserved = await ReadState(page, account.Uid);
         Assert.Equal(DataModel.CurrentVersion, preserved.GetProperty("modelVersion").GetInt32());
         Assert.Equal(0, preserved.GetProperty("outbox").GetArrayLength());
@@ -70,17 +70,18 @@ public partial class BrowserTests
         await page.SetViewportSizeAsync(390, 844);
         await context.SetOfflineAsync(true);
         await page.GotoAsync(host.Url + "/sales");
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "What sold today?" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Sales register" })).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Add Buko Juice to sale", Exact = true }).ClickAsync();
         var saleQuantity = page.GetByLabel("Buko Juice quantity sold", new() { Exact = true });
         await saleQuantity.FillAsync("2");
         await page.WaitForTimeoutAsync(150);
         var saleQuantityFocusRing = await saleQuantity.EvaluateAsync<string>("element => getComputedStyle(element).boxShadow");
         Assert.Contains("2px", saleQuantityFocusRing);
         Assert.DoesNotContain("6px", saleQuantityFocusRing);
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save 2 items", Exact = true }).ClickAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Record sale", Exact = true }).ClickAsync();
         await Expect(page.GetByText("Sale saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         await page.ReloadAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "What sold today?" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Sales register" })).ToBeVisibleAsync();
         var after = await ReadState(page, account.Uid);
         Assert.Equal(1, after.GetProperty("data").GetProperty("sales").GetArrayLength());
         Assert.Equal(7000, after.GetProperty("data").GetProperty("sales")[0].GetProperty("totalRevenueCentavos").GetInt64());
@@ -133,7 +134,7 @@ public partial class BrowserTests
         onboardingData.Business=new Business {Id=Guid.NewGuid(),OwnerUid=account.Uid,Name="Form verification",DefaultLocation="Main"};
         await page.GetByRole(AriaRole.Button,new(){Name="Refresh status",Exact=true}).ClickAsync();
         await page.GetByRole(AriaRole.Button,new(){Name="Open Form verification",Exact=true}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/items/new");
         if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Bread");
@@ -155,9 +156,10 @@ public partial class BrowserTests
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Items", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/sales");
         if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
+        await page.GetByRole(AriaRole.Button, new() { Name = "Add Bread to sale", Exact = true }).ClickAsync();
         await page.GetByLabel("Bread quantity sold", new() { Exact = true }).FillAsync("3");
-        await Expect(page.GetByText("One or more items will have negative stock.",new(){Exact=false})).ToBeVisibleAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Save 3 items", Exact = true }).ClickAsync();
+        await Expect(page.GetByText("This sale will leave -1 in stock.",new(){Exact=false})).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Record sale", Exact = true }).ClickAsync();
         await Expect(page.GetByText("Sale saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         state = await ReadState(page, account.Uid);
         var saleId = state.GetProperty("data").GetProperty("sales").EnumerateArray().Single().GetProperty("id").GetString()!;

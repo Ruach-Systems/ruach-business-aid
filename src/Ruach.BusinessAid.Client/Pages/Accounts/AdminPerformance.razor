@@ -2,36 +2,64 @@
 @inherits PageBase
 @inject ApiClient Api
 <section class="admin-performance" aria-label="Financial performance">
-<form novalidate class="admin-period" @onsubmit="Load" @onsubmit:preventDefault>
-<h2>@(OwnerId.HasValue ? "Owned-business performance" : "Financial performance")</h2>
-<div class="field"><label for="admin-period">Period</label><select id="admin-period" disabled="@(Saving || Busy || !Store.Online)" @bind="period" @bind:after="SetPeriod"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="last30">Last 30 days</option><option value="custom">Custom range</option></select></div>
-@if(period=="custom") { <div class="field"><label for="admin-from">From</label><input id="admin-from" type="date" min="2026-01-01" disabled="@(Saving || Busy)" @bind="from" @bind:after="Invalidate" required /></div><div class="field"><label for="admin-to">To</label><input id="admin-to" type="date" min="2026-01-01" disabled="@(Saving || Busy)" @bind="to" @bind:after="Invalidate" max="@Today().ToString("yyyy-MM-dd")" required /></div> }
-<button class="button ghost" disabled="@(Saving || Busy || !Store.Online)">Apply</button>
-</form>
-<p class="admin-caption">@from.ToString("MMM d, yyyy") – @to.ToString("MMM d, yyyy") · PHP · Asia/Manila · Synchronized records only</p>
+<section class="card performance-filter-panel">
+    <h2>@(OwnerId.HasValue ? "Owned-business performance" : "Financial performance")</h2>
+    <form novalidate class="performance-filters" @onsubmit="Load" @onsubmit:preventDefault>
+        <div class="field">
+            <label for="admin-period">Period</label>
+            <select id="admin-period" disabled="@FiltersDisabled" @bind="period" @bind:after="SetPeriod">
+                <option value="today">Today</option>
+                @if (BusinessId.HasValue && Today() > MinimumDate)
+                {
+                    <option value="yesterday">Yesterday</option>
+                }
+                <option value="week">This week</option>
+                <option value="month">This month</option>
+                <option value="last30">Last 30 days</option>
+                <option value="custom">Custom range</option>
+            </select>
+        </div>
+        @if (period == "custom")
+        {
+            <div class="performance-dates">
+                <div class="field">
+                    <label for="admin-from">From date</label>
+                    <input id="admin-from" type="date" min="@EarliestDate" max="@FromMaximum" disabled="@FiltersDisabled" @bind="from" @bind:after="CustomDateChanged" required aria-invalid="@(FromError is not null ? "true" : null)" aria-describedby="@(FromError is not null ? "analytics-from-error" : null)" />
+                    @if (FromError is { } fromError) { <small class="date-error" id="analytics-from-error" role="status">@fromError</small> }
+                </div>
+                <div class="field">
+                    <label for="admin-to">To date</label>
+                    <input id="admin-to" type="date" min="@ToMinimum" max="@Today().ToString("yyyy-MM-dd")" disabled="@FiltersDisabled" @bind="to" @bind:after="CustomDateChanged" required aria-invalid="@(ToError is not null ? "true" : null)" aria-describedby="@(ToError is not null ? "analytics-to-error" : null)" />
+                    @if (ToError is { } toError) { <small class="date-error" id="analytics-to-error" role="status">@toError</small> }
+                </div>
+            </div>
+            @if (!BusinessId.HasValue)
+            {
+                <button type="submit" class="button primary" disabled="@(FiltersDisabled || FromError is not null || ToError is not null)">Apply range</button>
+            }
+        }
+    </form>
+    @if (analytics is not null && Store.Online)
+    {
+        <p class="admin-caption performance-range">@AppliedDateLabel · Synced records</p>
+    }
+</section>
 @if(OwnerId.HasValue){<p>Totals include businesses owned by this user. They do not measure the user's individual actions.</p>}
 <ErrorBanner Message="@Error" />
 @if(!Store.Online){<p class="account-notice" role="status">@(Workspace ? "Connect to load business financial data. It is not saved offline." : "Connect to load admin financial data. It is not saved offline.")</p>}
 else if(Saving){<p role="status">Loading financial performance…</p>}
+else if (analytics is { } result && BusinessId.HasValue)
+{
+    <div class="admin-charts">
+        <PerformanceTrend @key="result" Rows="businessTrend" RangeLabel="@ChartRangeLabel" />
+    </div>
+}
 else if(analytics is {} a){
 <div class="admin-financials">@foreach(var metric in new[]{("Revenue",a.Summary.RevenueCentavos),("Item cost",a.Summary.CostCentavos),("Gross profit",a.Summary.GrossProfitCentavos),("Expenses",a.Summary.ExpenseCentavos),("Net profit",a.Summary.ProfitCentavos)}) {
 <article class="card @(metric.Item1=="Net profit" ? "net-profit" : "")"><span class="card-label">@metric.Item1</span><strong>@Money(metric.Item2)</strong></article> }</div>
 <p class="admin-caption">@Quantity(a.Summary.Transactions) transactions · @Quantity(a.Summary.ItemCount) items sold</p>
-<div class="admin-charts"><section class="card"><h2>Sales &amp; profit</h2><div class="chart-legend"><span>━ Revenue</span><span>┄ Net profit</span></div>
-@if(a.Trend.Count==0){<p class="empty-state">No sales or expenses in this period.</p>}
-else {
-<p class="admin-caption">Amount (PHP)</p>
-<div class="chart-with-axis"><div class="chart-axis" aria-hidden="true"><span>@AxisMoney(Max)</span><span>@AxisMoney((Max+Min)/2)</span><span>@AxisMoney(Min)</span></div>
-<svg class="admin-chart" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="Revenue and net profit over the selected period. Exact amounts are in the trend table below.">
-<line x1="12" x2="588" y1="16" y2="16" stroke="#D6CDD2" /><line x1="12" x2="588" y1="90" y2="90" stroke="#D6CDD2" /><line x1="12" x2="588" y1="164" y2="164" stroke="#D6CDD2" />
-<line x1="12" x2="588" y1="@ZeroY" y2="@ZeroY" stroke="#D6CDD2" stroke-dasharray="4 4" />
-<polyline points="@Points(false)" fill="none" stroke="#B21F32" stroke-width="3" />
-<polyline points="@Points(true)" fill="none" stroke="#321C3B" stroke-width="3" stroke-dasharray="7 4" />
-@if(a.Trend.Count==1){<circle cx="300" cy="@Y(a.Trend[0].RevenueCentavos)" r="4" fill="#B21F32"/><circle cx="300" cy="@Y(a.Trend[0].ProfitCentavos)" r="4" fill="#321C3B"/>}
-</svg></div><div class="chart-dates"><span>@ChartDate(a.Trend.First().Period)</span><span>@ChartDate(a.Trend.Last().Period)</span></div>
-<p class="admin-caption">Dates run left to right. Open trend amounts for exact daily values.</p>
-<details class="admin-trend-table"><summary>View trend amounts</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Daily financial trends"><table><thead><tr><th>Date</th><th>Revenue</th><th>Item cost</th><th>Gross profit</th><th>Expenses</th><th>Net profit</th></tr></thead><tbody>@foreach(var row in a.Trend){<tr><td>@row.Period</td><td>@Money(row.RevenueCentavos)</td><td>@Money(row.CostCentavos)</td><td>@Money(row.GrossProfitCentavos)</td><td>@Money(row.ExpenseCentavos)</td><td>@Money(row.ProfitCentavos)</td></tr>}</tbody></table></div></details>
-}</section>
+<div class="admin-charts">
+<PerformanceTrend @key="a" Rows="a.Trend" />
 @if(!BusinessId.HasValue){<section class="card"><div class="section-heading"><h2>Top businesses</h2><span class="admin-caption">By revenue</span></div>@foreach(var business in a.TopBusinesses){<button class="top-business" @onclick="()=>OpenBusiness.InvokeAsync(business.Id)"><span>@business.Name</span><strong>@Money(business.RevenueCentavos)</strong></button>}@if(a.TopBusinesses.Count==0){<p>No businesses yet.</p>}</section>}
 </div>
 }
@@ -39,33 +67,115 @@ else {
 @code {
     [Parameter] public bool Workspace { get; set; }
     [Parameter] public bool Busy {get;set;}
-    private void Invalidate()=>analytics=null;
     [Parameter] public Guid? BusinessId {get;set;}
     [Parameter] public Guid? OwnerId {get;set;}
     [Parameter] public EventCallback<Guid> OpenBusiness {get;set;}
     [Parameter] public EventCallback<(string From,string To)> RangeChanged {get;set;}
     private AdminAnalytics? analytics;
+    private IReadOnlyList<SalesTrend> businessTrend = [];
+    private const int MinimumChartDays = 7;
+    private DateOnly chartFrom;
+    private string ChartRangeLabel => $"{chartFrom:MMM d, yyyy} – {appliedTo:MMM d, yyyy}";
     private string period="month";
-    private DateOnly from=new(Today().Year,Today().Month,1), to=Today();
+    private const string EarliestDate = "2026-01-01";
+    private static readonly DateOnly MinimumDate = new(2026, 1, 1);
+    private DateOnly? from = new DateOnly(Today().Year, Today().Month, 1), to = Today();
+    private DateOnly appliedFrom, appliedTo;
+    private string AppliedDateLabel => appliedFrom == appliedTo
+        ? appliedFrom.ToString("MMM d, yyyy")
+        : $"{appliedFrom:MMM d, yyyy} – {appliedTo:MMM d, yyyy}";
+    private bool FiltersDisabled => Saving || Busy || !Store.Online;
+    private string FromMaximum => (to is { } end && end >= MinimumDate && end <= Today() ? end : Today()).ToString("yyyy-MM-dd");
+    private string ToMinimum => (from is { } start && start >= MinimumDate && start <= Today() ? start : MinimumDate).ToString("yyyy-MM-dd");
+    private string? FromError => DateError(from, "from");
+    private string? ToError => DateError(to, "to")
+        ?? (to < from ? "To date must be on or after the from date." : null);
+
+    private static string? DateError(DateOnly? value, string label) => value switch
+    {
+        null => $"Enter a {label} date.",
+        { } date when date < MinimumDate => "Use January 1, 2026 or later.",
+        { } date when date > Today() => "Choose today or earlier.",
+        _ => null
+    };
     private Guid? loadedBusiness,loadedOwner;
     private bool initialized;
-    protected override async Task OnParametersSetAsync(){ if(!initialized || loadedBusiness!=BusinessId || loadedOwner!=OwnerId){ initialized=true;loadedBusiness=BusinessId;loadedOwner=OwnerId;await Load(); } }
-    private async Task SetPeriod(){ if(period!="custom"){ to=Today(); from=period=="last30" ? to.AddDays(-29) : DateOnly.Parse(Period(period).From); await Load(); } }
-    private Task Load()=>Run(async()=>{
-        analytics=null;
-        if(!Store.Online || (!Workspace && Store.User?.IsAdmin!=true))return;
-        Rules.Require(from<=to && to<=Today(),"Choose a valid date range ending today or earlier.");
+    protected override async Task OnParametersSetAsync()
+    {
+        if (initialized && loadedBusiness == BusinessId && loadedOwner == OwnerId) return;
+        initialized = true;
+        analytics = null;
+        loadedBusiness = BusinessId;
+        loadedOwner = OwnerId;
+        if (period == "custom") await Load();
+        else await SetPeriod();
+    }
+    private async Task SetPeriod()
+    {
+        if (period == "custom")
+        {
+            if (analytics is not null)
+            {
+                from = appliedFrom;
+                to = appliedTo;
+            }
+            return;
+        }
+
+        var today = Today();
+        to = period == "yesterday" ? today.AddDays(-1) : today;
+        var start = period switch
+        {
+            "yesterday" => today.AddDays(-1),
+            "last30" => today.AddDays(-29),
+            _ => DateOnly.Parse(Period(period).From)
+        };
+        from = start < MinimumDate ? MinimumDate : start;
+        await Load();
+    }
+
+    private async Task CustomDateChanged()
+    {
+        if (BusinessId.HasValue && FromError is null && ToError is null &&
+            (analytics is null || from != appliedFrom || to != appliedTo))
+        {
+            await Load();
+        }
+    }
+
+    private Task Load() => Run(async () =>
+    {
+        if (!Store.Online || (!Workspace && Store.User?.IsAdmin != true)) return;
+        if (FromError is not null || ToError is not null || from is not { } start || to is not { } end) return;
+
+        var trendStart = BusinessId.HasValue && end.DayNumber - start.DayNumber + 1 < MinimumChartDays
+            ? end.AddDays(1 - MinimumChartDays)
+            : start;
         var path = Workspace
-            ? $"/api/businesses/{BusinessId}/overview/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"
-            : $"/api/admin/analytics?from={from:yyyy-MM-dd}&to={to:yyyy-MM-dd}"+(BusinessId.HasValue?$"&business={BusinessId}":"")+(OwnerId.HasValue?$"&owner={OwnerId}":"");
-        analytics=await Api.Get<AdminAnalytics>(path);
-        await RangeChanged.InvokeAsync((from.ToString("yyyy-MM-dd"),to.ToString("yyyy-MM-dd")));
+            ? $"/api/businesses/{BusinessId}/overview/analytics?from={trendStart:yyyy-MM-dd}&to={end:yyyy-MM-dd}"
+            : $"/api/admin/analytics?from={trendStart:yyyy-MM-dd}&to={end:yyyy-MM-dd}" +
+                (BusinessId.HasValue ? $"&business={BusinessId}" : "") +
+                (OwnerId.HasValue ? $"&owner={OwnerId}" : "");
+        analytics = await Api.Get<AdminAnalytics>(path);
+        if (BusinessId.HasValue)
+        {
+            businessTrend = DailyTrend(analytics.Trend, trendStart, end);
+            chartFrom = trendStart;
+        }
+        appliedFrom = start;
+        appliedTo = end;
+        await RangeChanged.InvokeAsync((start.ToString("yyyy-MM-dd"), end.ToString("yyyy-MM-dd")));
     });
-    private static string ChartDate(string value)=>DateOnly.Parse(value).ToString("MMM d, yyyy");
-    private static string AxisMoney(double value)=>(value/100).ToString("N2",System.Globalization.CultureInfo.GetCultureInfo("en-PH"));
-    private double Min=>Math.Min(0,analytics!.Trend.Min(x=>Math.Min(x.RevenueCentavos,x.ProfitCentavos)));
-    private double Max=>Math.Max(1,analytics!.Trend.Max(x=>Math.Max(x.RevenueCentavos,x.ProfitCentavos)));
-    private string Y(long value)=>(164-(value-Min)/(Max-Min)*148).ToString("0.##",System.Globalization.CultureInfo.InvariantCulture);
-    private string ZeroY=>Y(0);
-    private string Points(bool profit){ var rows=analytics!.Trend; var first=DateOnly.Parse(rows[0].Period).DayNumber; var days=DateOnly.Parse(rows[^1].Period).DayNumber-first; return string.Join(" ",rows.Select(r=>$"{(days==0 ? 300 : 12+576d*(DateOnly.Parse(r.Period).DayNumber-first)/days).ToString("0.##",System.Globalization.CultureInfo.InvariantCulture)},{Y(profit?r.ProfitCentavos:r.RevenueCentavos)}")); }
+
+    private static IReadOnlyList<SalesTrend> DailyTrend(IReadOnlyList<SalesTrend> rows, DateOnly start, DateOnly end)
+    {
+        if (rows.Count == 0) return rows;
+        var byDate = rows.ToDictionary(row => row.Period);
+        return Enumerable.Range(start.DayNumber, end.DayNumber - start.DayNumber + 1)
+            .Select(day =>
+            {
+                var date = DateOnly.FromDayNumber(day).ToString("yyyy-MM-dd");
+                return byDate.GetValueOrDefault(date) ?? new SalesTrend(date, 0, 0, 0);
+            }).ToList();
+    }
 }

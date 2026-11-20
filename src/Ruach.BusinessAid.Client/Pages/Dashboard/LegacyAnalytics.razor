@@ -1,0 +1,7 @@
+@namespace Ruach.BusinessAid.Client.Pages
+@page "/business-overview"
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized() => Navigation.NavigateTo("/analytics", replace: true);
+}

@@ -13,7 +13,7 @@ public partial class BrowserTests
         await using var host=await Preview.Start();
         using var playwright=await Playwright.CreateAsync();
         await using var browser=await playwright.Chromium.LaunchAsync(new(){Headless=true,Channel=Environment.GetEnvironmentVariable("MASHAL_BROWSER_CHANNEL")});
-        await using var context=await browser.NewContextAsync(new(){ViewportSize=new(){Width=390,Height=844}});
+        await using var context=await browser.NewContextAsync(new(){HasTouch=true,ViewportSize=new(){Width=390,Height=844}});
         var admin=new AppUser(Guid.NewGuid(),"Platform admin","admin@example.invalid",null){IsAdmin=true};
         var owner=new AdminUser(Guid.NewGuid(),"Ana Reyes","ana@example.invalid","+639181234567",DateTimeOffset.UtcNow,1);
         var business=new Business{Id=Guid.NewGuid(),OwnerUid=owner.Uid,Name="Cebu Kitchen",DefaultLocation="Cebu City",CreatedAt=DateTimeOffset.UtcNow};
@@ -57,16 +57,42 @@ public partial class BrowserTests
         }
         await page.SetViewportSizeAsync(390,844);
         await page.GetByLabel("Period",new(){Exact=true}).SelectOptionAsync("custom");
-        await page.GetByLabel("From",new(){Exact=true}).FillAsync("2026-10-22");
-        await page.GetByLabel("To",new(){Exact=true}).FillAsync("2026-10-01");
-        await page.GetByRole(AriaRole.Button,new(){Name="Apply",Exact=true}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Dialog)).ToContainTextAsync("valid date range");
-        await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync();
+        await page.GetByLabel("From date",new(){Exact=true}).FillAsync("2026-10-22");
+        await page.GetByLabel("To date",new(){Exact=true}).FillAsync("2026-10-01");
+        await Expect(page.GetByRole(AriaRole.Button,new(){Name="Apply range",Exact=true})).ToBeDisabledAsync();
+        await Expect(page.GetByText("To date must be on or after the from date.")).ToBeVisibleAsync();
         await page.GetByLabel("Period",new(){Exact=true}).SelectOptionAsync("month");
-        await page.GetByRole(AriaRole.Button,new(){Name="Cebu Kitchen",Exact=false}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Cebu Kitchen",Exact=true}).First).ToBeVisibleAsync();
+        await page.GetByRole(AriaRole.Button,new(){Name="Businesses",Exact=true}).TapAsync();
+        await page.GetByRole(AriaRole.Button,new(){Name="View business",Exact=true}).TapAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Cebu Kitchen",Exact=true})).ToBeVisibleAsync();
+        await Expect(page.Locator(".admin-detail-tabs button")).ToHaveCountAsync(4);
+        await Expect(page.Locator(".business-detail .admin-financials")).ToHaveCountAsync(0);
+        await page.GetByText("More records",new(){Exact=true}).TapAsync();
+        await page.GetByRole(AriaRole.Button,new(){Name="Members",Exact=true}).TapAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Business members"})).ToBeVisibleAsync();
+
+        var businessPeriod = page.GetByLabel("Period",new(){Exact=true});
+        var currentDay = Calculations.Today();
+        var yesterday = currentDay.AddDays(-1);
+        await businessPeriod.SelectOptionAsync("yesterday");
+        await Expect(page.Locator(".performance-range")).ToHaveTextAsync($"{yesterday:MMM d, yyyy} · Synced records");
+        await Expect(page.Locator(".trend-range")).ToHaveTextAsync(
+            $"Chart period · {yesterday.AddDays(-6):MMM d, yyyy} – {yesterday:MMM d, yyyy}");
+        await Expect(page.Locator(".trend-hit")).ToHaveCountAsync(7);
+        Assert.Contains(requested, url => url.Contains($"/api/admin/analytics?from={yesterday.AddDays(-6):yyyy-MM-dd}&to={yesterday:yyyy-MM-dd}&business={business.Id}"));
+        await businessPeriod.SelectOptionAsync("custom");
+        await Expect(page.GetByRole(AriaRole.Button,new(){Name="Apply range",Exact=true})).ToHaveCountAsync(0);
+        await page.GetByLabel("To date",new(){Exact=true}).FillAsync(currentDay.ToString("yyyy-MM-dd"));
+        await Expect(page.Locator(".performance-range")).ToHaveTextAsync(
+            $"{yesterday:MMM d, yyyy} – {currentDay:MMM d, yyyy} · Synced records");
+        await page.GetByRole(AriaRole.Slider,new(){Name="Select trend date"}).PressAsync("Home");
+        await Expect(page.Locator(".trend-selection")).ToContainTextAsync("₱0.00");
+        await page.Locator(".trend-hit").Last.TapAsync();
+        await Expect(page.Locator(".trend-selection")).ToContainTextAsync("₱100,000.00");
+        await page.Locator(".business-detail").ScreenshotAsync(new(){Path=Path.Combine(host.Root,"artifacts","browser","admin-business-analytics-mobile.png")});
         await page.GetByRole(AriaRole.Button,new(){Name="Sales",Exact=true}).ClickAsync();
         await Expect(page.GetByRole(AriaRole.Button,new(){Name="Sales",Exact=true})).ToHaveAttributeAsync("aria-pressed","true");
+        Assert.Contains(requested, url => url.Contains($"/records/sales?from={yesterday:yyyy-MM-dd}&to={currentDay:yyyy-MM-dd}"));
         await page.Locator(".admin-sale summary").ClickAsync();
         await Expect(page.GetByText("Buko Juice",new(){Exact=true})).ToBeVisibleAsync();
         await page.EvaluateAsync("window.scrollTo(0,0)");

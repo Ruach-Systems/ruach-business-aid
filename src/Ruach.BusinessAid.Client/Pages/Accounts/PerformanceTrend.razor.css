@@ -1,0 +1,25 @@
+.trend-selection { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:16px; row-gap:8px; padding:14px; margin:14px 0 18px; border-radius:10px; background:var(--mashal-cloud); }
+.trend-selection time { grid-column:1/-1; font-size:13px; font-weight:700; }
+.trend-selection strong { display:block; margin-top:4px; overflow-wrap:anywhere; font-variant-numeric:tabular-nums; }
+.trend-key { display:flex; gap:6px; align-items:center; color:var(--mashal-muted); font-size:12px; }
+.trend-key::before { content:""; flex:0 0 14px; border-top:3px solid var(--mashal-red); }
+.profit-key::before { border-color:var(--mashal-purple); border-top-style:dashed; }
+.trend-plot { width:100%; height:clamp(180px,33vw,300px); min-width:0; display:block; }
+.trend-plot :is(line, polyline, circle) { vector-effect:non-scaling-stroke; }
+.trend-plot polyline { stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; fill:none; }
+.trend-gridline { stroke:var(--mashal-line); opacity:.55; }
+.trend-zero { stroke:var(--mashal-muted); stroke-dasharray:3 5; opacity:.55; }
+.trend-revenue { stroke:var(--mashal-red); }
+polyline.trend-profit { stroke-dasharray:5 5; }
+.trend-profit { stroke:var(--mashal-purple); }
+.trend-cursor { stroke:var(--mashal-muted); stroke-width:1.2; }
+.trend-marker { fill:var(--mashal-paper); stroke-width:2; }
+.trend-hit { fill:transparent; cursor:crosshair; }
+.trend-series { animation:trend-reveal 460ms ease-out both; }
+@keyframes trend-reveal { from { clip-path:inset(0 100% 0 0); } to { clip-path:inset(0); } }
+@media (prefers-reduced-motion:reduce) { .trend-series { animation:none; } }
+.trend-card .chart-axis { height:clamp(180px,33vw,300px); padding-block:9px; }
+.trend-control { margin-left:4px; }
+.trend-control input { width:100%; margin:0; height:44px; accent-color:var(--mashal-red); cursor:ew-resize; }
+.trend-control .chart-dates { margin:0 0 12px; }
+.admin-trend-table { border-top:1px solid var(--mashal-line); margin-top:14px; }
