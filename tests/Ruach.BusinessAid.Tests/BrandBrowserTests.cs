@@ -22,7 +22,7 @@ public partial class BrowserTests
         var oldPage = await context.NewPageAsync();
         await oldPage.GotoAsync(oldHost.Url);
         await oldPage.GetByRole(AriaRole.Button, new() { Name = "Open Existing business", Exact = true }).ClickAsync();
-        await Expect(oldPage.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+        await Expect(oldPage.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         var key = $"{account.Uid}:{business.Id}";
         await oldPage.WaitForFunctionAsync("async key => (await mashalStorage.read('accounts', key)) !== null", key);
         await oldPage.EvaluateAsync("""
@@ -35,7 +35,7 @@ public partial class BrowserTests
         var newPage = await context.NewPageAsync();
         await newPage.GotoAsync(newHost.Url);
         await newPage.GetByRole(AriaRole.Button, new() { Name = "Open Existing business", Exact = true }).ClickAsync();
-        await Expect(newPage.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+        await Expect(newPage.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await newPage.WaitForFunctionAsync("async key => (await mashalStorage.read('accounts', key)) !== null", key);
         var newState = await ReadState(newPage, account.Uid);
         Assert.Equal(business.Id, newState.GetProperty("data").GetProperty("business").GetProperty("id").GetGuid());

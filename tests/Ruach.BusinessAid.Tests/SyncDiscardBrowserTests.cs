@@ -18,7 +18,7 @@ public partial class BrowserTests
         var page=await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button,new(){Name="Open Sync shop",Exact=true}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Business overview"})).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new(){Name="Today", Exact = true})).ToBeVisibleAsync();
         var key=$"{owner.Uid}:{data.Business.Id}";
         const string seed="""
         async key => {

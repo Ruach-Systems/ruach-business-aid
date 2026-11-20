@@ -3,16 +3,16 @@
 @inherits PageBase
 
 <div class="page business-overview">
-    <PageHeading Title="Business Overview" Description="Performance and records for your selected business." />
+    <PageHeading Title="Business records" Description="Review synchronized sales, expenses, and stock for this business." />
     @if (Store.User?.IsDemo == true)
     {
-        <section class="card"><h2>Connect a business account</h2><p>Business Overview displays synchronized business records and is unavailable in local demo mode.</p></section>
+        <section class="card"><h2>Connect a business account</h2><p>Sign in with your business account to view synchronized records.</p></section>
     }
     else if (Store.Data.Business is {} business && Store.User is {} user && business.OwnerUid.ToString() == user.Uid)
     {
         @if (Store.PendingCount > 0)
         {
-            <p class="notice">@Store.PendingCount device changes are waiting to synchronize and are excluded from this overview.</p>
+            <p class="notice">@Store.PendingCount device changes will appear here after synchronization.</p>
         }
         <AdminBusinessDetails @key="business.Id" Business="business" Workspace="true" Owner="@(new AdminUser(business.OwnerUid, user.DisplayName, user.Email, user.PhoneNumber, default, 1))" />
     }

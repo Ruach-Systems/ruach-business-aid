@@ -37,7 +37,7 @@ public partial class BrowserTests
         var page=await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button,new() { Name="Open History shop", Exact=true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading,new() { Name="Today", Exact = true })).ToBeVisibleAsync();
         var recent=page.Locator(".sale-history-link");
         await Expect(recent).ToHaveCountAsync(4);
         for(var i=0;i<4;i++)
@@ -71,7 +71,7 @@ public partial class BrowserTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name = "Open History shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
 
         await page.GotoAsync(host.Url + "/sales/history");
         await page.Locator("#history-period").SelectOptionAsync("all");
@@ -126,7 +126,7 @@ public partial class BrowserTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name = "Open History shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         var recent = page.Locator(".split > section").Filter(new() { Has = page.GetByRole(AriaRole.Heading, new() { Name = "Recent sales", Exact = true }) });
         await recent.GetByRole(AriaRole.Link, new() { Name = "View all", Exact = true }).ClickAsync();
         await Expect(page).ToHaveURLAsync(host.Url + "/sales/history");
@@ -195,7 +195,7 @@ public partial class BrowserTests
         await context.SetOfflineAsync(false);
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Empty shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/sales/history");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "No sales recorded yet", Exact = true })).ToBeVisibleAsync();
         await Expect(page.Locator("details.history-sale")).ToHaveCountAsync(0);

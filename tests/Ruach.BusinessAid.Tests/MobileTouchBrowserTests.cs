@@ -21,7 +21,7 @@ public partial class BrowserTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Touch shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         foreach (var compact in new[] { false, true })
         {
             await page.EvaluateAsync("value => window.mashalUi.setCompact(value)", compact);

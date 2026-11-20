@@ -28,11 +28,11 @@
     <nav class="bottom-nav" aria-label="Mobile navigation">
         <NavLink href="/dashboard">
 <Icon Name="home" />
-<span>Home</span>
+<span>Today</span>
 </NavLink>
 <NavLink href="/business-overview">
 <Icon Name="business" />
-<span>Business</span>
+<span>Business records</span>
 </NavLink>
 <NavLink href="/sales">
 <Icon Name="cart" />
@@ -54,5 +54,5 @@
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
 
-    private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Home", "home"), ("/business-overview", "Business Overview", "business"), ("/sales", "Sales", "cart"), ("/items", "Items", "tag"), ("/expenses", "Expenses", "wallet"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
+    private readonly (string Path, string Label, string Icon)[] links = [("/dashboard", "Today", "home"), ("/business-overview", "Business records", "business"), ("/sales", "Sales", "cart"), ("/items", "Items", "tag"), ("/expenses", "Expenses", "wallet"), ("/reports", "Reports", "chart"), ("/settings", "Settings", "settings")];
 }

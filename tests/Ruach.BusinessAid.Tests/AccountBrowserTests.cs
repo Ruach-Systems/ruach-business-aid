@@ -23,15 +23,15 @@ public partial class BrowserTests
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Your businesses", Exact = true })).ToBeVisibleAsync();
         await CheckAccountLayout(page, host.Root, "owner-businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Cebu Kitchen", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Mandaue Store", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.WaitForFunctionAsync("() => !!navigator.serviceWorker.controller");
         await context.SetOfflineAsync(true);
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Cebu Kitchen", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
         await page.GetByLabel("Description", new() { Exact = true }).FillAsync("Kitchen delivery only");
         await page.GetByLabel("Amount (₱)", new() { Exact = true }).FillAsync("125");
@@ -41,7 +41,7 @@ public partial class BrowserTests
         Assert.Single(aBefore.GetProperty("outbox").EnumerateArray());
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Mandaue Store", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
         await Expect(page.GetByText("Kitchen delivery only", new() { Exact = true })).ToHaveCountAsync(0);
         var bState = await ReadState(page, owner.Uid);
@@ -51,7 +51,7 @@ public partial class BrowserTests
         await Expect(page.Locator(".workspace-context strong")).ToHaveTextAsync("Mandaue Store");
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Cebu Kitchen", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/expenses");
         await Expect(page.GetByText("Kitchen delivery only", new() { Exact = true })).ToBeVisibleAsync();
         var aAfter = await ReadState(page, owner.Uid);
@@ -91,7 +91,7 @@ public partial class BrowserTests
         await Expect(page.GetByText("Mobile number saved successfully.", new() { Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/businesses");
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Recovery shop" }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
     }
 
     [BrowserFact]

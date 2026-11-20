@@ -1,6 +1,6 @@
-# Business Overview
+# Business records
 
-`/business-overview` exposes the existing RUACH Admin business inspection view to the selected business's owner. The desktop menu is **Business Overview**; mobile uses **Business**, with a building icon, between Home and Sales. Home remains the daily operational view.
+`/business-overview` exposes the existing RUACH Admin business inspection view to the selected business's owner. Desktop and mobile navigation label this view **Business records**. **Today** opens the daily dashboard.
 
 The page reuses `AdminBusinessDetails` and `AdminPerformance` with an explicit workspace mode. Their default remains platform-admin mode. Both views share the profile, five financial figures, trend chart and exact-value table, period controls, and Summary/Sales/Expenses/Items/Receipts/Adjustments/Members sections. The existing read-only records and pagination are retained.
 
@@ -28,4 +28,4 @@ For this checkout, the ignored `artifacts/run-api.ps1` starts the configured API
 and `artifacts/seed-local-owner.sql` creates the fixture idempotently. Run SQL
 with `sqlcmd -I` (quoted identifiers enabled). Neither file contains OAuth secrets.
 Open http://localhost:5080/api/auth/local-test, sign in, open **Local Test Business**,
-and select **Business Overview**. The new test business starts empty.
+and select **Business records**. The new test business starts empty.

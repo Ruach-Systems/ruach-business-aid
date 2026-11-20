@@ -23,7 +23,7 @@ public partial class BrowserTests
         page.PageError += (_, error) => errors.Add(error);
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name = "Open Numeric test shop", Exact = true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/items/new");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "New item", Exact = true })).ToBeVisibleAsync();
         await Expect(page.Locator("#item-price")).ToHaveValueAsync("");

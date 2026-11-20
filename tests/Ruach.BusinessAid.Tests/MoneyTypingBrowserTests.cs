@@ -19,7 +19,7 @@ public partial class BrowserTests
   var page = await context.NewPageAsync();
   await page.GotoAsync(host.Url);
   await page.GetByRole(AriaRole.Button, new() { Name = "Open Draft shop", Exact = true }).ClickAsync();
-  await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview", Exact = true })).ToBeVisibleAsync();
+  await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
   await CheckFields("/expenses", new[] { "#expense-amount" });
   await CheckFields("/items/new", new[] { "#item-price", "#item-cost" });
   await CheckFields($"/items/{item.Id}/edit", new[] { "#item-price", "#item-cost" });

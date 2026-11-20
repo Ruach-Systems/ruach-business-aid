@@ -34,7 +34,7 @@ public partial class BrowserTests
         var consoleErrors = new List<string>(); page.PageError += (_, error) => consoleErrors.Add(error);
         await page.GotoAsync(host.Url);
         await page.GetByRole(AriaRole.Button, new() { Name="Open Browser test shop", Exact=true }).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.WaitForFunctionAsync("() => navigator.serviceWorker.controller !== null");
         // Seed a legacy model without modelVersion. The simplified release must discard it.
         var expenseId = Guid.NewGuid();
@@ -42,7 +42,7 @@ public partial class BrowserTests
         var oldState = JsonSerializer.Serialize(new { user = account, workspaceId=business.Id, data, serverData = data, cursor = 0, outbox = new[] { operation } }, Wire.Json);
         await page.EvaluateAsync("async args => { await mashalStorage.write('accounts',args.uid,args.state); }", new { uid = $"{account.Uid}:{business.Id}", state = oldState });
         await page.ReloadAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         var preserved = await ReadState(page, account.Uid);
         Assert.Equal(DataModel.CurrentVersion, preserved.GetProperty("modelVersion").GetInt32());
         Assert.Equal(0, preserved.GetProperty("outbox").GetArrayLength());
@@ -134,7 +134,7 @@ public partial class BrowserTests
         onboardingData.Business=new Business {Id=Guid.NewGuid(),OwnerUid=account.Uid,Name="Form verification",DefaultLocation="Main"};
         await page.GetByRole(AriaRole.Button,new(){Name="Refresh status",Exact=true}).ClickAsync();
         await page.GetByRole(AriaRole.Button,new(){Name="Open Form verification",Exact=true}).ClickAsync();
-        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Business overview" })).ToBeVisibleAsync();
+        await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Today", Exact = true })).ToBeVisibleAsync();
         await page.GotoAsync(host.Url + "/items/new");
         if ((await ReadState(page, account.Uid)).GetProperty("outbox").GetArrayLength() > 0) { await Expect(page.GetByRole(AriaRole.Dialog)).ToBeVisibleAsync(); await page.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Button,new(){Name="OK",Exact=true}).ClickAsync(); }
         await page.GetByLabel("Item name", new() { Exact = true }).FillAsync("Bread");

@@ -3,7 +3,7 @@
 @page "/dashboard"
 @inherits PageBase
 <div class="page">
-<PageHeading Title="Business overview" Eyebrow="Today at a glance" Description="@($"{Store.Data.Business?.Name} · {Store.Data.Business?.DefaultLocation}")">
+<PageHeading Title="Today" Description="@($"{Store.Data.Business?.Name} · {Store.Data.Business?.DefaultLocation}")">
 <span class="date-chip">@Today().ToString("dddd, MMMM d")</span>
 </PageHeading>
 <section class="today-summary" aria-label="Today's performance">
