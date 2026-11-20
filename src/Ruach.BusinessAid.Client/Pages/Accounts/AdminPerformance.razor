@@ -2,6 +2,13 @@
 @inherits PageBase
 @inject ApiClient Api
 <section class="admin-performance" aria-label="Financial performance">
+@if (Workspace && Store.Online && analytics is not null)
+{
+    <section class="analytics-highlights analytics-calendar-highlights" aria-label="Current sales totals">
+        <article class="card analytics-metric analytics-week"><span>Sales this week</span><strong>@(weekSales is { } week ? Money(week) : "Unavailable")</strong><small>@weekLabel</small></article>
+        <article class="card analytics-metric analytics-month"><span>Sales this month</span><strong>@(monthSales is { } month ? Money(month) : "Unavailable")</strong><small>@monthLabel</small></article>
+    </section>
+}
 <section class="card performance-filter-panel">
     <h2>@(OwnerId.HasValue ? "Owned-business performance" : "Financial performance")</h2>
     <form novalidate class="performance-filters" @onsubmit="Load" @onsubmit:preventDefault>
@@ -50,6 +57,13 @@
 else if(Saving){<p role="status">Loading financial performance…</p>}
 else if (analytics is { } result && BusinessId.HasValue)
 {
+    @if (Workspace)
+    {
+        <section class="analytics-highlights" aria-label="Selected-period highlights">
+            <article class="card analytics-metric analytics-profit"><span>Net profit</span><strong>@Money(selectedProfit)</strong><small>Selected period</small></article>
+            <article class="card analytics-metric analytics-top-item"><span>Top item by revenue</span>@TopItemContent</article>
+        </section>
+    }
     <div class="admin-charts">
         <PerformanceTrend @key="result" Rows="businessTrend" RangeLabel="@ChartRangeLabel" />
     </div>
@@ -71,7 +85,11 @@ else if(analytics is {} a){
     [Parameter] public Guid? OwnerId {get;set;}
     [Parameter] public EventCallback<Guid> OpenBusiness {get;set;}
     [Parameter] public EventCallback<(string From,string To)> RangeChanged {get;set;}
+    [Parameter] public RenderFragment? TopItemContent { get; set; }
     private AdminAnalytics? analytics;
+    private long? weekSales, monthSales;
+    private long selectedProfit;
+    private string weekLabel = "", monthLabel = "";
     private IReadOnlyList<SalesTrend> businessTrend = [];
     private const int MinimumChartDays = 7;
     private DateOnly chartFrom;
@@ -105,6 +123,7 @@ else if(analytics is {} a){
         if (initialized && loadedBusiness == BusinessId && loadedOwner == OwnerId) return;
         initialized = true;
         analytics = null;
+        weekSales = monthSales = null;
         loadedBusiness = BusinessId;
         loadedOwner = OwnerId;
         if (period == "custom") await Load();
@@ -156,16 +175,46 @@ else if(analytics is {} a){
             : $"/api/admin/analytics?from={trendStart:yyyy-MM-dd}&to={end:yyyy-MM-dd}" +
                 (BusinessId.HasValue ? $"&business={BusinessId}" : "") +
                 (OwnerId.HasValue ? $"&owner={OwnerId}" : "");
-        analytics = await Api.Get<AdminAnalytics>(path);
+        var chartData = await Api.Get<AdminAnalytics>(path);
         if (BusinessId.HasValue)
         {
-            businessTrend = DailyTrend(analytics.Trend, trendStart, end);
+            businessTrend = DailyTrend(chartData.Trend, trendStart, end);
             chartFrom = trendStart;
         }
         appliedFrom = start;
         appliedTo = end;
-        await RangeChanged.InvokeAsync((start.ToString("yyyy-MM-dd"), end.ToString("yyyy-MM-dd")));
+        analytics = chartData;
+        var recordsTask = RangeChanged.InvokeAsync((start.ToString("yyyy-MM-dd"), end.ToString("yyyy-MM-dd")));
+        if (Workspace)
+        {
+            selectedProfit = InRange(chartData.Trend, start, end).Sum(day => day.ProfitCentavos);
+            await Task.WhenAll(recordsTask, LoadCurrentSales(chartData, trendStart, end));
+        }
+        else await recordsTask;
     });
+
+    private async Task LoadCurrentSales(AdminAnalytics chartData, DateOnly chartStart, DateOnly chartEnd)
+    {
+        var today = Today();
+        var weekStart = DateOnly.Parse(Period("week").From);
+        var monthStart = new DateOnly(today.Year, today.Month, 1);
+        var firstDay = weekStart < monthStart ? weekStart : monthStart;
+        weekLabel = $"{weekStart:MMM d} – {today:MMM d}";
+        monthLabel = today.ToString("MMMM yyyy");
+
+        var current = chartStart <= firstDay && chartEnd == today
+            ? chartData
+            : await Api.Get<AdminAnalytics>($"/api/businesses/{BusinessId}/overview/analytics?from={firstDay:yyyy-MM-dd}&to={today:yyyy-MM-dd}");
+        weekSales = InRange(current.Trend, weekStart, today).Sum(day => day.RevenueCentavos);
+        monthSales = InRange(current.Trend, monthStart, today).Sum(day => day.RevenueCentavos);
+    }
+
+    private static IEnumerable<SalesTrend> InRange(IEnumerable<SalesTrend> rows, DateOnly start, DateOnly end)
+    {
+        var fromDate = start.ToString("yyyy-MM-dd");
+        var toDate = end.ToString("yyyy-MM-dd");
+        return rows.Where(day => string.CompareOrdinal(day.Period, fromDate) >= 0 && string.CompareOrdinal(day.Period, toDate) <= 0);
+    }
 
     private static IReadOnlyList<SalesTrend> DailyTrend(IReadOnlyList<SalesTrend> rows, DateOnly start, DateOnly end)
     {

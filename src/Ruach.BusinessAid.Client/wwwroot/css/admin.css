@@ -119,3 +119,15 @@ html.density-compact :is(.admin-shell, .business-overview) .button,html.density-
 .business-metadata { margin-top:14px; }
 .extra-business-records { margin-bottom:12px; }
 .extra-record-actions { display:flex; flex-wrap:wrap; gap:6px; padding-bottom:12px; }
+
+.analytics-highlights { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.analytics-calendar-highlights { margin:0 0 12px; }
+.business-overview .analytics-highlights .analytics-metric { padding:12px; margin:0; display:flex; flex-direction:column; gap:5px; }
+.analytics-metric span { font-size:12px; font-weight:700; }
+.analytics-metric strong { font-size:clamp(17px,4.7vw,24px); line-height:1.2; font-variant-numeric:tabular-nums; }
+.analytics-metric small { color:var(--mashal-muted); font-size:11px; }
+.analytics-metric .analytics-item-name { font-size:16px; }
+.business-overview .analytics-highlights .analytics-week { background:var(--mashal-danger-soft); }
+.business-overview .analytics-highlights .analytics-month { background:var(--mashal-purple-soft); }
+.business-overview .analytics-highlights .analytics-profit { background:#E8E3DA; }
+.business-overview .analytics-highlights .analytics-top-item { background:var(--mashal-success-soft); }

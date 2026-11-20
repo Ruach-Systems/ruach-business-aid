@@ -14,7 +14,20 @@
         </details>
     }
 
-    <AdminPerformance @key="Business.Id" BusinessId="Business.Id" Workspace="Workspace" Busy="Saving" RangeChanged="ChangeRange" />
+    <AdminPerformance @key="Business.Id" BusinessId="Business.Id" Workspace="Workspace" Busy="Saving" RangeChanged="ChangeRange">
+        <TopItemContent>
+            @if (topItem is { } best)
+            {
+                <strong class="analytics-item-name">@best.ItemName</strong>
+                <small>@Money(best.RevenueCentavos) · @Quantity(best.Quantity) sold</small>
+            }
+            else
+            {
+                <strong class="analytics-item-name">@(loadedItemRange is null ? "Unavailable" : "No items sold")</strong>
+            }
+            <small>Selected period</small>
+        </TopItemContent>
+    </AdminPerformance>
     <h2 class="analytics-records-heading">Business records</h2>
     <nav class="admin-detail-tabs" aria-label="Business detail sections">
         @foreach (var section in AnalyticsSections)
@@ -66,17 +79,35 @@ else if(records is {} result){
     private int page=1;
     private AdminRecords? records;
     private List<ItemReport> items=[];
+    private ItemReport? topItem;
+    private (string From, string To)? loadedItemRange;
     private List<ExpenseReport> categories=[];
     private List<AdminMember> members=[];
-    private async Task ChangeRange((string From,string To) range){from=range.From;to=range.To;page=1;await Load();}
+    private async Task ChangeRange((string From, string To) range)
+    {
+        (from, to) = range;
+        loadedItemRange = null;
+        page = 1;
+        await Load();
+    }
     private async Task Select(string value){tab=value;page=1;await Load();}
     private async Task Page(int delta){page+=delta;await Load();}
     private Task Load()=>Run(async()=>{
-        records=null;items=[];categories=[];members=[];
+        records=null;categories=[];members=[];
         if(!Store.Online || (!Workspace && Store.User?.IsAdmin!=true))return;
         var path=Workspace ? $"/api/businesses/{Business.Id}/overview" : $"/api/admin/businesses/{Business.Id}";var query=$"?from={from}&to={to}";
+        if ((Workspace && loadedItemRange != (from, to)) || (!Workspace && tab == "Summary"))
+        {
+            loadedItemRange = null;
+            topItem = null;
+            items = await Api.Get<List<ItemReport>>(path + "/reports/items" + query);
+            topItem = items.OrderByDescending(item => item.RevenueCentavos)
+                .ThenByDescending(item => item.Quantity)
+                .ThenBy(item => item.ItemName, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+            loadedItemRange = (from, to);
+        }
         if(tab=="Summary"){
-            items=await Api.Get<List<ItemReport>>(path+"/reports/items"+query);
             categories=await Api.Get<List<ExpenseReport>>(path+"/reports/expenses-by-category"+query);
         }else if(tab=="Members")members=await Api.Get<List<AdminMember>>(path+"/members");
         else records=await Api.Get<AdminRecords>(path+"/records/"+tab.ToLowerInvariant()+query+$"&page={page}&pageSize=25");

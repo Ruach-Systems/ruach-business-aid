@@ -37,6 +37,9 @@ public partial class BrowserTests
             object body = path.EndsWith("/analytics") ? new AdminAnalytics(summary, trend, [])
                 : path.EndsWith("/members") ? new List<AdminMember> { new(user.Uid,user.DisplayName,user.Email,"Owner") }
                 : path.Contains("/records/") ? new AdminRecords(new(),0,1,25)
+                : path.EndsWith("/reports/items") ? new List<ItemReport> {
+                    new(Guid.NewGuid(), "More units", 5, 500, 300, 200),
+                    new(Guid.NewGuid(), "Top by revenue", 1, 1700, 900, 800) }
                 : path.EndsWith("/items") ? new List<ItemReport>() : (object)new List<ExpenseReport>();
             await route.FulfillAsync(new() { Status=200,ContentType="application/json",Body=JsonSerializer.Serialize(body,Wire.Json),Headers=new Dictionary<string,string>{{"Access-Control-Allow-Origin",route.Request.Headers.GetValueOrDefault("origin","*")},{"Access-Control-Allow-Credentials","true"}} });
         });
@@ -58,6 +61,23 @@ public partial class BrowserTests
         Assert.Contains(reportRequests, request => request.AbsolutePath.EndsWith("/reports/items")
             && request.Query == $"?from={today:yyyy-MM-dd}&to={today:yyyy-MM-dd}");
         await Expect(page.Locator(".admin-financials")).ToHaveCountAsync(0);
+        var currentTotals = page.GetByRole(AriaRole.Region, new() { Name = "Current sales totals" });
+        var highlights = page.GetByRole(AriaRole.Region, new() { Name = "Selected-period highlights" });
+        Assert.True(await page.EvaluateAsync<bool>("""
+            () => {
+                const filter = document.querySelector(".performance-filter-panel").getBoundingClientRect();
+                const totals = document.querySelector(".analytics-calendar-highlights").getBoundingClientRect();
+                const highlights = document.querySelector('[aria-label="Selected-period highlights"]').getBoundingClientRect();
+                return totals.bottom <= filter.top && filter.bottom <= highlights.top;
+            }
+            """));
+        await Expect(currentTotals.GetByRole(AriaRole.Article).Filter(new() { HasText = "Sales this month" }))
+            .ToContainTextAsync(today.Day == 1 ? "₱35.00" : "₱100.00");
+        await Expect(currentTotals.GetByRole(AriaRole.Article).Filter(new() { HasText = "Sales this week" }))
+            .ToContainTextAsync(today.DayOfWeek == DayOfWeek.Monday ? "₱35.00" : "₱100.00");
+        await Expect(highlights.GetByRole(AriaRole.Article).Filter(new() { HasText = "Net profit" })).ToContainTextAsync("-₱5.00");
+        await Expect(highlights.GetByRole(AriaRole.Article).Filter(new() { HasText = "Top item by revenue" }))
+            .ToContainTextAsync("Top by revenue");
         await Expect(page.Locator(".trend-hit")).ToHaveCountAsync(7);
         await slider.PressAsync("Home");
         await Expect(page.Locator(".trend-selection")).ToContainTextAsync("₱0.00");
